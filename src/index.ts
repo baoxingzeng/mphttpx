@@ -13,8 +13,8 @@ export { FileReader, FileReaderP } from "./FileReaderP";
 export { FormData, FormDataP } from "./FormDataP";
 export { URLSearchParams, URLSearchParamsP } from "./URLSearchParamsP";
 
-export { AbortController, AbortControllerP } from "./AbortControllerP";
 export { AbortSignal, AbortSignalP } from "./AbortSignalP";
+export { AbortController, AbortControllerP } from "./AbortControllerP";
 
 export { XMLHttpRequest, XMLHttpRequestP } from "./XMLHttpRequestP";
 export { fetch, fetchP } from "./fetchP";
