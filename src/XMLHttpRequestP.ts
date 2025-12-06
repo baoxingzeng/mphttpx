@@ -1,4 +1,3 @@
-import { mp } from "./platform";
 import { TextEncoderP } from "./TextEncoderP";
 import { TextDecoderP } from "./TextDecoderP";
 import { EventP } from "./EventP";
@@ -16,7 +15,7 @@ import type {
     IAliRequestFailCallbackResult
 } from "./request";
 import { request } from "./request";
-import { g, state as internalState, polyfill, isObjectType, isPolyfillType, defineStringTag, MPException } from "./isPolyfill";
+import { state as internalState, polyfill, isObjectType, isPolyfillType, defineStringTag, MPException } from "./isPolyfill";
 
 const state = Symbol("XMLHttpRequestState");
 export { state as xhrState };
@@ -550,5 +549,5 @@ function statusTextMap(val: number) {
     return statusMessages[val] || "unknown";
 }
 
-const XMLHttpRequestE = !mp ? g["XMLHttpRequest"] : XMLHttpRequestP;
+const XMLHttpRequestE = (typeof XMLHttpRequest !== "undefined" && XMLHttpRequest) || XMLHttpRequestP;
 export { XMLHttpRequestE as XMLHttpRequest };

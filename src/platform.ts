@@ -17,7 +17,7 @@ export const mp = (() => {
         (typeof qh !== u && typeof qh?.[r] === f && qh) ||        // 360
         undefined;
 
-    if (typeof g["XMLHttpRequest"] === f && typeof g["fetch"] === f) {
+    if (typeof g["XMLHttpRequest"] === f) {
         return;
     }
 

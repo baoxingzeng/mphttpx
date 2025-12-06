@@ -1,11 +1,10 @@
-import { mp } from "./platform";
 import { bodyState } from "./BodyP";
 import { RequestP } from "./RequestP";
 import { ResponseP } from "./ResponseP";
 import { type AbortSignalP } from "./AbortSignalP";
-import { XMLHttpRequestP, xhrState } from "./XMLHttpRequestP";
 import { g, state, isObjectType, MPException } from "./isPolyfill";
 import { HeadersP, normalizeName, normalizeValue } from "./HeadersP";
+import { XMLHttpRequest, XMLHttpRequestP, xhrState } from "./XMLHttpRequestP";
 
 export function fetchP(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
     if (new.target === fetchP) {
@@ -19,11 +18,11 @@ export function fetchP(input: RequestInfo | URL, init?: RequestInit): Promise<Re
             return reject((request.signal as AbortSignalP).reason);
         }
 
-        let xhr = new XMLHttpRequestP();
+        let xhr = new XMLHttpRequest();
 
         xhr.onload = function () {
             let options = {
-                headers: new HeadersP((xhr as XMLHttpRequestP)[xhrState]._resHeaders || undefined),
+                headers: xhr instanceof XMLHttpRequestP ? (new HeadersP(xhr[xhrState]._resHeaders || undefined)) : parseHeaders(xhr.getAllResponseHeaders() || ""),
                 status: xhr.status,
                 statusText: xhr.statusText,
             }
@@ -102,5 +101,30 @@ function isObjectHeaders(val: unknown): val is Record<string, string> {
     return typeof val === "object" && !isObjectType<Headers>("Headers", val);
 }
 
-const fetchE = !mp ? g["fetch"] : fetchP;
+function parseHeaders(rawHeaders: string) {
+    let headers = new HeadersP();
+    let preProcessedHeaders = rawHeaders.replace(/\r?\n[\t ]+/g, " ");
+
+    preProcessedHeaders
+        .split("\r")
+        .map(function (header) {
+            return header.indexOf("\n") === 0 ? header.substring(1, header.length) : header;
+        })
+        .forEach(function (line) {
+            let parts = line.split(":");
+            let key = parts.shift()!.trim();
+            if (key) {
+                let value = parts.join(":").trim();
+                try {
+                    headers.append(key, value);
+                } catch (error) {
+                    console.warn("Response " + (error as Error).message);
+                }
+            }
+        });
+
+    return headers;
+}
+
+const fetchE = g["fetch"] || fetchP;
 export { fetchE as fetch };
