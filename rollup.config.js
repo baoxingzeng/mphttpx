@@ -40,18 +40,4 @@ export default [
         },
         plugins: [dts()],
     },
-
-    {
-        input: "src/global.ts",
-        output: {
-            file: "dist/global.js",
-            format: "iife",
-        },
-        plugins: [
-            typescript({
-                declaration: false,
-            }),
-            terser(),
-        ],
-    },
 ];
