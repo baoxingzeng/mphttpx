@@ -1,14 +1,16 @@
 import { HeadersP } from "./HeadersP";
-import { BodyP, bodyState } from "./BodyP";
+import { BodyP, bodyState, _name, _body, initFn } from "./BodyP";
 import { normalizeMethod } from "./XMLHttpRequestP";
 import { AbortControllerP } from "./AbortControllerP";
-import { g, state, polyfill, isPolyfillType, defineStringTag } from "./isPolyfill";
+import { g, polyfill, isPolyfillType, defineStringTag } from "./isPolyfill";
+
+const state = Symbol(/* "RequestState" */);
 
 export class RequestP extends BodyP implements Request {
     constructor(input: RequestInfo | URL, init?: RequestInit) {
         super();
         this[state] = new RequestState();
-        this[bodyState]._name = "Request";
+        this[bodyState][_name] = "Request";
 
         let options = init ?? {};
         let body = options.body;
@@ -25,8 +27,8 @@ export class RequestP extends BodyP implements Request {
             this[state].url = input.url;
 
             let _input = input as RequestP;
-            if (!body && _input[bodyState]._body !== null) {
-                body = _input[bodyState]._body;
+            if (!body && _input[bodyState][_body] !== null) {
+                body = _input[bodyState][_body];
                 _input[bodyState].bodyUsed = true;
             }
         } else {
@@ -43,7 +45,7 @@ export class RequestP extends BodyP implements Request {
             throw new TypeError("Failed to construct 'Request': Request with GET/HEAD method cannot have body.");
         }
 
-        this[bodyState].init(body, this.headers);
+        initFn.call(this[bodyState], body, this.headers);
 
         if (this.method === "GET" || this.method === "HEAD") {
             if (options.cache === "no-store" || options.cache === "no-cache") {
@@ -78,7 +80,7 @@ export class RequestP extends BodyP implements Request {
     get url() { return this[state].url; }
 
     clone(): Request {
-        return new RequestP(this, { body: this[bodyState]._body ?? null });
+        return new RequestP(this, { body: this[bodyState][_body] ?? null });
     }
 
     toString() { return "[object Request]"; }

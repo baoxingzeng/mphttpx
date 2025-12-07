@@ -1,5 +1,4 @@
 export const polyfill = Symbol("isPolyfill");
-export const state = Symbol("INTERNAL_STATE");
 
 /* eslint-disable no-prototype-builtins */
 export const g: typeof globalThis =

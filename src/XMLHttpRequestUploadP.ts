@@ -1,6 +1,6 @@
-import { state, polyfill, defineStringTag } from "./isPolyfill";
+import { polyfill, defineStringTag } from "./isPolyfill";
 import { EventTargetState, eventTargetState } from "./EventTargetP";
-import { XMLHttpRequestEventTargetP, XMLHttpRequestEventTargetState } from "./XMLHttpRequestEventTargetP";
+import { XMLHttpRequestEventTargetP, XMLHttpRequestEventTargetState, xhrEventTargetState } from "./XMLHttpRequestEventTargetP";
 
 export class XMLHttpRequestUploadP extends XMLHttpRequestEventTargetP implements XMLHttpRequestUpload {
     constructor() {
@@ -20,6 +20,6 @@ defineStringTag(XMLHttpRequestUploadP, "XMLHttpRequestUpload");
 export function createXMLHttpRequestUploadP() {
     const instance: XMLHttpRequestUploadP = Object.create(XMLHttpRequestUploadP.prototype);
     instance[eventTargetState] = new EventTargetState(instance);
-    instance[state] = new XMLHttpRequestEventTargetState(instance);
+    instance[xhrEventTargetState] = new XMLHttpRequestEventTargetState(instance);
     return instance;
 }

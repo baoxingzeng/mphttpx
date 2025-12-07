@@ -1,7 +1,7 @@
 import { BlobP } from "./BlobP";
 import { g, polyfill, defineStringTag } from "./isPolyfill";
 
-const state = Symbol("FileState");
+const state = Symbol(/* "FileState" */);
 
 export class FileP extends BlobP implements File {
     constructor(fileBits: BlobPart[], fileName: string, options?: FilePropertyBag) {

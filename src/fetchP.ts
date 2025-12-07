@@ -1,10 +1,10 @@
-import { bodyState } from "./BodyP";
+import { bodyState, _body } from "./BodyP";
 import { RequestP } from "./RequestP";
-import { ResponseP } from "./ResponseP";
+import { ResponseP, responseState } from "./ResponseP";
 import { type AbortSignalP } from "./AbortSignalP";
-import { g, state, isObjectType, MPException } from "./isPolyfill";
-import { HeadersP, normalizeName, normalizeValue } from "./HeadersP";
-import { XMLHttpRequest, XMLHttpRequestP, xhrState } from "./XMLHttpRequestP";
+import { g, isObjectType, MPException } from "./isPolyfill";
+import { HeadersP, normalizeName, normalizeValue, parseHeaders } from "./HeadersP";
+import { XMLHttpRequest, XMLHttpRequestP, xhrState, _responseHeaders } from "./XMLHttpRequestP";
 
 export function fetchP(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
     if (new.target === fetchP) {
@@ -22,14 +22,14 @@ export function fetchP(input: RequestInfo | URL, init?: RequestInit): Promise<Re
 
         xhr.onload = function () {
             let options = {
-                headers: xhr instanceof XMLHttpRequestP ? (new HeadersP(xhr[xhrState]._resHeaders || undefined)) : parseHeaders(xhr.getAllResponseHeaders() || ""),
+                headers: xhr instanceof XMLHttpRequestP ? (new HeadersP(xhr[xhrState][_responseHeaders] || undefined)) : parseHeaders(xhr.getAllResponseHeaders() || ""),
                 status: xhr.status,
                 statusText: xhr.statusText,
             }
 
             setTimeout(() => {
                 const response = new ResponseP(xhr.response, options);
-                response[state].url = xhr.responseURL;
+                response[responseState].url = xhr.responseURL;
 
                 resolve(response);
             });
@@ -93,37 +93,12 @@ export function fetchP(input: RequestInfo | URL, init?: RequestInit): Promise<Re
             }
         }
 
-        xhr.send(request[bodyState]._body as (XMLHttpRequestBodyInit | null));
+        xhr.send(request[bodyState][_body] as (XMLHttpRequestBodyInit | null));
     });
 }
 
 function isObjectHeaders(val: unknown): val is Record<string, string> {
     return typeof val === "object" && !isObjectType<Headers>("Headers", val);
-}
-
-function parseHeaders(rawHeaders: string) {
-    let headers = new HeadersP();
-    let preProcessedHeaders = rawHeaders.replace(/\r?\n[\t ]+/g, " ");
-
-    preProcessedHeaders
-        .split("\r")
-        .map(function (header) {
-            return header.indexOf("\n") === 0 ? header.substring(1, header.length) : header;
-        })
-        .forEach(function (line) {
-            let parts = line.split(":");
-            let key = parts.shift()!.trim();
-            if (key) {
-                let value = parts.join(":").trim();
-                try {
-                    headers.append(key, value);
-                } catch (error) {
-                    console.warn("Response " + (error as Error).message);
-                }
-            }
-        });
-
-    return headers;
 }
 
 const fetchE = g["fetch"] || fetchP;

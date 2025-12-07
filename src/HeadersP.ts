@@ -1,4 +1,6 @@
-import { g, state, polyfill, isObjectType, defineStringTag } from "./isPolyfill";
+import { g, polyfill, isObjectType, defineStringTag } from "./isPolyfill";
+
+const state = Symbol(/* "HeadersState" */);
 
 export class HeadersP implements Headers {
     constructor(init?: HeadersInit) {
@@ -31,18 +33,18 @@ export class HeadersP implements Headers {
         let key = normalizeName(name, "append");
         value = normalizeValue(value);
 
-        let oldValue = this[state]._map.get(key)?.[1];
-        this[state]._map.set(key, ["" + name, oldValue ? `${oldValue}, ${value}` : value]);
+        let oldValue = this[state][_headersMap].get(key)?.[1];
+        this[state][_headersMap].set(key, ["" + name, oldValue ? `${oldValue}, ${value}` : value]);
     }
 
     delete(name: string): void {
         let key = normalizeName(name, "delete");
-        this[state]._map.delete(key);
+        this[state][_headersMap].delete(key);
     }
 
     get(name: string): string | null {
         let key = normalizeName(name, "get");
-        return this[state]._map.get(key)?.[1] ?? null;
+        return this[state][_headersMap].get(key)?.[1] ?? null;
     }
 
     getSetCookie(): string[] {
@@ -52,12 +54,12 @@ export class HeadersP implements Headers {
 
     has(name: string): boolean {
         let key = normalizeName(name, "has");
-        return this[state]._map.has(key);
+        return this[state][_headersMap].has(key);
     }
 
     set(name: string, value: string): void {
         let key = normalizeName(name, "set");
-        this[state]._map.set(key, ["" + name, normalizeValue(value)]);
+        this[state][_headersMap].set(key, ["" + name, normalizeValue(value)]);
     }
 
     forEach(callbackfn: (value: string, key: string, parent: Headers) => void, thisArg?: any): void {
@@ -67,7 +69,7 @@ export class HeadersP implements Headers {
     }
 
     entries() {
-        return this[state]._map.values();
+        return this[state][_headersMap].values();
     }
 
     keys() {
@@ -88,8 +90,10 @@ export class HeadersP implements Headers {
 
 defineStringTag(HeadersP, "Headers");
 
+const _headersMap = Symbol();
+
 class HeadersState {
-    _map = new Map<string, [string, string]>();
+    [_headersMap] = new Map<string, [string, string]>();
 }
 
 export function normalizeName(name: string, kind = "") {
@@ -109,6 +113,31 @@ export function normalizeValue(value: string) {
         value = String(value);
     }
     return value;
+}
+
+export function parseHeaders(rawHeaders: string) {
+    let headers = new HeadersP();
+    let preProcessedHeaders = rawHeaders.replace(/\r?\n[\t ]+/g, " ");
+
+    preProcessedHeaders
+        .split("\r")
+        .map(function (header) {
+            return header.indexOf("\n") === 0 ? header.substring(1, header.length) : header;
+        })
+        .forEach(function (line) {
+            let parts = line.split(":");
+            let key = parts.shift()!.trim();
+            if (key) {
+                let value = parts.join(":").trim();
+                try {
+                    headers.append(key, value);
+                } catch (error) {
+                    console.warn("Response " + (error as Error).message);
+                }
+            }
+        });
+
+    return headers;
 }
 
 const HeadersE = g["Headers"] || HeadersP;

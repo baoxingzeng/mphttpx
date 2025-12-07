@@ -1,7 +1,7 @@
-import { createAbortSignalP } from "./AbortSignalP";
-import { g, state as internalState, polyfill, defineStringTag } from "./isPolyfill";
+import { g, polyfill, defineStringTag } from "./isPolyfill";
+import { abortSignalState, createAbortSignalP, abort } from "./AbortSignalP";
 
-const state = Symbol("AbortControllerState");
+const state = Symbol(/* "AbortControllerState" */);
 
 export class AbortControllerP implements AbortController {
     constructor() {
@@ -13,7 +13,7 @@ export class AbortControllerP implements AbortController {
     get signal(): AbortSignal { return this[state].signal; }
 
     abort(reason?: any): void {
-        this[state].signal[internalState].abort(reason);
+        abort.call(this[state].signal[abortSignalState], reason);
     }
 
     toString() { return "[object AbortController]"; }

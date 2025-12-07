@@ -1,6 +1,9 @@
 import { TextEncoderP } from "./TextEncoderP";
 import { TextDecoderP } from "./TextDecoderP";
-import { g, state, polyfill, isPolyfillType, defineStringTag } from "./isPolyfill";
+import { g, polyfill, isPolyfillType, defineStringTag } from "./isPolyfill";
+
+const state = Symbol(/* "BlobState" */);
+export { state as blobState };
 
 export class BlobP implements Blob {
     constructor(blobParts: BlobPart[] = [], options?: BlobPropertyBag) {
@@ -11,7 +14,7 @@ export class BlobP implements Blob {
         let encoder: TextEncoderP | null = null;
         let chunks = blobParts.reduce((chunks: Array<TUint8ArrayOfArrayBuffer>, part) => {
             if (isPolyfillType<Blob>("Blob", part)) {
-                chunks.push((part as BlobP)[state]._u8array);
+                chunks.push((part as BlobP)[state][_u8array]);
             } else if (part instanceof ArrayBuffer || ArrayBuffer.isView(part)) {
                 chunks.push(convert(part));
             } else {
@@ -23,7 +26,7 @@ export class BlobP implements Blob {
         }, []);
 
         this[state] = new BlobState(concat(chunks));
-        this[state].size = this[state]._u8array.length;
+        this[state].size = this[state][_u8array].length;
 
         const rawType = options?.type || "";
         this[state].type = /[^\u0020-\u007E]/.test(rawType) ? "" : rawType.toLowerCase();
@@ -35,15 +38,15 @@ export class BlobP implements Blob {
     get type() { return this[state].type; }
 
     arrayBuffer(): Promise<ArrayBuffer> {
-        return Promise.resolve(clone(this[state]._u8array.buffer).buffer);
+        return Promise.resolve(clone(this[state][_u8array].buffer).buffer);
     }
 
     bytes(): Promise<TUint8ArrayOfArrayBuffer> {
-        return Promise.resolve(clone(this[state]._u8array.buffer));
+        return Promise.resolve(clone(this[state][_u8array].buffer));
     }
 
     slice(start?: number, end?: number, contentType?: string): Blob {
-        const sliced = this[state]._u8array.slice(start ?? 0, end ?? this[state]._u8array.length);
+        const sliced = this[state][_u8array].slice(start ?? 0, end ?? this[state][_u8array].length);
         return new BlobP([sliced], { type: contentType ?? "" });
     }
 
@@ -53,7 +56,7 @@ export class BlobP implements Blob {
 
     text(): Promise<string> {
         const decoder = new TextDecoderP();
-        return Promise.resolve(decoder.decode(this[state]._u8array));
+        return Promise.resolve(decoder.decode(this[state][_u8array]));
     }
 
     toString() { return "[object Blob]"; }
@@ -62,14 +65,16 @@ export class BlobP implements Blob {
 
 defineStringTag(BlobP, "Blob");
 
+export const _u8array = Symbol();
+
 class BlobState {
     constructor(buffer: TUint8ArrayOfArrayBuffer) {
-        this._u8array = buffer;
+        this[_u8array] = buffer;
     }
 
     size = 0;
     type = "";
-    _u8array: TUint8ArrayOfArrayBuffer;
+    [_u8array]: TUint8ArrayOfArrayBuffer;
 }
 
 export type TUint8ArrayOfArrayBuffer = ReturnType<TextEncoder["encode"]>;

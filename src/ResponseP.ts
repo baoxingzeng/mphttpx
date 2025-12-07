@@ -1,12 +1,15 @@
 import { HeadersP } from "./HeadersP";
-import { BodyP, bodyState } from "./BodyP";
-import { g, state, polyfill, defineStringTag } from "./isPolyfill";
+import { g, polyfill, defineStringTag } from "./isPolyfill";
+import { BodyP, bodyState, _name, _body, initFn } from "./BodyP";
+
+const state = Symbol(/* "ResponseState" */);
+export { state as responseState };
 
 export class ResponseP extends BodyP implements Response {
     constructor(body?: BodyInit | null, init?: ResponseInit) {
         super();
         this[state] = new ResponseState();
-        this[bodyState]._name = "Response";
+        this[bodyState][_name] = "Response";
 
         let options = init ?? {};
         let status = options.status === undefined ? 200 : options.status;
@@ -20,7 +23,7 @@ export class ResponseP extends BodyP implements Response {
         this[state].status = status;
         this[state].statusText = options.statusText === undefined ? "" : "" + options.statusText;
         
-        this[bodyState].init(body, this.headers)
+        initFn.call(this[bodyState], body, this.headers);
     }
 
     [state]: ResponseState;
@@ -34,7 +37,7 @@ export class ResponseP extends BodyP implements Response {
     get url() { return this[state].url; }
 
     clone(): Response {
-        const response = new ResponseP(this[bodyState]._body, {
+        const response = new ResponseP(this[bodyState][_body], {
             headers: new HeadersP(this.headers),
             status: this.status,
             statusText: this.statusText,

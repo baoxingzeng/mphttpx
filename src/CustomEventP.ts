@@ -1,7 +1,7 @@
-import { EventP } from "./EventP";
-import { g, state as eventState, polyfill, defineStringTag } from "./isPolyfill";
+import { EventP, eventState, _dispatched } from "./EventP";
+import { g, polyfill, defineStringTag } from "./isPolyfill";
 
-const state = Symbol("CustomEventState");
+const state = Symbol(/* "CustomEventState" */);
 
 export class CustomEventP<T> extends EventP implements CustomEvent {
     constructor(type: string, eventInitDict?: CustomEventInit<T>) {
@@ -14,7 +14,7 @@ export class CustomEventP<T> extends EventP implements CustomEvent {
     get detail() { return this[state].detail as T; }
 
     initCustomEvent(type: string, bubbles?: boolean, cancelable?: boolean, detail?: T): void {
-        if (this[eventState]._dispatched) return;
+        if (this[eventState][_dispatched]) return;
 
         this.initEvent(type, bubbles, cancelable);
         this[state].detail = detail ?? null;

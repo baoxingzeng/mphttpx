@@ -1,7 +1,7 @@
 import { EventP } from "./EventP";
 import { g, polyfill, defineStringTag } from "./isPolyfill";
 
-const state = Symbol("ProgressEventState");
+const state = Symbol(/* "ProgressEventState" */);
 
 export class ProgressEventP extends EventP implements ProgressEvent {
     constructor(type: string, eventInitDict?: ProgressEventInit) {

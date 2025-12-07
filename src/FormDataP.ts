@@ -1,7 +1,10 @@
 import { BlobP } from "./BlobP";
 import { FileP } from "./FileP";
 import { TextEncoderP } from "./TextEncoderP";
-import { g, state, polyfill, isPolyfillType, defineStringTag } from "./isPolyfill";
+import { g, polyfill, isPolyfillType, defineStringTag } from "./isPolyfill";
+
+const state = Symbol(/* "FormDataState" */);
+export { state as formDataState };
 
 export class FormDataP implements FormData {
     constructor(form?: HTMLFormElement, submitter?: HTMLElement | null) {
@@ -19,22 +22,22 @@ export class FormDataP implements FormData {
     [state]: FormDataState;
 
     append(name: string, value: string | Blob, filename?: string) {
-        this[state]._data.push(normalizeArgs(name, value, filename));
+        this[state][_formData].push(normalizeArgs(name, value, filename));
     }
 
     delete(name: string) {
         const result: [string, FormDataEntryValue][] = [];
         name = String(name);
 
-        each(this[state]._data, entry => {
+        each(this[state][_formData], entry => {
             entry[0] !== name && result.push(entry);
         });
 
-        this[state]._data = result;
+        this[state][_formData] = result;
     }
 
     get(name: string): FormDataEntryValue | null {
-        const entries = this[state]._data;
+        const entries = this[state][_formData];
         name = String(name);
 
         for (let i = 0; i < entries.length; ++i) {
@@ -50,7 +53,7 @@ export class FormDataP implements FormData {
         const result: FormDataEntryValue[] = [];
         name = String(name);
 
-        each(this[state]._data, data => {
+        each(this[state][_formData], data => {
             data[0] === name && result.push(data[1]);
         });
 
@@ -60,8 +63,8 @@ export class FormDataP implements FormData {
     has(name: string): boolean {
         name = String(name);
 
-        for (let i = 0; i < this[state]._data.length; ++i) {
-            if (this[state]._data[i]![0] === name) {
+        for (let i = 0; i < this[state][_formData].length; ++i) {
+            if (this[state][_formData][i]![0] === name) {
                 return true;
             }
         }
@@ -75,7 +78,7 @@ export class FormDataP implements FormData {
         const args = normalizeArgs(name, value, filename);
         let replace = true;
 
-        each(this[state]._data, data => {
+        each(this[state][_formData], data => {
             data[0] === name
                 ? replace && (replace = !result.push(args))
                 : result.push(data);
@@ -83,7 +86,7 @@ export class FormDataP implements FormData {
 
         replace && result.push(args);
 
-        this[state]._data = result;
+        this[state][_formData] = result;
     }
 
     forEach(callbackfn: (value: FormDataEntryValue, key: string, parent: FormData) => void, thisArg?: any): void {
@@ -93,15 +96,15 @@ export class FormDataP implements FormData {
     }
 
     entries() {
-        return this[state]._data.values();
+        return this[state][_formData].values();
     }
 
     keys() {
-        return this[state]._data.map(x => x[0]).values();
+        return this[state][_formData].map(x => x[0]).values();
     }
 
     values() {
-        return this[state]._data.map(x => x[1]).values();
+        return this[state][_formData].map(x => x[1]).values();
     }
 
     [Symbol.iterator]() {
@@ -114,8 +117,10 @@ export class FormDataP implements FormData {
 
 defineStringTag(FormDataP, "FormData");
 
+const _formData = Symbol();
+
 class FormDataState {
-    _data: [string, FormDataEntryValue][] = [];
+    [_formData]: [string, FormDataEntryValue][] = [];
 
     toBlob() {
         const boundary = "----formdata-polyfill-" + Math.random();
@@ -123,7 +128,7 @@ class FormDataState {
 
         let chunks: BlobPart[] = [];
 
-        for (const [name, value] of this._data.values()) {
+        for (const [name, value] of this[_formData].values()) {
             if (typeof value === "string") {
                 chunks.push(p + escape(normalizeLinefeeds(name)) + `"\r\n\r\n${normalizeLinefeeds(value)}\r\n`);
             } else {

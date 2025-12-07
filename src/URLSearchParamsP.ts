@@ -1,4 +1,6 @@
-import { g, state, polyfill, isObjectType, defineStringTag } from "./isPolyfill";
+import { g, polyfill, isObjectType, defineStringTag } from "./isPolyfill";
+
+const state = Symbol(/* "URLSearchParamsState" */);
 
 export class URLSearchParamsP implements URLSearchParams {
     constructor(init?: string[][] | Record<string, string> | string | URLSearchParams) {
@@ -9,22 +11,22 @@ export class URLSearchParamsP implements URLSearchParams {
         }
 
         this[state] = new URLSearchParamsState();
-        this[state]._dict = parseToDict(search);
+        this[state][_urlspDict] = parseToDict(search);
     }
 
     [state]: URLSearchParamsState;
 
     get size() {
-        return Object.values(this[state]._dict).reduce((acc, cur) => acc + cur.length, 0);
+        return Object.values(this[state][_urlspDict]).reduce((acc, cur) => acc + cur.length, 0);
     }
 
     append(name: string, value: string): void {
-        appendTo(this[state]._dict, name, value);
+        appendTo(this[state][_urlspDict], name, value);
     }
 
     delete(name: string, value?: string): void {
         let dict: Record<string, string[]> = {};
-        for (let [key, values] of Object.entries(this[state]._dict)) {
+        for (let [key, values] of Object.entries(this[state][_urlspDict])) {
             if (key === name) {
                 if (value !== undefined) {
                     let vals = values.filter(x => x !== ("" + value));
@@ -35,21 +37,21 @@ export class URLSearchParamsP implements URLSearchParams {
             Object.assign(dict, { [key]: values });
         }
 
-        this[state]._dict = dict;
+        this[state][_urlspDict] = dict;
     }
 
     get(name: string): string | null {
-        return this.has(name) ? this[state]._dict[name]![0] ?? null : null;
+        return this.has(name) ? this[state][_urlspDict][name]![0] ?? null : null;
     }
 
     getAll(name: string): string[] {
-        return this.has(name) ? this[state]._dict[name]!.slice(0) : [];
+        return this.has(name) ? this[state][_urlspDict][name]!.slice(0) : [];
     }
 
     has(name: string, value?: string): boolean {
-        if (hasOwnProperty(this[state]._dict, name)) {
+        if (hasOwnProperty(this[state][_urlspDict], name)) {
             if (value !== undefined) {
-                return this[state]._dict[name]!.includes(("" + value));
+                return this[state][_urlspDict][name]!.includes(("" + value));
             }
             return true;
         }
@@ -57,23 +59,23 @@ export class URLSearchParamsP implements URLSearchParams {
     }
 
     set(name: string, value: string): void {
-        this[state]._dict[name] = ["" + value];
+        this[state][_urlspDict][name] = ["" + value];
     }
 
     sort(): void {
-        let keys = Object.keys(this[state]._dict);
+        let keys = Object.keys(this[state][_urlspDict]);
         keys.sort();
 
         let dict: Record<string, string[]> = {};
         for (let key of keys) {
-            Object.assign(dict, { [key]: this[state]._dict[key] });
+            Object.assign(dict, { [key]: this[state][_urlspDict][key] });
         }
 
-        this[state]._dict = dict;
+        this[state][_urlspDict] = dict;
     }
 
     forEach(callbackfn: (value: string, key: string, parent: URLSearchParams) => void, thisArg?: any): void {
-        Object.entries(this[state]._dict).forEach(([key, values]) => {
+        Object.entries(this[state][_urlspDict]).forEach(([key, values]) => {
             values.forEach(value => {
                 callbackfn.call(thisArg, value, key, this);
             });
@@ -81,7 +83,7 @@ export class URLSearchParamsP implements URLSearchParams {
     }
 
     entries() {
-        return Object.entries(this[state]._dict)
+        return Object.entries(this[state][_urlspDict])
             .map(([key, values]) => {
                 return values.map(value => {
                     return [key, value] as [string, string];
@@ -92,11 +94,11 @@ export class URLSearchParamsP implements URLSearchParams {
     }
 
     keys() {
-        return Object.keys(this[state]._dict).values();
+        return Object.keys(this[state][_urlspDict]).values();
     }
 
     values() {
-        return Object.values(this[state]._dict).flat().values();
+        return Object.values(this[state][_urlspDict]).flat().values();
     }
 
     [Symbol.iterator]() {
@@ -105,7 +107,7 @@ export class URLSearchParamsP implements URLSearchParams {
 
     toString(): string {
         let query: string[] = [];
-        for (let [key, values] of Object.entries(this[state]._dict)) {
+        for (let [key, values] of Object.entries(this[state][_urlspDict])) {
             let name = encode(key);
             for (let val of values) {
                 query.push(name + "=" + encode(val));
@@ -120,8 +122,10 @@ export class URLSearchParamsP implements URLSearchParams {
 
 defineStringTag(URLSearchParamsP, "URLSearchParams");
 
+const _urlspDict = Symbol();
+
 class URLSearchParamsState {
-    _dict: Record<string, string[]> = {};
+    [_urlspDict]: Record<string, string[]> = {};
 }
 
 function parseToDict(search: string[][] | Record<string, string> | string) {

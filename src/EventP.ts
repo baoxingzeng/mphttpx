@@ -1,4 +1,7 @@
-import { g, state, polyfill, defineStringTag } from "./isPolyfill";
+import { g, polyfill, defineStringTag } from "./isPolyfill";
+
+const state = Symbol(/* "EventState" */);
+export { state as eventState };
 
 export class EventP implements Event {
     static readonly NONE = 0;
@@ -49,7 +52,7 @@ export class EventP implements Event {
     }
 
     initEvent = (type: string, bubbles?: boolean, cancelable?: boolean) => {
-        if (this[state]._dispatched) return;
+        if (this[state][_dispatched]) return;
 
         this[state].type = String(type);
         this[state].bubbles = !!bubbles;
@@ -57,20 +60,20 @@ export class EventP implements Event {
     }
 
     preventDefault = () => {
-        if (this[state]._passive) {
+        if (this[state][_passive]) {
             console.warn(`Ignoring 'preventDefault()' call on event of type '${this.type}' from a listener registered as 'passive'.`);
             return;
         }
 
         if (this.cancelable) {
-            this[state]._preventDefaultCalled = true;
+            this[state][_preventDefaultCalled] = true;
             this[state].defaultPrevented = true;
             this[state].returnValue = false;
         }
     }
 
     stopImmediatePropagation = () => {
-        this[state]._stopImmediatePropagationCalled = true;
+        this[state][_stopImmediatePropagationCalled] = true;
         this.cancelBubble = true;
     }
 
@@ -84,8 +87,15 @@ export class EventP implements Event {
 
 defineStringTag(EventP, "Event");
 
+const _TimeStamp = Symbol();
+
+export const _passive = Symbol();
+export const _dispatched = Symbol();
+export const _preventDefaultCalled = Symbol();
+export const _stopImmediatePropagationCalled = Symbol();
+
 class EventState {
-    static TimeStamp = (new Date()).getTime();
+    static [_TimeStamp] = (new Date()).getTime();
 
     type = "";
     bubbles = false;
@@ -100,12 +110,12 @@ class EventState {
     returnValue = true;
 
     isTrusted = false;
-    timeStamp = (new Date()).getTime() - EventState.TimeStamp;
+    timeStamp = (new Date()).getTime() - EventState[_TimeStamp];
 
-    _passive = false;
-    _dispatched = false;
-    _preventDefaultCalled = false;
-    _stopImmediatePropagationCalled = false;
+    [_passive] = false;
+    [_dispatched] = false;
+    [_preventDefaultCalled] = false;
+    [_stopImmediatePropagationCalled] = false;
 }
 
 const EventE = g["EventTarget"] ? g["Event"] : EventP;

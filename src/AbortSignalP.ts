@@ -1,11 +1,14 @@
-import { EventP } from "./EventP";
-import { g, state, polyfill, defineStringTag, MPException } from "./isPolyfill";
-import { EventTargetP, EventTargetState, eventTargetState, attachFn, executeFn } from "./EventTargetP";
+import { EventP, eventState } from "./EventP";
+import { g, polyfill, defineStringTag, MPException } from "./isPolyfill";
+import { EventTargetP, EventTargetState, eventTargetState, fire, attachFn, executeFn } from "./EventTargetP";
+
+const state = Symbol(/* "AbortSignalState" */);
+export { state as abortSignalState };
 
 export class AbortSignalP extends EventTargetP implements AbortSignal {
     static abort(reason?: any): AbortSignal {
         const signal = createAbortSignalP();
-        signal[state].abort(reason, false);
+        abort.call(signal[state], reason, false);
 
         return signal;
     }
@@ -15,14 +18,14 @@ export class AbortSignalP extends EventTargetP implements AbortSignal {
         const abortedSignal = signals.find(x => x.aborted);
 
         if (abortedSignal) {
-            signal[state].abort((abortedSignal as AbortSignalP).reason, false);
+            abort.call(signal[state], (abortedSignal as AbortSignalP).reason, false);
         } else {
             function abortFn(this: AbortSignal, ev: Event) {
                 for (const sig of signals) {
                     sig.removeEventListener("abort", abortFn);
                 }
 
-                signal[state].abort((this as AbortSignalP).reason, true, ev.isTrusted);
+                abort.call(signal[state], (this as AbortSignalP).reason, true, ev.isTrusted);
             }
 
             for (const sig of signals) {
@@ -37,7 +40,7 @@ export class AbortSignalP extends EventTargetP implements AbortSignal {
         const signal = createAbortSignalP();
 
         setTimeout(() => {
-            signal[state].abort(new MPException("signal timed out", "TimeoutError"));
+            abort.call(signal[state], new MPException("signal timed out", "TimeoutError"));
         }, milliseconds);
 
         return signal;
@@ -64,7 +67,7 @@ export class AbortSignalP extends EventTargetP implements AbortSignal {
     get onabort() { return this[state].onabort; }
     set onabort(value) {
         this[state].onabort = value;
-        attachFn.call(this, "abort", value, this[state]._onabort);
+        attachFn.call(this, "abort", value, this[state][_handlers].onabort);
     }
 
     toString() { return "[object AbortSignal]"; }
@@ -72,6 +75,8 @@ export class AbortSignalP extends EventTargetP implements AbortSignal {
 }
 
 defineStringTag(AbortSignalP, "AbortSignal");
+
+const _handlers = Symbol();
 
 export class AbortSignalState {
     constructor(target: AbortSignalP) {
@@ -83,23 +88,30 @@ export class AbortSignalState {
     aborted = false;
     reason: any = undefined;
 
-    abort(reason: any, notify = true, isTrusted = true) {
-        if (!this.aborted) {
-            this.aborted = true;
-            this.reason = reason ?? (new MPException("signal is aborted without reason", "AbortError"));
+    onabort: ((this: AbortSignal, ev: Event) => any) | null = null;
 
-            if (notify) {
-                const evt = new EventP("abort");
-                evt[state].target = this.target;
-                evt[state].isTrusted = isTrusted;
+    [_handlers] = getHandlers.call(this);
+}
 
-                this.target[eventTargetState].fire(evt);
-            }
+export function abort(this: AbortSignalState, reason: any, notify = true, isTrusted = true) {
+    if (!this.aborted) {
+        this.aborted = true;
+        this.reason = reason ?? (new MPException("signal is aborted without reason", "AbortError"));
+
+        if (notify) {
+            const evt = new EventP("abort");
+            evt[eventState].target = this.target;
+            evt[eventState].isTrusted = isTrusted;
+
+            fire.call(this.target[eventTargetState], evt);
         }
     }
+}
 
-    onabort: ((this: AbortSignal, ev: Event) => any) | null = null;
-    _onabort = (ev: Event) => { executeFn.call(this.target, this.onabort, ev); }
+function getHandlers(this: AbortSignalState) {
+    return {
+        onabort: (ev: Event) => { executeFn.call(this.target, this.onabort, ev); },
+    };
 }
 
 export function createAbortSignalP(): AbortSignalP {
