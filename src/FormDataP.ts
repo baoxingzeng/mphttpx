@@ -181,7 +181,7 @@ function escape(str: string) {
  * @param body - Text in multipart/form-data format (including boundaries and data)
  * @returns Parsed FormData object (text fields as strings, files as File objects)
  */
-export function createFormData(body: string) {
+export function createFormDataFromBody(body: string, errMsg = "Failed to fetch") {
     const formData = new FormDataP();
     if (typeof body !== "string" || body.trim() === "") {
         return formData;
@@ -191,7 +191,7 @@ export function createFormData(body: string) {
     const firstLineEnd = body.indexOf("\r\n");
     if (firstLineEnd === -1) {
         // Invalid multipart format: Missing line break in header
-        throw new TypeError("Failed to fetch");
+        throw new TypeError(errMsg);
     }
     const boundary = body.substring(2, firstLineEnd).trim();
     if (!boundary) {
@@ -207,7 +207,7 @@ export function createFormData(body: string) {
 
     if (parts.length === 0) {
         // Invalid multipart format: No parts found
-        throw new TypeError("Failed to fetch");
+        throw new TypeError(errMsg);
     }
 
     // 3. Parse each part
@@ -216,7 +216,7 @@ export function createFormData(body: string) {
         const separatorIndex = part.indexOf("\r\n\r\n");
         if (separatorIndex === -1) {
             // Invalid part format: Missing header-content separator
-            throw new TypeError("Failed to fetch");
+            throw new TypeError(errMsg);
         }
 
         // Extract header (Content-Disposition and Content-Type)
@@ -230,7 +230,7 @@ export function createFormData(body: string) {
 
         if (!nameMatch || !nameMatch[1]) {
             // Invalid part format: Missing field name
-            throw new TypeError("Failed to fetch");
+            throw new TypeError(errMsg);
         }
         const fieldName = nameMatch[1];
         const isFile = !!filenameMatch; // Whether it's a file field
@@ -251,7 +251,7 @@ export function createFormData(body: string) {
                 formData.append(fieldName, file, filename);
             } catch (e) {
                 // `Failed to process file field "${fieldName}": ${(e as Error).message}`
-                throw new TypeError("Failed to fetch");
+                throw new TypeError(errMsg);
             }
         } else {
             // Text field: Directly take content (remove leading/trailing line breaks to match browser behavior)

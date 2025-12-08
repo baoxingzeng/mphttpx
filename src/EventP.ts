@@ -11,11 +11,12 @@ export class EventP implements Event {
 
     constructor(type: string, eventInitDict?: EventInit) {
         this[state] = new EventState();
+        const that = this[state];
 
-        this[state].type = String(type);
-        this[state].bubbles = !!eventInitDict?.bubbles;
-        this[state].cancelable = !!eventInitDict?.cancelable;
-        this[state].composed = !!eventInitDict?.composed;
+        that.type = String(type);
+        that.bubbles = !!eventInitDict?.bubbles;
+        that.cancelable = !!eventInitDict?.cancelable;
+        that.composed = !!eventInitDict?.composed;
     }
 
     [state]: EventState;
@@ -35,13 +36,14 @@ export class EventP implements Event {
     readonly BUBBLING_PHASE = EventP.BUBBLING_PHASE;
 
     get srcElement() { return this[state].target; }
-    cancelBubble = false;
+    get cancelBubble() { return this[state].cancelBubble; }
+    set cancelBubble(value) { this[state].cancelBubble = value; }
 
     get defaultPrevented() { return this[state].defaultPrevented; }
     get returnValue() { return this[state].returnValue; }
     set returnValue(value) { if (!value) { this.preventDefault(); } }
 
-    get isTrusted() { return this[state].isTrusted; }
+    get isTrusted() { return this[state][_isTrusted]; }
     get timeStamp() { return this[state].timeStamp; }
 
     composedPath(): EventTarget[] {
@@ -51,28 +53,31 @@ export class EventP implements Event {
         return path;
     }
 
-    initEvent = (type: string, bubbles?: boolean, cancelable?: boolean) => {
-        if (this[state][_dispatched]) return;
+    initEvent(type: string, bubbles?: boolean, cancelable?: boolean){
+        const that = this[state];
+        if (that[_dispatched]) return;
 
-        this[state].type = String(type);
-        this[state].bubbles = !!bubbles;
-        this[state].cancelable = !!cancelable;
+        that.type = String(type);
+        that.bubbles = !!bubbles;
+        that.cancelable = !!cancelable;
     }
 
-    preventDefault = () => {
-        if (this[state][_passive]) {
+    preventDefault() {
+        const that = this[state];
+
+        if (that[_passive]) {
             console.warn(`Ignoring 'preventDefault()' call on event of type '${this.type}' from a listener registered as 'passive'.`);
             return;
         }
 
         if (this.cancelable) {
-            this[state][_preventDefaultCalled] = true;
-            this[state].defaultPrevented = true;
-            this[state].returnValue = false;
+            that[_preventDefaultCalled] = true;
+            that.defaultPrevented = true;
+            that.returnValue = false;
         }
     }
 
-    stopImmediatePropagation = () => {
+    stopImmediatePropagation() {
         this[state][_stopImmediatePropagationCalled] = true;
         this.cancelBubble = true;
     }
@@ -88,6 +93,8 @@ export class EventP implements Event {
 defineStringTag(EventP, "Event");
 
 const _TimeStamp = Symbol();
+
+export const _isTrusted = Symbol();
 
 export const _passive = Symbol();
 export const _dispatched = Symbol();
@@ -106,16 +113,26 @@ class EventState {
     currentTarget = null as EventTarget | null;
     eventPhase = EventP.NONE;
 
+    cancelBubble = false;
+
     defaultPrevented = false;
     returnValue = true;
 
-    isTrusted = false;
     timeStamp = (new Date()).getTime() - EventState[_TimeStamp];
+
+    [_isTrusted] = false;
 
     [_passive] = false;
     [_dispatched] = false;
     [_preventDefaultCalled] = false;
     [_stopImmediatePropagationCalled] = false;
+}
+
+export function createInnerEvent(target: EventTarget, type: string, eventInitDict?: EventInit, isTrusted = true) {
+    const event = new EventP(type, eventInitDict);
+    event[state].target = target;
+    event[state][_isTrusted] = isTrusted;
+    return event;
 }
 
 const EventE = g["EventTarget"] ? g["Event"] : EventP;

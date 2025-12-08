@@ -1,12 +1,12 @@
 import { TextEncoderP } from "./TextEncoderP";
 import { TextDecoderP } from "./TextDecoderP";
-import { EventP, eventState } from "./EventP";
-import { ProgressEventP } from "./ProgressEventP";
+import { createInnerEvent } from "./EventP";
+import { emitProcessEvent } from "./ProgressEventP";
 import { eventTargetState, _executors, fire, attachFn, executeFn } from "./EventTargetP";
 import { XMLHttpRequestEventTargetP } from "./XMLHttpRequestEventTargetP";
 import { XMLHttpRequestUploadP, createXMLHttpRequestUploadP } from "./XMLHttpRequestUploadP";
-import { BlobP, blobState, _u8array } from "./BlobP";
 import { type FormDataP, formDataState } from "./FormDataP";
+import { BlobP, blobState, _u8array, u8array2base64 } from "./BlobP";
 import type {
     IRequestOptions,
     IRequestTask,
@@ -80,24 +80,40 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
 
     open(...args: [method: string, url: string | URL, async?: boolean, username?: string | null, password?: string | null]): void {
         const [method, url, async = true, username = null, password = null] = args;
+        const that = this[state];
+
         if (args.length < 2) {
             throw new TypeError(`Failed to execute 'open' on 'XMLHttpRequest': 2 arguments required, but only ${args.length} present.`);
         }
 
         if (!async) {
-            console.warn("Synchronous XMLHttpRequest is deprecated because of its detrimental effects to the end user's experience.");
+            console.warn("Synchronous XMLHttpRequest is not supported because of its detrimental effects to the end user's experience.");
         }
 
-        clearRequest.call(this[state], false);
+        clearRequest.call(that, false);
 
-        this[state][_method] = normalizeMethod(method);
-        this[state][_requestURL] = String(url);
+        that[_method] = normalizeMethod(method);
+        that[_requestURL] = String(url);
 
-        this[state][_inAfterOpenBeforeSend] = true;
-        setReadyStateAndNotify.call(this[state], XMLHttpRequestP.OPENED);
+        if (username !== null || password !== null) {
+            const _username = String(username ?? "");
+            const _password = String(password ?? "");
+
+            if (_username.length > 0 || _password.length > 0) {
+                const auth = `Basic ${u8array2base64((new TextEncoderP()).encode(_username + ":" + _password))}`;
+                this.setRequestHeader("Authorization", auth);
+            }
+        }
+
+        that[_inAfterOpenBeforeSend] = true;
+        setReadyStateAndNotify.call(that, XMLHttpRequestP.OPENED);
     }
 
-    overrideMimeType(mime: string): void { }
+    overrideMimeType(mime: string): void {
+        if (this[state][_inAfterOpenBeforeSend]) {
+            console.warn(`XMLHttpRequest.overrideMimeType(${mime}) is not implemented: The method will have no effect on response parsing.`);
+        }
+    }
 
     send(body?: Document | XMLHttpRequestBodyInit | null): void {
         const that = this[state];
@@ -109,16 +125,15 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
         that[_inAfterOpenBeforeSend] = false;
 
         const allowsRequestBody = !["GET", "HEAD"].includes(that[_method]);
-        const contentTypeExists = Object.keys(that[_requestHeaders]).map(x => x.toLowerCase()).includes("Content-Type".toLowerCase());
-        const processHeaders = allowsRequestBody && !contentTypeExists;
+        const processHeaders = allowsRequestBody && !Object.keys(that[_requestHeaders]).map(x => x.toLowerCase()).includes("Content-Type".toLowerCase());
         const processContentLength = that.upload[eventTargetState][_executors].length > 0;
 
         let headers = { ...that[_requestHeaders] };
-        let contentLength = 0;
+        let contentLength: number | (() => number) = 0;
 
-        let data: IRequestOptions["data"] = convert(
+        let data = convert(
             body,
-            processHeaders ? v => { headers["Content-Type"] = v } : void 0,
+            processHeaders ? v => { assignRequestHeader(headers, "Content-Type", v); } : void 0,
             processContentLength ? v => { contentLength = v; } : void 0,
         );
 
@@ -127,20 +142,20 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
             method: that[_method] as NonNullable<IRequestOptions["method"]>,
             header: headers,
             data,
-            dataType: that.responseType === "json" ? "json" : "text",
-            responseType: that.responseType === "arraybuffer" ? "arraybuffer" : "text",
+            dataType: that.responseType === "json" ? "json" : normalizeDataType(that.responseType),
+            responseType: normalizeDataType(that.responseType),
             success: requestSuccess.bind(that),
             fail: requestFail.bind(that),
             complete: requestComplete.bind(that),
         });
 
-        emitProcessEvent.call(that, "loadstart");
+        emitProcessEvent(this, "loadstart");
 
         if (processContentLength) {
-            const hasRequestBody = allowsRequestBody && contentLength > 0;
+            const hasRequestBody = allowsRequestBody && (typeof data === "string" ? data.length > 0 : data.byteLength > 0);
 
             if (hasRequestBody) {
-                emitProcessEvent.call(that, "loadstart", 0, contentLength, that.upload);
+                emitProcessEvent(that.upload, "loadstart", 0, contentLength);
             }
 
             setTimeout(() => {
@@ -148,15 +163,15 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
                 const _contentLength = _aborted ? 0 : contentLength;
 
                 if (_aborted) {
-                    emitProcessEvent.call(that, "abort", 0, 0, that.upload);
+                    emitProcessEvent(that.upload, "abort");
                 } else {
                     if (hasRequestBody) {
-                        emitProcessEvent.call(that, "load", _contentLength, _contentLength, that.upload);
+                        emitProcessEvent(that.upload, "load", _contentLength, _contentLength);
                     }
                 }
 
                 if (_aborted || hasRequestBody) {
-                    emitProcessEvent.call(that, "loadend", _contentLength, _contentLength, that.upload);
+                    emitProcessEvent(that.upload, "loadend", _contentLength, _contentLength);
                 }
             });
         }
@@ -189,12 +204,10 @@ const _timeoutId = Symbol();
 const _requestURL = Symbol();
 const _method = Symbol();
 const _requestHeaders = Symbol();
-const _responseHeaders = Symbol();
+export const _responseHeaders = Symbol();
 const _responseContentLength = Symbol();
 
 const _requestTask = Symbol();
-
-export { _responseHeaders };
 
 class XMLHttpRequestState {
     constructor(target: XMLHttpRequestP) {
@@ -214,9 +227,8 @@ class XMLHttpRequestState {
     upload: XMLHttpRequestUploadP;
     withCredentials = false;
 
-    onreadystatechange: ((this: XMLHttpRequest, ev: Event) => any) | null = null;
-
     [_handlers] = getHandlers.call(this);
+    onreadystatechange: ((this: XMLHttpRequest, ev: Event) => any) | null = null;
 
     [_inAfterOpenBeforeSend] = false;
     [_resetPending] = false;
@@ -226,7 +238,7 @@ class XMLHttpRequestState {
     [_method] = "GET";
     [_requestHeaders]: Record<string, string> = { Accept: "*/*" };
     [_responseHeaders]: Record<string, string> | null = null;
-    [_responseContentLength] = 0;
+    [_responseContentLength]: number | (() => number) = 0;
 
     [_requestTask]: IRequestTask | null = null;
 }
@@ -235,7 +247,7 @@ function requestSuccess(this: XMLHttpRequestState, { statusCode, header, data }:
     this.responseURL = this[_requestURL];
     this.status = statusCode;
     this[_responseHeaders] = header as Record<string, string>;
-    this[_responseContentLength] = parseInt(this.target.getResponseHeader("Content-Length") || "0");
+    this[_responseContentLength] = () => { return parseInt(this.target.getResponseHeader("Content-Length") || "0"); }
 
     if (this.readyState === XMLHttpRequestP.OPENED) {
         setReadyStateAndNotify.call(this, XMLHttpRequestP.HEADERS_RECEIVED);
@@ -247,10 +259,10 @@ function requestSuccess(this: XMLHttpRequestState, { statusCode, header, data }:
 
                 try {
                     this.response = convertBack(this.responseType, data);
-                    emitProcessEvent.call(this, "load", l, l);
+                    emitProcessEvent(this.target, "load", l, l);
                 } catch (e) {
                     console.error(e);
-                    emitProcessEvent.call(this, "error");
+                    emitProcessEvent(this.target, "error");
                 }
             }
         });
@@ -275,7 +287,7 @@ function requestFail(this: XMLHttpRequestState, err: IRequestFailCallbackResult 
     this.statusText = "errMsg" in err ? err.errMsg : "errorMessage" in err ? err.errorMessage : "";
 
     if (!this[_inAfterOpenBeforeSend] && this.readyState !== XMLHttpRequestP.UNSENT && this.readyState !== XMLHttpRequestP.DONE) {
-        emitProcessEvent.call(this, "error");
+        emitProcessEvent(this.target, "error");
         resetRequestTimeout.call(this);
     }
 }
@@ -290,7 +302,7 @@ function requestComplete(this: XMLHttpRequestState) {
     setTimeout(() => {
         if (!this[_inAfterOpenBeforeSend]) {
             let l = this[_responseContentLength];
-            emitProcessEvent.call(this, "loadend", l, l);
+            emitProcessEvent(this.target, "loadend", l, l);
         }
     });
 }
@@ -306,8 +318,8 @@ function clearRequest(this: XMLHttpRequestState, delay = true) {
             const requestTask = this[_requestTask];
 
             if (requestTask) { requestTask.abort(); }
-            if (delay) { emitProcessEvent.call(this, "abort"); }
-            if (delay && !requestTask) { emitProcessEvent.call(this, "loadend"); }
+            if (delay) { emitProcessEvent(this.target, "abort"); }
+            if (delay && !requestTask) { emitProcessEvent(this.target, "loadend"); }
         });
     }
 
@@ -325,7 +337,7 @@ function checkRequestTimeout(this: XMLHttpRequestState) {
             if (!this.status && this.readyState !== XMLHttpRequestP.DONE) {
                 if (this[_requestTask]) this[_requestTask]!.abort();
                 setReadyStateAndNotify.call(this, XMLHttpRequestP.DONE);
-                emitProcessEvent.call(this, "timeout");
+                emitProcessEvent(this.target, "timeout");
             }
         }, this.timeout);
     }
@@ -352,28 +364,12 @@ function resetRequestTimeout(this: XMLHttpRequestState) {
     }
 }
 
-function emitProcessEvent(this: XMLHttpRequestState, type: string, loaded = 0, total = 0, target?: XMLHttpRequestEventTargetP) {
-    const _target = target ?? this.target;
-    const _event = new ProgressEventP(type, {
-        lengthComputable: total > 0,
-        loaded,
-        total,
-    });
-
-    _event[eventState].target = _target;
-    _event[eventState].isTrusted = true;
-    fire.call(_target[eventTargetState], _event);
-}
-
 function setReadyStateAndNotify(this: XMLHttpRequestState, value: number) {
     const hasChanged = value !== this.readyState;
     this.readyState = value;
 
     if (hasChanged) {
-        const evt = new EventP("readystatechange");
-        evt[eventState].target = this.target;
-        evt[eventState].isTrusted = true;
-
+        const evt = createInnerEvent(this.target, "readystatechange");
         fire.call(this.target[eventTargetState], evt);
     }
 }
@@ -390,6 +386,10 @@ const methods = ["CONNECT", "DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST",
 export function normalizeMethod(method: string) {
     let upcased = method.toUpperCase();
     return methods.indexOf(upcased) > -1 ? upcased : method;
+}
+
+function normalizeDataType(responseType: XMLHttpRequestResponseType) {
+    return (responseType === "blob" || responseType === "arraybuffer") ? "arraybuffer" : "text";
 }
 
 function assignRequestHeader(headers: Record<string, string>, name: string, value: string) {
@@ -417,7 +417,7 @@ const decode = (buf: ArrayBuffer) => {
 export function convert(
     body?: Parameters<XMLHttpRequest["send"]>[0],
     setContentType?: (str: string) => void,
-    setContentLength?: (num: number) => void,
+    setContentLength?: (num: number | (() => number)) => void,
 ): string | ArrayBuffer {
     let result: string | ArrayBuffer;
 
@@ -471,7 +471,8 @@ export function convert(
     }
 
     if (setContentLength) {
-        setContentLength((typeof result === "string" ? encode(result) : result).byteLength);
+        if (typeof result === "string") { setContentLength(() => { return encode(result as string).byteLength; }); }
+        else { setContentLength(result.byteLength); }
     }
 
     return result;

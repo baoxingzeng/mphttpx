@@ -9,6 +9,7 @@ export class TextDecoderP implements TextDecoder {
         }
 
         this[state] = new TextDecoderState();
+
         this[state].fatal = fatal;
         this[state].ignoreBOM = ignoreBOM;
     }
@@ -20,7 +21,9 @@ export class TextDecoderP implements TextDecoder {
     get ignoreBOM() { return this[state].ignoreBOM; }
 
     decode(buffer?: TAllowSharedBufferSource, { stream = false } = {}) {
+        const that = this[state];
         let buf: Uint8Array;
+
         if (typeof buffer !== "undefined") {
             if (buffer instanceof Uint8Array) {
                 buf = buffer;
@@ -30,29 +33,29 @@ export class TextDecoderP implements TextDecoder {
                 buf = new Uint8Array(buffer);
             }
         } else {
-            if (this[state][_partial].length > 0) {
+            if (that[_partial].length > 0) {
                 if (this.fatal) {
                     throw new TypeError("TextDecoder: Incomplete UTF-8 sequence.");
                 } else {
-                    this[state][_partial] = [];
+                    that[_partial] = [];
                 }
             }
             return "";
         }
 
-        if (!this[state][_bomSeen] && this.ignoreBOM && buf.length >= 3) {
+        if (!that[_bomSeen] && this.ignoreBOM && buf.length >= 3) {
             if (buf[0] === 0xef && buf[1] === 0xbb && buf[2] === 0xbf) {
                 buf = buf.subarray(3);
-                this[state][_bomSeen] = true;
+                that[_bomSeen] = true;
             }
         }
 
-        if (this[state][_partial].length > 0) {
-            let merged = new Uint8Array(this[state][_partial].length + buf.length);
-            merged.set(this[state][_partial], 0);
-            merged.set(buf, this[state][_partial].length);
+        if (that[_partial].length > 0) {
+            let merged = new Uint8Array(that[_partial].length + buf.length);
+            merged.set(that[_partial], 0);
+            merged.set(buf, that[_partial].length);
             buf = merged;
-            this[state][_partial] = [];
+            that[_partial] = [];
         }
 
         let end = buf.length;
@@ -70,7 +73,7 @@ export class TextDecoderP implements TextDecoder {
                 i--;
             }
 
-            this[state][_partial] = Array.from(buf.slice(end)); // save tail
+            that[_partial] = Array.from(buf.slice(end)); // save tail
             buf = buf.slice(0, end);
         }
 

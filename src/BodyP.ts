@@ -1,4 +1,4 @@
-import { createFormData } from "./FormDataP";
+import { createFormDataFromBody } from "./FormDataP";
 import type { TUint8ArrayOfArrayBuffer } from "./BlobP";
 import { convert, convertBack } from "./XMLHttpRequestP";
 import { polyfill, isObjectType, defineStringTag } from "./isPolyfill";
@@ -100,7 +100,7 @@ function read(this: BodyState, kind: "arrayBuffer" | "blob" | "bytes" | "formDat
 
             else if (kind === "formData") {
                 let text = convertBack("text", this[_body]) as string;
-                resolve(createFormData(text));
+                resolve(createFormDataFromBody(text));
             }
 
             else if (kind === "json") {

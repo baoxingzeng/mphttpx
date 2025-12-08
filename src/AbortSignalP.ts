@@ -1,4 +1,4 @@
-import { EventP, eventState } from "./EventP";
+import { createInnerEvent } from "./EventP";
 import { g, polyfill, defineStringTag, MPException } from "./isPolyfill";
 import { EventTargetP, EventTargetState, eventTargetState, fire, attachFn, executeFn } from "./EventTargetP";
 
@@ -88,9 +88,8 @@ export class AbortSignalState {
     aborted = false;
     reason: any = undefined;
 
-    onabort: ((this: AbortSignal, ev: Event) => any) | null = null;
-
     [_handlers] = getHandlers.call(this);
+    onabort: ((this: AbortSignal, ev: Event) => any) | null = null;
 }
 
 export function abort(this: AbortSignalState, reason: any, notify = true, isTrusted = true) {
@@ -99,10 +98,7 @@ export function abort(this: AbortSignalState, reason: any, notify = true, isTrus
         this.reason = reason ?? (new MPException("signal is aborted without reason", "AbortError"));
 
         if (notify) {
-            const evt = new EventP("abort");
-            evt[eventState].target = this.target;
-            evt[eventState].isTrusted = isTrusted;
-
+            const evt = createInnerEvent(this.target, "abort", undefined, isTrusted);
             fire.call(this.target[eventTargetState], evt);
         }
     }

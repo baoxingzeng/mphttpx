@@ -58,8 +58,9 @@ export interface IRequestOptions {
      * 合法值：
      * - json(默认值): 返回的数据为 JSON，返回后会对返回的数据进行一次 JSON.parse
      * - 其他: 不对返回的内容进行 JSON.parse
+     * - 支付宝（额外类型）："json_or_text" | "base64" | "arraybuffer"
      */
-    dataType?: "json" | "text";
+    dataType?: "json" | "text" | "json_or_text" | "base64" | "arraybuffer";
 
     /**
      * 响应的数据类型

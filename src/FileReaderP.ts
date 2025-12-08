@@ -1,9 +1,8 @@
 import { TextDecoderP } from "./TextDecoderP";
+import { emitProcessEvent } from "./ProgressEventP";
+import { EventTargetP, attachFn, executeFn } from "./EventTargetP";
 import { BlobP, blobState, _u8array, u8array2base64 } from "./BlobP";
-import { eventState } from "./EventP";
-import { ProgressEventP } from "./ProgressEventP";
 import { g, polyfill, isPolyfillType, defineStringTag } from "./isPolyfill";
-import { EventTargetP, eventTargetState, fire, attachFn, executeFn } from "./EventTargetP";
 
 const state = Symbol(/* "FileReaderState" */);
 
@@ -33,7 +32,7 @@ export class FileReaderP extends EventTargetP implements FileReader {
             this[state].readyState = FileReaderP.DONE;
             this[state].result = null;
 
-            emitProcessEvent.call(this[state], "abort");
+            emitProcessEvent(this, "abort");
         }
     }
 
@@ -102,14 +101,13 @@ class FileReaderState {
 
     error: DOMException | null = null;
 
+    [_handlers] = getHandlers.call(this);
     onabort: ((this: FileReader, ev: ProgressEvent<FileReader>) => any) | null = null;
     onerror: ((this: FileReader, ev: ProgressEvent<FileReader>) => any) | null = null;
     onload: ((this: FileReader, ev: ProgressEvent<FileReader>) => any) | null = null;
     onloadend: ((this: FileReader, ev: ProgressEvent<FileReader>) => any) | null = null;
     onloadstart: ((this: FileReader, ev: ProgressEvent<FileReader>) => any) | null = null;
     onprogress: ((this: FileReader, ev: ProgressEvent<FileReader>) => any) | null = null;
-
-    [_handlers] = getHandlers.call(this);
 }
 
 function read(this: FileReaderState, kind: string, blob: Blob, setResult: () => void) {
@@ -119,7 +117,7 @@ function read(this: FileReaderState, kind: string, blob: Blob, setResult: () => 
 
     this.error = null;
     this.readyState = FileReaderP.LOADING;
-    emitProcessEvent.call(this, "loadstart", 0, blob.size);
+    emitProcessEvent(this.target, "loadstart", 0, blob.size);
 
     setTimeout(() => {
         if (this.readyState === FileReaderP.LOADING) {
@@ -127,15 +125,15 @@ function read(this: FileReaderState, kind: string, blob: Blob, setResult: () => 
 
             try {
                 setResult();
-                emitProcessEvent.call(this, "load", blob.size, blob.size);
+                emitProcessEvent(this.target, "load", blob.size, blob.size);
             } catch (e: unknown) {
                 this.result = null;
                 this.error = e as DOMException;
-                emitProcessEvent.call(this, "error", 0, blob.size);
+                emitProcessEvent(this.target, "error", 0, blob.size);
             }
         }
 
-        emitProcessEvent.call(this, "loadend", !!this.result ? blob.size : 0, blob.size);
+        emitProcessEvent(this.target, "loadend", !!this.result ? blob.size : 0, blob.size);
     });
 }
 
@@ -144,18 +142,6 @@ function attach(this: FileReaderState, type: keyof FileReaderEventMap) {
     const cb = this[fnName];
     const listener = this[_handlers][fnName];
     attachFn.call(this.target, type, cb, listener as EventListener);
-}
-
-function emitProcessEvent(this: FileReaderState, type: string, loaded = 0, total = 0) {
-    const event = new ProgressEventP(type, {
-        lengthComputable: total > 0,
-        loaded,
-        total,
-    });
-
-    event[eventState].target = this.target;
-    event[eventState].isTrusted = true;
-    fire.call(this.target[eventTargetState], event);
 }
 
 function getHandlers(this: FileReaderState) {

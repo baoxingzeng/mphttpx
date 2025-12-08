@@ -55,6 +55,7 @@ export class XMLHttpRequestEventTargetState {
 
     target: XMLHttpRequest;
 
+    [_handlers] = getHandlers.call(this);
     onabort: ((this: XMLHttpRequest, ev: ProgressEvent) => any) | null = null;
     onerror: ((this: XMLHttpRequest, ev: ProgressEvent) => any) | null = null;
     onload: ((this: XMLHttpRequest, ev: ProgressEvent) => any) | null = null;
@@ -62,12 +63,10 @@ export class XMLHttpRequestEventTargetState {
     onloadstart: ((this: XMLHttpRequest, ev: ProgressEvent) => any) | null = null;
     onprogress: ((this: XMLHttpRequest, ev: ProgressEvent) => any) | null = null;
     ontimeout: ((this: XMLHttpRequest, ev: ProgressEvent) => any) | null = null;
-
-    [_handlers] = getHandlers.call(this);
 }
 
 function attach(this: XMLHttpRequestEventTargetState, type: keyof XMLHttpRequestEventTargetEventMap) {
-    const fnName = ("on" + type) as `on${keyof XMLHttpRequestEventTargetEventMap}`;
+    const fnName = ("on" + type) as `on${typeof type}`;
     const cb = this[fnName];
     const listener = this[_handlers][fnName];
     attachFn.call(this.target, type, cb, listener as EventListener);

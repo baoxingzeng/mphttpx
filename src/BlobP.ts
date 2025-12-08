@@ -26,10 +26,12 @@ export class BlobP implements Blob {
         }, []);
 
         this[state] = new BlobState(concat(chunks));
-        this[state].size = this[state][_u8array].length;
+        const that = this[state];
+
+        that.size = that[_u8array].length;
 
         const rawType = options?.type || "";
-        this[state].type = /[^\u0020-\u007E]/.test(rawType) ? "" : rawType.toLowerCase();
+        that.type = /[^\u0020-\u007E]/.test(rawType) ? "" : rawType.toLowerCase();
     }
 
     [state]: BlobState;

@@ -1,5 +1,5 @@
 import { g, polyfill, defineStringTag } from "./isPolyfill";
-import { EventP, eventState, _passive, _dispatched, _preventDefaultCalled, _stopImmediatePropagationCalled } from "./EventP";
+import { EventP, eventState, _isTrusted, _passive, _dispatched, _preventDefaultCalled, _stopImmediatePropagationCalled } from "./EventP";
 
 const state = Symbol(/* "EventTargetState" */);
 export { state as eventTargetState };
@@ -12,10 +12,11 @@ export class EventTargetP implements EventTarget {
     [state]: EventTargetState;
 
     addEventListener(type: string, callback: EventListenerOrEventListenerObject | null, options?: AddEventListenerOptions | boolean) {
+        const that = this[state];
         const executor = new Executor(type, callback);
         executor.options.capture = typeof options === "boolean" ? options : !!options?.capture;
 
-        if (!this[state][_executors].some(x => x.equals(executor))) {
+        if (!that[_executors].some(x => x.equals(executor))) {
             if (typeof options === "object") {
                 const { once, passive, signal } = options;
 
@@ -24,14 +25,14 @@ export class EventTargetP implements EventTarget {
 
                 if (signal) {
                     executor.options.signal = signal;
-                    reply.call(this[state], signal, executor);
+                    reply.call(that, signal, executor);
                 }
             }
 
-            this[state][_executors].push(executor);
+            that[_executors].push(executor);
 
             const f = (v: Executor) => !!v.options.capture ? 0 : 1;
-            this[state][_executors] = this[state][_executors].sort((a, b) => f(a) - f(b));
+            that[_executors] = that[_executors].sort((a, b) => f(a) - f(b));
         }
     }
 
@@ -46,17 +47,18 @@ export class EventTargetP implements EventTarget {
 
         const s = event[eventState];
         s.target = this;
-        s.isTrusted = false;
+        s[_isTrusted] = false;
 
         return fire.call(this[state], event);
     }
 
     removeEventListener(type: string, callback: EventListenerOrEventListenerObject | null, options?: EventListenerOptions | boolean) {
+        const that = this[state];
         const executor = new Executor(type, callback);
         executor.options.capture = typeof options === "boolean" ? options : !!options?.capture;
 
-        if (this[state][_executors].some(x => x.equals(executor))) {
-            this[state][_executors] = this[state][_executors].filter(x => !x.equals(executor));
+        if (that[_executors].some(x => x.equals(executor))) {
+            that[_executors] = that[_executors].filter(x => !x.equals(executor));
         }
     }
 

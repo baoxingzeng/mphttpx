@@ -10,6 +10,8 @@ export class RequestP extends BodyP implements Request {
     constructor(input: RequestInfo | URL, init?: RequestInit) {
         super();
         this[state] = new RequestState();
+        const that = this[state];
+
         this[bodyState][_name] = "Request";
 
         let options = init ?? {};
@@ -19,12 +21,12 @@ export class RequestP extends BodyP implements Request {
             if (input.bodyUsed) {
                 throw new TypeError("Failed to construct 'Request': Cannot construct a Request with a Request object that has already been used.");
             }
-            this[state].credentials = input.credentials;
-            if (!options.headers) { this[state].headers = new HeadersP(input.headers); }
-            this[state].method = input.method;
-            this[state].mode = input.mode;
-            this[state].signal = input.signal;
-            this[state].url = input.url;
+            that.credentials = input.credentials;
+            if (!options.headers) { that.headers = new HeadersP(input.headers); }
+            that.method = input.method;
+            that.mode = input.mode;
+            that.signal = input.signal;
+            that.url = input.url;
 
             let _input = input as RequestP;
             if (!body && _input[bodyState][_body] !== null) {
@@ -32,14 +34,14 @@ export class RequestP extends BodyP implements Request {
                 _input[bodyState].bodyUsed = true;
             }
         } else {
-            this[state].url = String(input);
+            that.url = String(input);
         }
 
-        if (options.credentials) { this[state].credentials = options.credentials; }
-        if (options.headers) { this[state].headers = new HeadersP(options.headers); }
-        if (options.method) { this[state].method = normalizeMethod(options.method); }
-        if (options.mode) { this[state].mode = options.mode; }
-        if (options.signal) { this[state].signal = options.signal; }
+        if (options.credentials) { that.credentials = options.credentials; }
+        if (options.headers) { that.headers = new HeadersP(options.headers); }
+        if (options.method) { that.method = normalizeMethod(options.method); }
+        if (options.mode) { that.mode = options.mode; }
+        if (options.signal) { that.signal = options.signal; }
 
         if ((this.method === "GET" || this.method === "HEAD") && body) {
             throw new TypeError("Failed to construct 'Request': Request with GET/HEAD method cannot have body.");
@@ -53,11 +55,11 @@ export class RequestP extends BodyP implements Request {
                 let reParamSearch = /([?&])_=[^&]*/;
                 if (reParamSearch.test(this.url)) {
                     // If it already exists then set the value with the current time
-                    this[state].url = this.url.replace(reParamSearch, "$1_=" + (new Date()).getTime());
+                    that.url = this.url.replace(reParamSearch, "$1_=" + (new Date()).getTime());
                 } else {
                     // Otherwise add a new '_' parameter to the end with the current time
                     let reQueryString = /\?/;
-                    this[state].url += (reQueryString.test(this.url) ? "&" : "?") + "_=" + (new Date()).getTime();
+                    that.url += (reQueryString.test(this.url) ? "&" : "?") + "_=" + (new Date()).getTime();
                 }
             }
         }
@@ -68,7 +70,13 @@ export class RequestP extends BodyP implements Request {
     get cache() { return this[state].cache; }
     get credentials() { return this[state].credentials; }
     get destination() { return this[state].destination; }
-    get headers() { return this[state].headers; }
+
+    get headers() {
+        const that = this[state];
+        if (!that.headers) { that.headers = new HeadersP(); }
+        return that.headers!;
+    }
+
     get integrity() { return this[state].integrity; }
     get keepalive() { return this[state].keepalive; }
     get method() { return this[state].method; }
@@ -76,7 +84,13 @@ export class RequestP extends BodyP implements Request {
     get redirect() { return this[state].redirect; }
     get referrer() { return this[state].referrer; }
     get referrerPolicy() { return this[state].referrerPolicy; }
-    get signal() { return this[state].signal; }
+
+    get signal() {
+        const that = this[state];
+        if (!that.signal) { that.signal = (new AbortControllerP()).signal; }
+        return that.signal!;
+    }
+
     get url() { return this[state].url; }
 
     clone(): Request {
@@ -93,7 +107,7 @@ class RequestState {
     cache: RequestCache = "default";
     credentials: RequestCredentials = "same-origin";
     destination: RequestDestination = "";
-    headers: Headers = new HeadersP();
+    headers?: Headers;
     integrity: string = "";
     keepalive: boolean = false;
     method: string = "GET";
@@ -101,7 +115,7 @@ class RequestState {
     redirect: RequestRedirect = "follow";
     referrer: string = "about:client";
     referrerPolicy: ReferrerPolicy = "";
-    signal: AbortSignal = (new AbortControllerP()).signal;
+    signal?: AbortSignal;
     url: string = "";
 }
 

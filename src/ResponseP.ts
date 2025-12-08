@@ -9,6 +9,8 @@ export class ResponseP extends BodyP implements Response {
     constructor(body?: BodyInit | null, init?: ResponseInit) {
         super();
         this[state] = new ResponseState();
+        const that = this[state];
+
         this[bodyState][_name] = "Response";
 
         let options = init ?? {};
@@ -18,17 +20,22 @@ export class ResponseP extends BodyP implements Response {
             throw new RangeError(`Failed to construct 'Response': The status provided (${+status}) is outside the range [200, 599].`);
         }
 
-        if (options.headers) { this[state].headers = new HeadersP(options.headers); }
-        this[state].ok = this.status >= 200 && this.status < 300;
-        this[state].status = status;
-        this[state].statusText = options.statusText === undefined ? "" : "" + options.statusText;
+        if (options.headers) { that.headers = new HeadersP(options.headers); }
+        that.ok = this.status >= 200 && this.status < 300;
+        that.status = status;
+        that.statusText = options.statusText === undefined ? "" : "" + options.statusText;
         
         initFn.call(this[bodyState], body, this.headers);
     }
 
     [state]: ResponseState;
 
-    get headers() { return this[state].headers; }
+    get headers() {
+        const that = this[state];
+        if (!that.headers) { that.headers = new HeadersP(); }
+        return that.headers!;
+    }
+    
     get ok() { return this[state].ok; }
     get redirected() { return this[state].redirected; }
     get status() { return this[state].status; }
@@ -74,7 +81,7 @@ export class ResponseP extends BodyP implements Response {
 defineStringTag(ResponseP, "Response");
 
 class ResponseState {
-    headers: Headers = new HeadersP();
+    headers?: Headers;
     ok: boolean = true;
     redirected: boolean = false;
     status: number = 200;

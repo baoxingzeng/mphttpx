@@ -63,15 +63,16 @@ export class URLSearchParamsP implements URLSearchParams {
     }
 
     sort(): void {
-        let keys = Object.keys(this[state][_urlspDict]);
+        const that = this[state];
+        let keys = Object.keys(that[_urlspDict]);
         keys.sort();
 
         let dict: Record<string, string[]> = {};
         for (let key of keys) {
-            Object.assign(dict, { [key]: this[state][_urlspDict][key] });
+            Object.assign(dict, { [key]: that[_urlspDict][key] });
         }
 
-        this[state][_urlspDict] = dict;
+        that[_urlspDict] = dict;
     }
 
     forEach(callbackfn: (value: string, key: string, parent: URLSearchParams) => void, thisArg?: any): void {
