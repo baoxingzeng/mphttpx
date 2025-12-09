@@ -4,7 +4,7 @@ const state = Symbol(/* "TextDecoderState" */);
 
 export class TextDecoderP implements TextDecoder {
     constructor(utfLabel = "utf-8", { fatal = false, ignoreBOM = false } = {}) {
-        if (!UTF8Labels.includes(utfLabel.toLowerCase())) {
+        if (UTF8Labels.indexOf(utfLabel.toLowerCase()) === -1) {
             throw new RangeError("TextDecoder: The encoding label provided ('" + utfLabel + "') is invalid.");
         }
 

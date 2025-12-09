@@ -2,7 +2,7 @@ import { bodyState, _body } from "./BodyP";
 import { RequestP } from "./RequestP";
 import { ResponseP, responseState } from "./ResponseP";
 import { type AbortSignalP } from "./AbortSignalP";
-import { g, isObjectType, MPException } from "./isPolyfill";
+import { g, isObjectType, MPException, objectEntries } from "./isPolyfill";
 import { HeadersP, normalizeName, normalizeValue, parseHeaders } from "./HeadersP";
 import { XMLHttpRequest, XMLHttpRequestP, xhrState, _responseHeaders } from "./XMLHttpRequestP";
 
@@ -65,7 +65,7 @@ export function fetchP(input: RequestInfo | URL, init?: RequestInit): Promise<Re
             let headers = init.headers;
             let names: string[] = [];
 
-            Object.entries(headers).forEach(([name, value]) => {
+            objectEntries(headers).forEach(([name, value]) => {
                 names.push(normalizeName(name));
                 xhr.setRequestHeader(name, normalizeValue(value));
             });

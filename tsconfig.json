@@ -43,6 +43,6 @@
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
     "skipLibCheck": true,
-    "useDefineForClassFields": true,
-  },
+    "useDefineForClassFields": false
+  }
 }

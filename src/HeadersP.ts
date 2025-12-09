@@ -1,4 +1,4 @@
-import { g, polyfill, isObjectType, defineStringTag } from "./isPolyfill";
+import { g, polyfill, isObjectType, defineStringTag, objectEntries } from "./isPolyfill";
 
 const state = Symbol(/* "HeadersState" */);
 
@@ -21,7 +21,7 @@ export class HeadersP implements Headers {
                 this.append(header[0], header[1]);
             });
         } else if (init) {
-            Object.entries(init).forEach(([name, value]) => {
+            objectEntries(init).forEach(([name, value]) => {
                 this.append(name, value);
             });
         }

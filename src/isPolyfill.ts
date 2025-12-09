@@ -28,7 +28,7 @@ export function isPolyfillType<T>(name: string, value: unknown): value is T {
         && (value as THasSymbol).isPolyfill.symbol === polyfill
         && "hierarchy" in (value as TIsPolyfillObject).isPolyfill
         && Array.isArray((value as THasHierarchy).isPolyfill.hierarchy)
-        && (value as THierarchyIsArray).isPolyfill.hierarchy.includes(name);
+        && (value as THierarchyIsArray).isPolyfill.hierarchy.indexOf(name) > -1;
 }
 
 export class MPException extends Error {
@@ -44,4 +44,12 @@ export function defineStringTag(targetFunc: Function, stringTag: string) {
         configurable: true,
         value: stringTag,
     });
+}
+
+export function objectValues<T extends object>(obj: T): Array<T[keyof T]> {
+    return Object.keys(obj).map(key => obj[key as keyof T]);
+}
+
+export function objectEntries<T extends object>(obj: T): Array<[keyof T & string, T[keyof T]]> {
+    return Object.keys(obj).map(key => [key as keyof T & string, obj[key as keyof T]]);
 }

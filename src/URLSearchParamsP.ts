@@ -1,4 +1,4 @@
-import { g, polyfill, isObjectType, defineStringTag } from "./isPolyfill";
+import { g, polyfill, isObjectType, defineStringTag, objectValues, objectEntries } from "./isPolyfill";
 
 const state = Symbol(/* "URLSearchParamsState" */);
 
@@ -17,7 +17,7 @@ export class URLSearchParamsP implements URLSearchParams {
     [state]: URLSearchParamsState;
 
     get size() {
-        return Object.values(this[state][_urlspDict]).reduce((acc, cur) => acc + cur.length, 0);
+        return objectValues(this[state][_urlspDict]).reduce((acc, cur) => acc + cur.length, 0);
     }
 
     append(name: string, value: string): void {
@@ -26,7 +26,7 @@ export class URLSearchParamsP implements URLSearchParams {
 
     delete(name: string, value?: string): void {
         let dict: Record<string, string[]> = {};
-        for (let [key, values] of Object.entries(this[state][_urlspDict])) {
+        for (let [key, values] of objectEntries(this[state][_urlspDict])) {
             if (key === name) {
                 if (value !== undefined) {
                     let vals = values.filter(x => x !== ("" + value));
@@ -51,7 +51,7 @@ export class URLSearchParamsP implements URLSearchParams {
     has(name: string, value?: string): boolean {
         if (hasOwnProperty(this[state][_urlspDict], name)) {
             if (value !== undefined) {
-                return this[state][_urlspDict][name]!.includes(("" + value));
+                return this[state][_urlspDict][name]!.indexOf(("" + value)) > -1;
             }
             return true;
         }
@@ -76,7 +76,7 @@ export class URLSearchParamsP implements URLSearchParams {
     }
 
     forEach(callbackfn: (value: string, key: string, parent: URLSearchParams) => void, thisArg?: any): void {
-        Object.entries(this[state][_urlspDict]).forEach(([key, values]) => {
+        objectEntries(this[state][_urlspDict]).forEach(([key, values]) => {
             values.forEach(value => {
                 callbackfn.call(thisArg, value, key, this);
             });
@@ -84,13 +84,13 @@ export class URLSearchParamsP implements URLSearchParams {
     }
 
     entries() {
-        return Object.entries(this[state][_urlspDict])
+        return objectEntries(this[state][_urlspDict])
             .map(([key, values]) => {
                 return values.map(value => {
                     return [key, value] as [string, string];
                 });
             })
-            .flat()
+            .reduce(flatCb, [])
             .values();
     }
 
@@ -99,7 +99,7 @@ export class URLSearchParamsP implements URLSearchParams {
     }
 
     values() {
-        return Object.values(this[state][_urlspDict]).flat().values();
+        return objectValues(this[state][_urlspDict]).reduce(flatCb, []).values();
     }
 
     [Symbol.iterator]() {
@@ -108,7 +108,7 @@ export class URLSearchParamsP implements URLSearchParams {
 
     toString(): string {
         let query: string[] = [];
-        for (let [key, values] of Object.entries(this[state][_urlspDict])) {
+        for (let [key, values] of objectEntries(this[state][_urlspDict])) {
             let name = encode(key);
             for (let val of values) {
                 query.push(name + "=" + encode(val));
@@ -208,6 +208,11 @@ function decode(str: string) {
 
 function hasOwnProperty(obj: object, prop: PropertyKey) {
     return Object.prototype.hasOwnProperty.call(obj, prop);
+}
+
+function flatCb<T>(acc: T[], cur: T[]) {
+    for (const item of cur) { acc.push(item); }
+    return acc;
 }
 
 const URLSearchParamsE = g["URLSearchParams"] || URLSearchParamsP;

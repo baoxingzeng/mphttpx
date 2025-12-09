@@ -15,6 +15,7 @@ export const mp = (() => {
         (typeof tt !== u && typeof tt?.[r] === f && tt) ||        // 抖音 | 飞书
         (typeof ks !== u && typeof ks?.[r] === f && ks) ||        // 快手
         (typeof qh !== u && typeof qh?.[r] === f && qh) ||        // 360
+        (typeof xhs !== u && typeof xhs?.[r] === f && xhs) ||     // 小红书
         undefined;
 
     if (typeof g["XMLHttpRequest"] === f) {

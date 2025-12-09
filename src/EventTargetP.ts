@@ -110,7 +110,7 @@ export function fire(this: EventTargetState, event: EventP) {
 
     if (onceIndexes.length > 0) {
         this[_executors] = this[_executors].reduce((acc: Executor[], cur, index) => {
-            if (!onceIndexes.includes(index)) acc.push(cur);
+            if (onceIndexes.indexOf(index) === -1) acc.push(cur);
             return acc;
         }, []);
     }

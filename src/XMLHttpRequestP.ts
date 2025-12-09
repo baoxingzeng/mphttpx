@@ -15,7 +15,7 @@ import type {
     IAliRequestFailCallbackResult
 } from "./request";
 import { request } from "./request";
-import { polyfill, isObjectType, isPolyfillType, defineStringTag, MPException } from "./isPolyfill";
+import { polyfill, isObjectType, isPolyfillType, defineStringTag, MPException, objectEntries } from "./isPolyfill";
 
 const state = Symbol(/* "XMLHttpRequestState" */);
 export { state as xhrState };
@@ -70,12 +70,14 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
 
     getAllResponseHeaders(): string {
         if (!this[state][_responseHeaders]) return "";
-        return Object.entries(this[state][_responseHeaders] || {}).map(([k, v]) => `${k}: ${v}\r\n`).join("");
+        return objectEntries(this[state][_responseHeaders] || {}).map(([k, v]) => `${k}: ${v}\r\n`).join("");
     }
 
     getResponseHeader(name: string): string | null {
         if (!this[state][_responseHeaders]) return null;
-        return Object.entries(this[state][_responseHeaders] || {}).find(x => x[0].toLowerCase() === name.toLowerCase())?.[1] ?? null;
+
+        const nameKey = name.toLowerCase();
+        return objectEntries(this[state][_responseHeaders] || {}).find(x => x[0].toLowerCase() === nameKey)?.[1] ?? null;
     }
 
     open(...args: [method: string, url: string | URL, async?: boolean, username?: string | null, password?: string | null]): void {
@@ -124,8 +126,8 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
 
         that[_inAfterOpenBeforeSend] = false;
 
-        const allowsRequestBody = !["GET", "HEAD"].includes(that[_method]);
-        const processHeaders = allowsRequestBody && !Object.keys(that[_requestHeaders]).map(x => x.toLowerCase()).includes("Content-Type".toLowerCase());
+        const allowsRequestBody = ["GET", "HEAD"].indexOf(that[_method]) === -1;
+        const processHeaders = allowsRequestBody && Object.keys(that[_requestHeaders]).map(x => x.toLowerCase()).indexOf("content-type") === -1;
         const processContentLength = that.upload[eventTargetState][_executors].length > 0;
 
         let headers = { ...that[_requestHeaders] };
@@ -395,8 +397,10 @@ function normalizeDataType(responseType: XMLHttpRequestResponseType) {
 }
 
 function assignRequestHeader(headers: Record<string, string>, name: string, value: string) {
+    const nameKey = name.toLowerCase();
+
     for (const key of Object.keys(headers)) {
-        if (key.toLowerCase() === name.toLowerCase()) {
+        if (key.toLowerCase() === nameKey) {
             headers[key] = value;
             return;
         }

@@ -36,13 +36,13 @@ export class FileReaderP extends EventTargetP implements FileReader {
         }
     }
 
-    readAsArrayBuffer = (blob: Blob) => {
+    readAsArrayBuffer(blob: Blob) {
         read.call(this[state], "readAsArrayBuffer", blob, () => {
             this[state].result = (blob as BlobP)[blobState][_u8array].buffer.slice(0);
         });
     }
 
-    readAsBinaryString = (blob: Blob) => {
+    readAsBinaryString(blob: Blob) {
         read.call(this[state], "readAsBinaryString", blob, () => {
             this[state].result = (blob as BlobP)[blobState][_u8array].reduce((acc, cur) => {
                 acc += String.fromCharCode(cur);
@@ -51,13 +51,13 @@ export class FileReaderP extends EventTargetP implements FileReader {
         });
     }
 
-    readAsDataURL = (blob: Blob) => {
+    readAsDataURL(blob: Blob) {
         read.call(this[state], "readAsDataURL", blob, () => {
             this[state].result = "data:" + blob.type + ";base64," + u8array2base64((blob as BlobP)[blobState][_u8array]);
         });
     }
 
-    readAsText = (blob: Blob, encoding?: string) => {
+    readAsText(blob: Blob, encoding?: string) {
         read.call(this[state], "readAsText", blob, () => {
             this[state].result = (new TextDecoderP(encoding)).decode((blob as BlobP)[blobState][_u8array]);
         });
