@@ -85,35 +85,41 @@ export function initFn(this: BodyState, body?: ConstructorParameters<typeof Resp
 function read(this: BodyState, kind: "arrayBuffer" | "blob" | "bytes" | "formData" | "json" | "text") {
     return new Promise((resolve, reject) => {
         try {
-            if (kind === "arrayBuffer") {
-                resolve(convertBack("arraybuffer", this[_body]) as ArrayBuffer);
-            }
-
-            else if (kind === "blob") {
-                resolve(convertBack("blob", this[_body]) as Blob);
-            }
-
-            else if (kind === "bytes") {
-                let arrayBuffer = convertBack("arraybuffer", this[_body]) as ArrayBuffer;
-                resolve(new Uint8Array(arrayBuffer));
-            }
-
-            else if (kind === "formData") {
-                let text = convertBack("text", this[_body]) as string;
-                resolve(createFormDataFromBody(text));
-            }
-
-            else if (kind === "json") {
-                resolve(convertBack("json", this[_body]));
-            }
-
-            else {
-                resolve(convertBack("text", this[_body]));
-            }
+            resolve(readSync.call(this, kind));
         } catch (e) {
             reject(e);
         }
     });
+}
+
+type TReadSyncResult = ArrayBuffer | Blob | TUint8ArrayOfArrayBuffer | FormData | object | string;
+
+function readSync(this: BodyState, kind: Parameters<typeof read>[0]): TReadSyncResult {
+    if (kind === "arrayBuffer") {
+        return convertBack("arraybuffer", this[_body]) as ArrayBuffer;
+    }
+
+    else if (kind === "blob") {
+        return convertBack("blob", this[_body]) as Blob;
+    }
+
+    else if (kind === "bytes") {
+        let arrayBuffer = convertBack("arraybuffer", this[_body]) as ArrayBuffer;
+        return new Uint8Array(arrayBuffer);
+    }
+
+    else if (kind === "formData") {
+        let text = convertBack("text", this[_body]) as string;
+        return createFormDataFromBody(text);
+    }
+
+    else if (kind === "json") {
+        return convertBack("json", this[_body]) as object;
+    }
+
+    else {
+        return convertBack("text", this[_body]) as string;
+    }
 }
 
 function consumed(this: BodyState, kind: string) {

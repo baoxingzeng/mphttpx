@@ -247,7 +247,9 @@ function requestSuccess(this: XMLHttpRequestState, { statusCode, header, data }:
     this.responseURL = this[_requestURL];
     this.status = statusCode;
     this[_responseHeaders] = header as Record<string, string>;
-    this[_responseContentLength] = () => { return parseInt(this.target.getResponseHeader("Content-Length") || "0"); }
+
+    const lengthStr = this.target.getResponseHeader("Content-Length");
+    this[_responseContentLength] = () => { return lengthStr ? parseInt(lengthStr) : 0; }
 
     if (this.readyState === XMLHttpRequestP.OPENED) {
         setReadyStateAndNotify.call(this, XMLHttpRequestP.HEADERS_RECEIVED);

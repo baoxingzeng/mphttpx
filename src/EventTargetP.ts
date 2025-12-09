@@ -96,8 +96,9 @@ export function fire(this: EventTargetState, event: EventP) {
         s[_passive] = !!executor.options.passive;
         if (executor.options.once) onceIndexes.push(i);
 
+        const { callback: cb } = executor;
+
         try {
-            const { callback: cb } = executor;
             if (typeof cb === "function") cb.call(this.target, event);
         } catch (e) {
             console.error(e);
@@ -122,12 +123,12 @@ export function fire(this: EventTargetState, event: EventP) {
 }
 
 function reply(this: EventTargetState, signal: AbortSignal, executor: Executor) {
-    try {
-        const onAbort = () => {
-            this[_executors] = this[_executors].filter(x => !x.equals(executor));
-            signal.removeEventListener("abort", onAbort);
-        }
+    const onAbort = () => {
+        this[_executors] = this[_executors].filter(x => !x.equals(executor));
+        signal.removeEventListener("abort", onAbort);
+    }
 
+    try {
         signal.addEventListener("abort", onAbort);
     } catch (e) {
         console.error(e);
