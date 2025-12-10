@@ -45,9 +45,8 @@ export class EventTargetP implements EventTarget {
             throw new TypeError("EventTarget.dispatchEvent: Argument 1 does not implement interface Event.");
         }
 
-        const s = event[eventState];
-        s.target = this;
-        s[_isTrusted] = false;
+        event[eventState].target = this;
+        Object.defineProperty(event[eventState], _isTrusted, { value: false, configurable: true, enumerable: true, writable: true });
 
         return fire.call(this[state], event);
     }

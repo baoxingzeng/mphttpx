@@ -7,9 +7,9 @@ import { g, polyfill, isPolyfillType, defineStringTag } from "./isPolyfill";
 const state = Symbol(/* "FileReaderState" */);
 
 export class FileReaderP extends EventTargetP implements FileReader {
-    static readonly EMPTY = 0;
-    static readonly LOADING = 1;
-    static readonly DONE = 2;
+    declare static readonly EMPTY: 0;
+    declare static readonly LOADING: 1;
+    declare static readonly DONE: 2;
 
     constructor() {
         super();
@@ -21,9 +21,9 @@ export class FileReaderP extends EventTargetP implements FileReader {
     get readyState() { return this[state].readyState; }
     get result() { return this[state].result; }
 
-    readonly EMPTY = 0;
-    readonly LOADING = 1;
-    readonly DONE = 2;
+    declare readonly EMPTY: 0;
+    declare readonly LOADING: 1;
+    declare readonly DONE: 2;
 
     get error() { return this[state].error; }
 
@@ -84,6 +84,15 @@ export class FileReaderP extends EventTargetP implements FileReader {
     toString() { return "[object FileReader]"; }
     get isPolyfill() { return { symbol: polyfill, hierarchy: ["FileReader", "EventTarget"] }; }
 }
+
+const properties = {
+    EMPTY: { value: 0, enumerable: true },
+    LOADING: { value: 1, enumerable: true },
+    DONE: { value: 2, enumerable: true },
+};
+
+Object.defineProperties(FileReaderP, properties);
+Object.defineProperties(FileReaderP.prototype, properties);
 
 defineStringTag(FileReaderP, "FileReader");
 

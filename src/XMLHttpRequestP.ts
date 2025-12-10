@@ -21,11 +21,11 @@ const state = Symbol(/* "XMLHttpRequestState" */);
 export { state as xhrState };
 
 export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHttpRequest {
-    static readonly UNSENT = 0;
-    static readonly OPENED = 1;
-    static readonly HEADERS_RECEIVED = 2;
-    static readonly LOADING = 3;
-    static readonly DONE = 4;
+    declare static readonly UNSENT: 0;
+    declare static readonly OPENED: 1;
+    declare static readonly HEADERS_RECEIVED: 2;
+    declare static readonly LOADING: 3;
+    declare static readonly DONE: 4;
 
     constructor() {
         super();
@@ -34,11 +34,11 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
 
     [state]: XMLHttpRequestState;
 
-    readonly UNSENT = 0;
-    readonly OPENED = 1;
-    readonly HEADERS_RECEIVED = 2;
-    readonly LOADING = 3;
-    readonly DONE = 4;
+    declare readonly UNSENT: 0;
+    declare readonly OPENED: 1;
+    declare readonly HEADERS_RECEIVED: 2;
+    declare readonly LOADING: 3;
+    declare readonly DONE: 4;
 
     get readyState() { return this[state].readyState; }
     get response() { return this[state].response; }
@@ -195,6 +195,17 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
     get isPolyfill() { return { symbol: polyfill, hierarchy: ["XMLHttpRequest", "XMLHttpRequestEventTarget", "EventTarget"] }; }
 }
 
+const properties = {
+    UNSENT: { value: 0, enumerable: true },
+    OPENED: { value: 1, enumerable: true },
+    HEADERS_RECEIVED: { value: 2, enumerable: true },
+    LOADING: { value: 3, enumerable: true },
+    DONE: { value: 4, enumerable: true },
+};
+
+Object.defineProperties(XMLHttpRequestP, properties);
+Object.defineProperties(XMLHttpRequestP.prototype, properties);
+
 defineStringTag(XMLHttpRequestP, "XMLHttpRequest");
 
 const _handlers = Symbol();
@@ -219,7 +230,7 @@ class XMLHttpRequestState {
 
     target: XMLHttpRequestP;
 
-    readyState = XMLHttpRequestP.UNSENT;
+    readyState: XMLHttpRequest["readyState"] = XMLHttpRequestP.UNSENT;
     response: any = "";
     responseType: XMLHttpRequestResponseType = "";
     responseURL = "";

@@ -58,3 +58,9 @@ console.log(fetch);
 console.log(Headers);
 console.log(Request);
 console.log(Response);
+
+// fetch("https://developer.mozilla.org/pong/get", { method: "POST" })
+//     .then(r => r.json())
+//     .then(r => {
+//         console.log("fetch: ", r);
+//     });

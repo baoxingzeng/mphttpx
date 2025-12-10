@@ -4,10 +4,10 @@ const state = Symbol(/* "EventState" */);
 export { state as eventState };
 
 export class EventP implements Event {
-    static readonly NONE = 0;
-    static readonly CAPTURING_PHASE = 1;
-    static readonly AT_TARGET = 2;
-    static readonly BUBBLING_PHASE = 3;
+    declare static readonly NONE: 0;
+    declare static readonly CAPTURING_PHASE: 1;
+    declare static readonly AT_TARGET: 2;
+    declare static readonly BUBBLING_PHASE: 3;
 
     constructor(type: string, eventInitDict?: EventInit) {
         this[state] = new EventState();
@@ -17,6 +17,11 @@ export class EventP implements Event {
         that.bubbles = !!eventInitDict?.bubbles;
         that.cancelable = !!eventInitDict?.cancelable;
         that.composed = !!eventInitDict?.composed;
+
+        Object.defineProperty(this, "isTrusted", {
+            enumerable: true,
+            get: (function isTrusted(this: EventP) { return this[state][_isTrusted]; }).bind(this),
+        });
     }
 
     [state]: EventState;
@@ -30,10 +35,10 @@ export class EventP implements Event {
     get currentTarget() { return this[state].currentTarget; }
     get eventPhase() { return this[state].eventPhase; }
 
-    readonly NONE = EventP.NONE;
-    readonly CAPTURING_PHASE = EventP.CAPTURING_PHASE;
-    readonly AT_TARGET = EventP.AT_TARGET;
-    readonly BUBBLING_PHASE = EventP.BUBBLING_PHASE;
+    declare readonly NONE: 0;
+    declare readonly CAPTURING_PHASE: 1;
+    declare readonly AT_TARGET: 2;
+    declare readonly BUBBLING_PHASE: 3;
 
     get srcElement() { return this[state].target; }
     get cancelBubble() { return this[state].cancelBubble; }
@@ -43,7 +48,7 @@ export class EventP implements Event {
     get returnValue() { return this[state].returnValue; }
     set returnValue(value) { if (!value) { this.preventDefault(); } }
 
-    get isTrusted() { return this[state][_isTrusted]; }
+    declare readonly isTrusted: boolean;
     get timeStamp() { return this[state].timeStamp; }
 
     composedPath(): EventTarget[] {
@@ -90,6 +95,16 @@ export class EventP implements Event {
     get isPolyfill() { return { symbol: polyfill, hierarchy: ["Event"] }; }
 }
 
+const properties = {
+    NONE: { value: 0, enumerable: true },
+    CAPTURING_PHASE: { value: 1, enumerable: true },
+    AT_TARGET: { value: 2, enumerable: true },
+    BUBBLING_PHASE: { value: 3, enumerable: true },
+};
+
+Object.defineProperties(EventP, properties);
+Object.defineProperties(EventP.prototype, properties);
+
 defineStringTag(EventP, "Event");
 
 const _TimeStamp = Symbol();
@@ -111,7 +126,7 @@ class EventState {
 
     target = null as EventTarget | null;
     currentTarget = null as EventTarget | null;
-    eventPhase = EventP.NONE;
+    eventPhase: Event["eventPhase"] = EventP.NONE;
 
     cancelBubble = false;
 
