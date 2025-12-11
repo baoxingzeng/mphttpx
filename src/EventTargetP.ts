@@ -1,6 +1,7 @@
 import { g, polyfill, defineStringTag } from "./isPolyfill";
 import { EventP, eventState, _isTrusted, _passive, _dispatched, _preventDefaultCalled, _stopImmediatePropagationCalled } from "./EventP";
 
+/** @internal */
 const state = Symbol(/* "EventTargetState" */);
 export { state as eventTargetState };
 
@@ -9,6 +10,7 @@ export class EventTargetP implements EventTarget {
         this[state] = new EventTargetState(this);
     }
 
+    /** @internal */
     [state]: EventTargetState;
 
     addEventListener(type: string, callback: EventListenerOrEventListenerObject | null, options?: AddEventListenerOptions | boolean) {
@@ -67,8 +69,10 @@ export class EventTargetP implements EventTarget {
 
 defineStringTag(EventTargetP, "EventTarget");
 
+/** @internal */
 export const _executors = Symbol();
 
+/** @internal */
 export class EventTargetState {
     constructor(target: EventTargetP) {
         this.target = target;
@@ -134,6 +138,7 @@ function reply(this: EventTargetState, signal: AbortSignal, executor: Executor) 
     }
 }
 
+/** @internal */
 class Executor {
     constructor(type: string, callback: EventListenerOrEventListenerObject | null) {
         this.type = String(type);

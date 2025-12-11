@@ -1,5 +1,6 @@
 import { g, polyfill, defineStringTag } from "./isPolyfill";
 
+/** @internal */
 const state = Symbol(/* "EventState" */);
 export { state as eventState };
 
@@ -24,6 +25,7 @@ export class EventP implements Event {
         });
     }
 
+    /** @internal */
     [state]: EventState;
 
     get type() { return this[state].type; }
@@ -107,15 +109,16 @@ Object.defineProperties(EventP.prototype, properties);
 
 defineStringTag(EventP, "Event");
 
-const _TimeStamp = Symbol();
+/** @internal */ const _TimeStamp = Symbol();
 
-export const _isTrusted = Symbol();
+export /** @internal */ const _isTrusted = Symbol();
 
-export const _passive = Symbol();
-export const _dispatched = Symbol();
-export const _preventDefaultCalled = Symbol();
-export const _stopImmediatePropagationCalled = Symbol();
+export /** @internal */ const _passive = Symbol();
+export /** @internal */ const _dispatched = Symbol();
+export /** @internal */ const _preventDefaultCalled = Symbol();
+export /** @internal */ const _stopImmediatePropagationCalled = Symbol();
 
+/** @internal */
 class EventState {
     static [_TimeStamp] = (new Date()).getTime();
 

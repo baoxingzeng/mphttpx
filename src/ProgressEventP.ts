@@ -2,6 +2,7 @@ import { EventP, eventState, _isTrusted } from "./EventP";
 import { g, polyfill, defineStringTag } from "./isPolyfill";
 import { EventTargetP, eventTargetState, fire } from "./EventTargetP";
 
+/** @internal */
 const state = Symbol(/* "ProgressEventState" */);
 
 export class ProgressEventP extends EventP implements ProgressEvent {
@@ -15,6 +16,7 @@ export class ProgressEventP extends EventP implements ProgressEvent {
         that.total = eventInitDict?.total ?? 0;
     }
 
+    /** @internal */
     [state]: ProgressEventState;
 
     get lengthComputable() { return getValue(this[state].lengthComputable); }
@@ -27,6 +29,7 @@ export class ProgressEventP extends EventP implements ProgressEvent {
 
 defineStringTag(ProgressEventP, "ProgressEvent");
 
+/** @internal */
 class ProgressEventState {
     lengthComputable: boolean | (() => boolean) = false;
     loaded: number | (() => number) = 0;

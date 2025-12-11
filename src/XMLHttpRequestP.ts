@@ -17,6 +17,7 @@ import type {
 import { request } from "./request";
 import { polyfill, isObjectType, isPolyfillType, defineStringTag, MPException, objectEntries } from "./isPolyfill";
 
+/** @internal */
 const state = Symbol(/* "XMLHttpRequestState" */);
 export { state as xhrState };
 
@@ -32,6 +33,7 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
         this[state] = new XMLHttpRequestState(this);
     }
 
+    /** @internal */
     [state]: XMLHttpRequestState;
 
     declare readonly UNSENT: 0;
@@ -220,20 +222,21 @@ Object.defineProperties(XMLHttpRequestP.prototype, properties);
 
 defineStringTag(XMLHttpRequestP, "XMLHttpRequest");
 
-const _handlers = Symbol();
+/** @internal */ const _handlers = Symbol();
 
-const _inAfterOpenBeforeSend = Symbol();
-const _resetPending = Symbol();
-const _timeoutId = Symbol();
+/** @internal */ const _inAfterOpenBeforeSend = Symbol();
+/** @internal */ const _resetPending = Symbol();
+/** @internal */ const _timeoutId = Symbol();
 
-const _requestURL = Symbol();
-const _method = Symbol();
-const _requestHeaders = Symbol();
-export const _responseHeaders = Symbol();
-const _responseContentLength = Symbol();
+/** @internal */ const _requestURL = Symbol();
+/** @internal */ const _method = Symbol();
+/** @internal */ const _requestHeaders = Symbol();
+export /** @internal */ const _responseHeaders = Symbol();
+/** @internal */ const _responseContentLength = Symbol();
 
-const _requestTask = Symbol();
+/** @internal */ const _requestTask = Symbol();
 
+/** @internal */
 class XMLHttpRequestState {
     constructor(target: XMLHttpRequestP) {
         this.target = target;

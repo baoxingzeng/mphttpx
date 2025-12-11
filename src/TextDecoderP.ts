@@ -1,5 +1,6 @@
 import { g, polyfill, defineStringTag } from "./isPolyfill";
 
+/** @internal */
 const state = Symbol(/* "TextDecoderState" */);
 
 export class TextDecoderP implements TextDecoder {
@@ -14,13 +15,14 @@ export class TextDecoderP implements TextDecoder {
         this[state].ignoreBOM = ignoreBOM;
     }
 
+    /** @internal */
     [state]: TextDecoderState;
 
     get encoding() { return "utf-8"; }
     get fatal() { return this[state].fatal; }
     get ignoreBOM() { return this[state].ignoreBOM; }
 
-    decode(buffer?: TAllowSharedBufferSource, { stream = false } = {}) {
+    decode(buffer?: Parameters<TextDecoder["decode"]>[0], { stream = false } = {}) {
         const that = this[state];
         let buf: Uint8Array;
 
@@ -158,9 +160,10 @@ export class TextDecoderP implements TextDecoder {
 
 defineStringTag(TextDecoderP, "TextDecoder");
 
-const _bomSeen = Symbol();
-const _partial = Symbol();
+/** @internal */ const _bomSeen = Symbol();
+/** @internal */ const _partial = Symbol();
 
+/** @internal */
 class TextDecoderState {
     fatal = false;
     ignoreBOM = false;
@@ -168,8 +171,6 @@ class TextDecoderState {
     [_bomSeen] = false;
     [_partial] = [] as number[];
 }
-
-type TAllowSharedBufferSource = NonNullable<Parameters<TextDecoder["decode"]>[0]>;
 
 const UTF8Labels = ["utf-8", "utf8", "unicode-1-1-utf-8"];
 

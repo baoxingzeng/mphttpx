@@ -4,6 +4,7 @@ import { EventTargetP, attachFn, executeFn } from "./EventTargetP";
 import { BlobP, blobState, u8array2base64 } from "./BlobP";
 import { g, polyfill, isPolyfillType, defineStringTag } from "./isPolyfill";
 
+/** @internal */
 const state = Symbol(/* "FileReaderState" */);
 
 export class FileReaderP extends EventTargetP implements FileReader {
@@ -16,6 +17,7 @@ export class FileReaderP extends EventTargetP implements FileReader {
         this[state] = new FileReaderState(this);
     }
 
+    /** @internal */
     [state]: FileReaderState;
 
     get readyState() { return this[state].readyState; }
@@ -96,8 +98,10 @@ Object.defineProperties(FileReaderP.prototype, properties);
 
 defineStringTag(FileReaderP, "FileReader");
 
+/** @internal */
 const _handlers = Symbol();
 
+/** @internal */
 class FileReaderState {
     constructor(target: FileReaderP) {
         this.target = target;

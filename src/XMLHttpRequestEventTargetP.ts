@@ -1,6 +1,7 @@
 import { polyfill, defineStringTag } from "./isPolyfill";
 import { EventTargetP, attachFn, executeFn } from "./EventTargetP";
 
+/** @internal */
 const state = Symbol(/* "XMLHttpRequestEventTargetState" */);
 export { state as xhrEventTargetState };
 
@@ -14,6 +15,7 @@ export class XMLHttpRequestEventTargetP extends EventTargetP implements XMLHttpR
         this[state] = new XMLHttpRequestEventTargetState(this);
     }
 
+    /** @internal */
     [state]: XMLHttpRequestEventTargetState;
 
     get onabort() { return this[state].onabort; }
@@ -43,8 +45,10 @@ export class XMLHttpRequestEventTargetP extends EventTargetP implements XMLHttpR
 
 defineStringTag(XMLHttpRequestEventTargetP, "XMLHttpRequestEventTarget");
 
+/** @internal */
 const _handlers = Symbol();
 
+/** @internal */
 export class XMLHttpRequestEventTargetState {
     /**
      * @param _target XMLHttpRequestEventTargetP

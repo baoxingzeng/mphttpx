@@ -1,5 +1,6 @@
 import { g, polyfill, isObjectType, defineStringTag, objectValues, objectEntries } from "./isPolyfill";
 
+/** @internal */
 const state = Symbol(/* "URLSearchParamsState" */);
 
 export class URLSearchParamsP implements URLSearchParams {
@@ -14,6 +15,7 @@ export class URLSearchParamsP implements URLSearchParams {
         this[state][_urlspDict] = parseToDict(search);
     }
 
+    /** @internal */
     [state]: URLSearchParamsState;
 
     get size() {
@@ -123,8 +125,10 @@ export class URLSearchParamsP implements URLSearchParams {
 
 defineStringTag(URLSearchParamsP, "URLSearchParams");
 
+/** @internal */
 const _urlspDict = Symbol();
 
+/** @internal */
 class URLSearchParamsState {
     [_urlspDict]: Record<string, string[]> = {};
 }

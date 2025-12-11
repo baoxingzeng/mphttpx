@@ -3,6 +3,7 @@ import { FileP } from "./FileP";
 import { TextEncoderP } from "./TextEncoderP";
 import { g, polyfill, isPolyfillType, defineStringTag } from "./isPolyfill";
 
+/** @internal */
 const state = Symbol(/* "FormDataState" */);
 export { state as formDataState };
 
@@ -19,6 +20,7 @@ export class FormDataP implements FormData {
         this[state] = new FormDataState();
     }
 
+    /** @internal */
     [state]: FormDataState;
 
     append(name: string, value: string | Blob, filename?: string) {
@@ -117,8 +119,10 @@ export class FormDataP implements FormData {
 
 defineStringTag(FormDataP, "FormData");
 
+/** @internal */
 const _formData = Symbol();
 
+/** @internal */
 class FormDataState {
     [_formData]: [string, FormDataEntryValue][] = [];
 

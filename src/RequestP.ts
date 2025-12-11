@@ -4,6 +4,7 @@ import { normalizeMethod } from "./XMLHttpRequestP";
 import { AbortControllerP } from "./AbortControllerP";
 import { g, polyfill, isPolyfillType, defineStringTag } from "./isPolyfill";
 
+/** @internal */
 const state = Symbol(/* "RequestState" */);
 export { state as requestState };
 
@@ -65,6 +66,7 @@ export class RequestP extends BodyP implements Request {
         }
     }
 
+    /** @internal */
     [state]: RequestState;
 
     get cache() { return this[state].cache; }
@@ -98,11 +100,12 @@ export class RequestP extends BodyP implements Request {
     }
 
     toString() { return "[object Request]"; }
-    get isPolyfill() { return { symbol: polyfill, hierarchy: ["Request"] }; }
+    get isPolyfill() { return { symbol: polyfill, hierarchy: ["Request", "Body"] }; }
 }
 
 defineStringTag(RequestP, "Request");
 
+/** @internal */
 class RequestState {
     cache: RequestCache = "default";
     credentials: RequestCredentials = "same-origin";

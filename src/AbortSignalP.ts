@@ -2,6 +2,7 @@ import { createInnerEvent } from "./EventP";
 import { g, polyfill, defineStringTag, MPException } from "./isPolyfill";
 import { EventTargetP, EventTargetState, eventTargetState, fire, attachFn, executeFn } from "./EventTargetP";
 
+/** @internal */
 const state = Symbol(/* "AbortSignalState" */);
 export { state as abortSignalState };
 
@@ -55,6 +56,7 @@ export class AbortSignalP extends EventTargetP implements AbortSignal {
         this[state] = new AbortSignalState(this);
     }
 
+    /** @internal */
     [state]: AbortSignalState;
 
     get aborted() { return this[state].aborted; }
@@ -76,8 +78,10 @@ export class AbortSignalP extends EventTargetP implements AbortSignal {
 
 defineStringTag(AbortSignalP, "AbortSignal");
 
+/** @internal */
 const _handlers = Symbol();
 
+/** @internal */
 export class AbortSignalState {
     constructor(target: AbortSignalP) {
         this.target = target;

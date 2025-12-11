@@ -1,5 +1,6 @@
 import { g, polyfill, isObjectType, defineStringTag, objectEntries } from "./isPolyfill";
 
+/** @internal */
 const state = Symbol(/* "HeadersState" */);
 
 export class HeadersP implements Headers {
@@ -27,6 +28,7 @@ export class HeadersP implements Headers {
         }
     }
 
+    /** @internal */
     [state]: HeadersState;
 
     append(name: string, value: string): void {
@@ -90,8 +92,10 @@ export class HeadersP implements Headers {
 
 defineStringTag(HeadersP, "Headers");
 
+/** @internal */
 const _headersMap = Symbol();
 
+/** @internal */
 class HeadersState {
     [_headersMap] = new Map<string, [string, string]>();
 }

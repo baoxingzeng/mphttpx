@@ -1,8 +1,8 @@
 import { createFormDataFromBody } from "./FormDataP";
-import type { TUint8ArrayOfArrayBuffer } from "./BlobP";
 import { convert, convertBack } from "./XMLHttpRequestP";
 import { polyfill, isObjectType, defineStringTag } from "./isPolyfill";
 
+/** @internal */
 const state = Symbol(/* "BodyState" */);
 export { state as bodyState };
 
@@ -15,9 +15,10 @@ export class BodyP implements Body {
         this[state] = new BodyState();
     }
 
+    /** @internal */
     [state]: BodyState;
 
-    get body(): ReadableStream<TUint8ArrayOfArrayBuffer> | null {
+    get body(): Body["body"] {
         if (!this[state][_body]) { return null; }
         throw new ReferenceError("ReadableStream is not defined");
     }
@@ -34,9 +35,9 @@ export class BodyP implements Body {
         return consumed.call(this[state], kind) || read.call(this[state], kind) as Promise<Blob>;
     }
 
-    bytes(): Promise<TUint8ArrayOfArrayBuffer> {
+    bytes() {
         const kind = "bytes";
-        return consumed.call(this[state], kind) || read.call(this[state], kind) as Promise<TUint8ArrayOfArrayBuffer>;
+        return consumed.call(this[state], kind) || read.call(this[state], kind) as Promise<InstanceType<typeof Uint8Array>>;
     }
 
     formData(): Promise<FormData> {
@@ -60,9 +61,10 @@ export class BodyP implements Body {
 
 defineStringTag(BodyP, "Body");
 
-export const _name = Symbol();
-export const _body = Symbol();
+export /** @internal */ const _name = Symbol();
+export /** @internal */ const _body = Symbol();
 
+/** @internal */
 class BodyState {
     bodyUsed = false;
 
@@ -92,7 +94,7 @@ function read(this: BodyState, kind: "arrayBuffer" | "blob" | "bytes" | "formDat
     });
 }
 
-type TReadSyncResult = ArrayBuffer | Blob | TUint8ArrayOfArrayBuffer | FormData | object | string;
+type TReadSyncResult = ArrayBuffer | Blob | InstanceType<typeof Uint8Array> | FormData | object | string;
 
 function readSync(this: BodyState, kind: Parameters<typeof read>[0]): TReadSyncResult {
     if (kind === "arrayBuffer") {

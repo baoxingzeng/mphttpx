@@ -1,6 +1,7 @@
 import { g, polyfill, defineStringTag } from "./isPolyfill";
 import { abortSignalState, createAbortSignalP, abort } from "./AbortSignalP";
 
+/** @internal */
 const state = Symbol(/* "AbortControllerState" */);
 
 export class AbortControllerP implements AbortController {
@@ -8,6 +9,7 @@ export class AbortControllerP implements AbortController {
         this[state] = new AbortControllerState();
     }
 
+    /** @internal */
     [state]: AbortControllerState;
 
     get signal(): AbortSignal { return this[state].signal; }
@@ -22,6 +24,7 @@ export class AbortControllerP implements AbortController {
 
 defineStringTag(AbortControllerP, "AbortController");
 
+/** @internal */
 class AbortControllerState {
     signal = createAbortSignalP();
 }

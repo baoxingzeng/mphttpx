@@ -2,6 +2,7 @@ import { TextEncoderP } from "./TextEncoderP";
 import { TextDecoderP } from "./TextDecoderP";
 import { g, polyfill, isPolyfillType, defineStringTag } from "./isPolyfill";
 
+/** @internal */
 const state = Symbol(/* "BlobState" */);
 export { state as blobState };
 
@@ -12,7 +13,7 @@ export class BlobP implements Blob {
         }
 
         let encoder: TextEncoderP | null = null;
-        let chunks = blobParts.reduce((chunks: Array<TUint8ArrayOfArrayBuffer>, part) => {
+        let chunks = blobParts.reduce((chunks: Array<InstanceType<typeof Uint8Array>>, part) => {
             if (isPolyfillType<Blob>("Blob", part)) {
                 chunks.push((part as BlobP)[state][_u8array]);
             } else if (part instanceof ArrayBuffer || ArrayBuffer.isView(part)) {
@@ -34,6 +35,7 @@ export class BlobP implements Blob {
         that.type = /[^\u0020-\u007E]/.test(rawType) ? "" : rawType.toLowerCase();
     }
 
+    /** @internal */
     [state]: BlobState;
 
     get size() { return this[state].size; }
@@ -43,7 +45,7 @@ export class BlobP implements Blob {
         return Promise.resolve(clone(this[state][_u8array].buffer).buffer);
     }
 
-    bytes(): Promise<TUint8ArrayOfArrayBuffer> {
+    bytes() {
         return Promise.resolve(clone(this[state][_u8array].buffer));
     }
 
@@ -52,7 +54,7 @@ export class BlobP implements Blob {
         return new BlobP([sliced], { type: contentType ?? "" });
     }
 
-    stream(): ReadableStream<TUint8ArrayOfArrayBuffer> {
+    stream(): ReturnType<Blob["stream"]> {
         throw new ReferenceError("ReadableStream is not defined");
     }
 
@@ -67,17 +69,19 @@ export class BlobP implements Blob {
 
 defineStringTag(BlobP, "Blob");
 
+/** @internal */
 const _u8array = Symbol();
 
+/** @internal */
 class BlobState {
-    constructor(buffer: TUint8ArrayOfArrayBuffer) {
+    constructor(buffer: InstanceType<typeof Uint8Array>) {
         this[_u8array] = buffer;
     }
 
     size = 0;
     type = "";
 
-    [_u8array]: TUint8ArrayOfArrayBuffer;
+    [_u8array]: InstanceType<typeof Uint8Array>;
 
     toUint8Array() {
         return this[_u8array];
@@ -88,9 +92,7 @@ class BlobState {
     }
 }
 
-export type TUint8ArrayOfArrayBuffer = ReturnType<TextEncoder["encode"]>;
-
-export function u8array2base64(input: TUint8ArrayOfArrayBuffer) {
+export function u8array2base64(input: InstanceType<typeof Uint8Array>) {
     let byteToCharMap = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
     let output: string[] = [];
 
@@ -123,7 +125,7 @@ export function u8array2base64(input: TUint8ArrayOfArrayBuffer) {
     return output.join("");
 }
 
-function convert(buf: BufferSource): TUint8ArrayOfArrayBuffer {
+function convert(buf: BufferSource): InstanceType<typeof Uint8Array> {
     return buf instanceof ArrayBuffer
         ? new Uint8Array(buf)
         : new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength);

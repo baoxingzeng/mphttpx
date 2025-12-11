@@ -1,6 +1,7 @@
 import { BlobP } from "./BlobP";
 import { g, polyfill, defineStringTag } from "./isPolyfill";
 
+/** @internal */
 const state = Symbol(/* "FileState" */);
 
 export class FileP extends BlobP implements File {
@@ -12,6 +13,7 @@ export class FileP extends BlobP implements File {
         this[state].name = fileName.replace(/\//g, ":");
     }
 
+    /** @internal */
     [state]: FileState;
 
     get lastModified() { return this[state].lastModified; }
@@ -24,6 +26,7 @@ export class FileP extends BlobP implements File {
 
 defineStringTag(FileP, "File");
 
+/** @internal */
 class FileState {
     lastModified = 0;
     name = "";

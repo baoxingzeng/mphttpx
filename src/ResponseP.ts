@@ -2,6 +2,7 @@ import { HeadersP } from "./HeadersP";
 import { g, polyfill, defineStringTag } from "./isPolyfill";
 import { BodyP, bodyState, _name, _body, initFn } from "./BodyP";
 
+/** @internal */
 const state = Symbol(/* "ResponseState" */);
 export { state as responseState };
 
@@ -28,6 +29,7 @@ export class ResponseP extends BodyP implements Response {
         initFn.call(this[bodyState], body, this.headers);
     }
 
+    /** @internal */
     [state]: ResponseState;
 
     get headers() {
@@ -75,11 +77,12 @@ export class ResponseP extends BodyP implements Response {
     }
 
     toString() { return "[object Response]"; }
-    get isPolyfill() { return { symbol: polyfill, hierarchy: ["Response"] }; }
+    get isPolyfill() { return { symbol: polyfill, hierarchy: ["Response", "Body"] }; }
 }
 
 defineStringTag(ResponseP, "Response");
 
+/** @internal */
 class ResponseState {
     headers?: Headers;
     ok: boolean = true;
