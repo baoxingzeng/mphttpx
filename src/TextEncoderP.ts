@@ -8,7 +8,7 @@ export class TextEncoderP implements TextEncoder {
     }
 
     encodeInto(source: string, destination: Uint8Array): TextEncoderEncodeIntoResult {
-        const result = encodeText(source, destination);
+        let result = encodeText(source, destination);
         return { read: result.read, written: result.written };
     }
 

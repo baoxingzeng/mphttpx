@@ -30,7 +30,7 @@ export class BlobP implements Blob {
 
         that.size = that[_u8array].length;
 
-        const rawType = options?.type || "";
+        let rawType = options?.type || "";
         that.type = /[^\u0020-\u007E]/.test(rawType) ? "" : rawType.toLowerCase();
     }
 
@@ -48,7 +48,7 @@ export class BlobP implements Blob {
     }
 
     slice(start?: number, end?: number, contentType?: string): Blob {
-        const sliced = this[state][_u8array].slice(start ?? 0, end ?? this[state][_u8array].length);
+        let sliced = this[state][_u8array].slice(start ?? 0, end ?? this[state][_u8array].length);
         return new BlobP([sliced], { type: contentType ?? "" });
     }
 
@@ -57,7 +57,7 @@ export class BlobP implements Blob {
     }
 
     text(): Promise<string> {
-        const decoder = new TextDecoderP();
+        let decoder = new TextDecoderP();
         return Promise.resolve(decoder.decode(this[state][_u8array]));
     }
 
@@ -67,7 +67,7 @@ export class BlobP implements Blob {
 
 defineStringTag(BlobP, "Blob");
 
-export const _u8array = Symbol();
+const _u8array = Symbol();
 
 class BlobState {
     constructor(buffer: TUint8ArrayOfArrayBuffer) {
@@ -76,7 +76,16 @@ class BlobState {
 
     size = 0;
     type = "";
+
     [_u8array]: TUint8ArrayOfArrayBuffer;
+
+    toUint8Array() {
+        return this[_u8array];
+    }
+
+    toArrayBuffer() {
+        return this[_u8array].buffer;
+    }
 }
 
 export type TUint8ArrayOfArrayBuffer = ReturnType<TextEncoder["encode"]>;
@@ -121,16 +130,16 @@ function convert(buf: BufferSource): TUint8ArrayOfArrayBuffer {
 }
 
 function clone(buf: BufferSource) {
-    const sourceArray = convert(buf);
-    const cloneArray = new Uint8Array(new ArrayBuffer(sourceArray.byteLength));
+    let sourceArray = convert(buf);
+    let cloneArray = new Uint8Array(new ArrayBuffer(sourceArray.byteLength));
 
     cloneArray.set(sourceArray);
     return cloneArray;
 }
 
 function concat(chunks: Uint8Array[]) {
-    const totalByteLength = chunks.reduce((acc, cur) => acc + cur.byteLength, 0);
-    const result = new Uint8Array(totalByteLength);
+    let totalByteLength = chunks.reduce((acc, cur) => acc + cur.byteLength, 0);
+    let result = new Uint8Array(totalByteLength);
 
     chunks.reduce((offset, chunk) => {
         result.set(chunk, offset);

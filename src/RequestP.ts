@@ -5,6 +5,7 @@ import { AbortControllerP } from "./AbortControllerP";
 import { g, polyfill, isPolyfillType, defineStringTag } from "./isPolyfill";
 
 const state = Symbol(/* "RequestState" */);
+export { state as requestState };
 
 export class RequestP extends BodyP implements Request {
     constructor(input: RequestInfo | URL, init?: RequestInit) {
@@ -25,11 +26,10 @@ export class RequestP extends BodyP implements Request {
             if (!options.headers) { that.headers = new HeadersP(input.headers); }
             that.method = input.method;
             that.mode = input.mode;
-            that.signal = input.signal;
+            let inputSignal = (input as RequestP)[state].signal; if (inputSignal) { that.signal = inputSignal; }
             that.url = input.url;
 
-            let _input = input as RequestP;
-            if (!body && _input[bodyState][_body] !== null) {
+            let _input = input as RequestP; if (!body && _input[bodyState][_body] !== null) {
                 body = _input[bodyState][_body];
                 _input[bodyState].bodyUsed = true;
             }

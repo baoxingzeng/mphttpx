@@ -1,7 +1,7 @@
 import { TextDecoderP } from "./TextDecoderP";
 import { emitProcessEvent } from "./ProgressEventP";
 import { EventTargetP, attachFn, executeFn } from "./EventTargetP";
-import { BlobP, blobState, _u8array, u8array2base64 } from "./BlobP";
+import { BlobP, blobState, u8array2base64 } from "./BlobP";
 import { g, polyfill, isPolyfillType, defineStringTag } from "./isPolyfill";
 
 const state = Symbol(/* "FileReaderState" */);
@@ -38,13 +38,13 @@ export class FileReaderP extends EventTargetP implements FileReader {
 
     readAsArrayBuffer(blob: Blob) {
         read.call(this[state], "readAsArrayBuffer", blob, () => {
-            this[state].result = (blob as BlobP)[blobState][_u8array].buffer.slice(0);
+            this[state].result = (blob as BlobP)[blobState].toArrayBuffer().slice(0);
         });
     }
 
     readAsBinaryString(blob: Blob) {
         read.call(this[state], "readAsBinaryString", blob, () => {
-            this[state].result = (blob as BlobP)[blobState][_u8array].reduce((acc, cur) => {
+            this[state].result = (blob as BlobP)[blobState].toUint8Array().reduce((acc, cur) => {
                 acc += String.fromCharCode(cur);
                 return acc;
             }, "");
@@ -53,13 +53,13 @@ export class FileReaderP extends EventTargetP implements FileReader {
 
     readAsDataURL(blob: Blob) {
         read.call(this[state], "readAsDataURL", blob, () => {
-            this[state].result = "data:" + blob.type + ";base64," + u8array2base64((blob as BlobP)[blobState][_u8array]);
+            this[state].result = "data:" + blob.type + ";base64," + u8array2base64((blob as BlobP)[blobState].toUint8Array());
         });
     }
 
     readAsText(blob: Blob, encoding?: string) {
         read.call(this[state], "readAsText", blob, () => {
-            this[state].result = (new TextDecoderP(encoding)).decode((blob as BlobP)[blobState][_u8array]);
+            this[state].result = (new TextDecoderP(encoding)).decode((blob as BlobP)[blobState].toUint8Array());
         });
     }
 

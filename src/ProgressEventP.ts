@@ -52,7 +52,7 @@ function createInnerProgressEvent(
         total = 0,
     }: Partial<TCreateExtraParams> = {},
 ) {
-    const event = new ProgressEventP(type);
+    let event = new ProgressEventP(type);
     event[state].lengthComputable = lengthComputable;
     event[state].loaded = loaded;
     event[state].total = total;
@@ -63,7 +63,7 @@ function createInnerProgressEvent(
 }
 
 export function emitProcessEvent(target: EventTargetP, type: string, loaded: number | (() => number) = 0, total: number | (() => number) = 0) {
-    const event = createInnerProgressEvent(target, type, {
+    let event = createInnerProgressEvent(target, type, {
         lengthComputable: () => { return getValue(total) > 0; },
         loaded,
         total,

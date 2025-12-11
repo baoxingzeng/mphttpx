@@ -144,7 +144,7 @@ function parseToDict(search: string[][] | Record<string, string> | string) {
                 }
             }
         } else {
-            for (const key in search) {
+            for (let key in search) {
                 if (search.hasOwnProperty(key)) {
                     appendTo(dict, key, search[key]!);
                 }
@@ -211,7 +211,7 @@ function hasOwnProperty(obj: object, prop: PropertyKey) {
 }
 
 function flatCb<T>(acc: T[], cur: T[]) {
-    for (const item of cur) { acc.push(item); }
+    for (let item of cur) { acc.push(item); }
     return acc;
 }
 

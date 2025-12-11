@@ -52,7 +52,7 @@ export class EventP implements Event {
     get timeStamp() { return this[state].timeStamp; }
 
     composedPath(): EventTarget[] {
-        const path = !!this.target ? [this.target] : [];
+        let path = !!this.target ? [this.target] : [];
         if (!!this.currentTarget && this.currentTarget !== this.target) path.push(this.currentTarget);
 
         return path;
@@ -144,7 +144,7 @@ class EventState {
 }
 
 export function createInnerEvent(target: EventTarget, type: string, eventInitDict?: EventInit, isTrusted = true) {
-    const event = new EventP(type, eventInitDict);
+    let event = new EventP(type, eventInitDict);
     event[state].target = target;
     event[state][_isTrusted] = isTrusted;
     return event;

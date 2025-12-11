@@ -5,8 +5,8 @@ import { emitProcessEvent } from "./ProgressEventP";
 import { eventTargetState, _executors, fire, attachFn, executeFn } from "./EventTargetP";
 import { XMLHttpRequestEventTargetP } from "./XMLHttpRequestEventTargetP";
 import { XMLHttpRequestUploadP, createXMLHttpRequestUploadP } from "./XMLHttpRequestUploadP";
+import { BlobP, blobState, u8array2base64 } from "./BlobP";
 import { type FormDataP, formDataState } from "./FormDataP";
-import { BlobP, blobState, _u8array, u8array2base64 } from "./BlobP";
 import type {
     IRequestOptions,
     IRequestTask,
@@ -59,7 +59,11 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
     get timeout() { return this[state].timeout; }
     set timeout(value) { this[state].timeout = value; }
 
-    get upload(): XMLHttpRequestUpload { return this[state].upload; }
+    get upload(): XMLHttpRequestUpload {
+        const that = this[state];
+        if (!that.upload) { that.upload = createXMLHttpRequestUploadP(); }
+        return that.upload!;
+    }
 
     get withCredentials() { return this[state].withCredentials; }
     set withCredentials(value) { this[state].withCredentials = value; }
@@ -76,7 +80,7 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
     getResponseHeader(name: string): string | null {
         if (!this[state][_responseHeaders]) return null;
 
-        const nameKey = name.toLowerCase();
+        let nameKey = name.toLowerCase();
         return objectEntries(this[state][_responseHeaders] || {}).find(x => x[0].toLowerCase() === nameKey)?.[1] ?? null;
     }
 
@@ -98,11 +102,11 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
         that[_requestURL] = String(url);
 
         if (username !== null || password !== null) {
-            const _username = String(username ?? "");
-            const _password = String(password ?? "");
+            let _username = String(username ?? "");
+            let _password = String(password ?? "");
 
             if (_username.length > 0 || _password.length > 0) {
-                const auth = `Basic ${u8array2base64((new TextEncoderP()).encode(_username + ":" + _password))}`;
+                let auth = `Basic ${u8array2base64((new TextEncoderP()).encode(_username + ":" + _password))}`;
                 this.setRequestHeader("Authorization", auth);
             }
         }
@@ -113,7 +117,7 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
 
     overrideMimeType(mime: string): void {
         if (this[state][_inAfterOpenBeforeSend]) {
-            console.warn(`XMLHttpRequest.overrideMimeType(${mime}) is not implemented: The method will have no effect on response parsing.`);
+            console.warn(`XMLHttpRequest.overrideMimeType('${mime}') is not implemented: The method will have no effect on response parsing.`);
         }
     }
 
@@ -126,12 +130,14 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
 
         that[_inAfterOpenBeforeSend] = false;
 
-        const allowsRequestBody = ["GET", "HEAD"].indexOf(that[_method]) === -1;
+        const allowsRequestBody = that[_method] !== "GET" && that[_method] !== "HEAD";
         const processHeaders = allowsRequestBody && Object.keys(that[_requestHeaders]).map(x => x.toLowerCase()).indexOf("content-type") === -1;
-        const processContentLength = that.upload[eventTargetState][_executors].length > 0;
 
-        let headers = { ...that[_requestHeaders] };
-        let contentLength: number | (() => number) = () => 0;
+        const upload = that.upload;
+        const processContentLength = upload && upload[eventTargetState][_executors].length > 0;
+
+        let headers = processHeaders ? { ...that[_requestHeaders] } : that[_requestHeaders];
+        let contentLength: number | (() => number) = zero;
 
         let data = convert(
             body,
@@ -163,7 +169,7 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
             const hasRequestBody = allowsRequestBody && (typeof data === "string" ? data.length > 0 : data.byteLength > 0);
 
             if (hasRequestBody) {
-                emitProcessEvent(that.upload, "loadstart", 0, contentLength);
+                emitProcessEvent(upload, "loadstart", 0, contentLength);
             }
 
             setTimeout(() => {
@@ -171,15 +177,15 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
                 const _contentLength = _aborted ? 0 : contentLength;
 
                 if (_aborted) {
-                    emitProcessEvent(that.upload, "abort");
+                    emitProcessEvent(upload, "abort");
                 } else {
                     if (hasRequestBody) {
-                        emitProcessEvent(that.upload, "load", _contentLength, _contentLength);
+                        emitProcessEvent(upload, "load", _contentLength, _contentLength);
                     }
                 }
 
                 if (_aborted || hasRequestBody) {
-                    emitProcessEvent(that.upload, "loadend", _contentLength, _contentLength);
+                    emitProcessEvent(upload, "loadend", _contentLength, _contentLength);
                 }
             });
         }
@@ -231,7 +237,6 @@ const _requestTask = Symbol();
 class XMLHttpRequestState {
     constructor(target: XMLHttpRequestP) {
         this.target = target;
-        this.upload = createXMLHttpRequestUploadP();
     }
 
     target: XMLHttpRequestP;
@@ -243,7 +248,7 @@ class XMLHttpRequestState {
     status = 0;
     statusText = "";
     timeout = 0;
-    upload: XMLHttpRequestUploadP;
+    upload?: XMLHttpRequestUploadP;
     withCredentials = false;
 
     [_handlers] = getHandlers.call(this);
@@ -257,7 +262,7 @@ class XMLHttpRequestState {
     [_method] = "GET";
     [_requestHeaders]: Record<string, string> = { Accept: "*/*" };
     [_responseHeaders]: Record<string, string> | null = null;
-    [_responseContentLength]: number | (() => number) = () => 0;
+    [_responseContentLength]: number | (() => number) = zero;
 
     [_requestTask]: IRequestTask | null = null;
 }
@@ -267,7 +272,7 @@ function requestSuccess(this: XMLHttpRequestState, { statusCode, header, data }:
     this.status = statusCode;
     this[_responseHeaders] = header as Record<string, string>;
 
-    const lengthStr = this.target.getResponseHeader("Content-Length");
+    let lengthStr = this.target.getResponseHeader("Content-Length");
     this[_responseContentLength] = () => { return lengthStr ? parseInt(lengthStr) : 0; }
 
     if (this.readyState === XMLHttpRequestP.OPENED) {
@@ -375,7 +380,7 @@ function resetXHR(this: XMLHttpRequestState) {
 
     this[_requestHeaders] = {};
     this[_responseHeaders] = null;
-    this[_responseContentLength] = () => 0;
+    this[_responseContentLength] = zero;
 }
 
 function resetRequestTimeout(this: XMLHttpRequestState) {
@@ -386,11 +391,11 @@ function resetRequestTimeout(this: XMLHttpRequestState) {
 }
 
 function setReadyStateAndNotify(this: XMLHttpRequestState, value: number) {
-    const hasChanged = value !== this.readyState;
+    let hasChanged = value !== this.readyState;
     this.readyState = value;
 
     if (hasChanged) {
-        const evt = createInnerEvent(this.target, "readystatechange");
+        let evt = createInnerEvent(this.target, "readystatechange");
         fire.call(this.target[eventTargetState], evt);
     }
 }
@@ -414,9 +419,9 @@ function normalizeDataType(responseType: XMLHttpRequestResponseType) {
 }
 
 function assignRequestHeader(headers: Record<string, string>, name: string, value: string) {
-    const nameKey = name.toLowerCase();
+    let nameKey = name.toLowerCase();
 
-    for (const key of Object.keys(headers)) {
+    for (let key of Object.keys(headers)) {
         if (key.toLowerCase() === nameKey) {
             headers[key] = value;
             return;
@@ -456,7 +461,7 @@ export function convert(
         result = body.toString();
 
         if (setContentType) {
-            setContentType("application/x-www-form-urlencoded;charset=UTF-8")
+            setContentType("application/x-www-form-urlencoded;charset=UTF-8");
         }
     }
 
@@ -469,7 +474,7 @@ export function convert(
     }
 
     else if (isPolyfillType<Blob>("Blob", body)) {
-        result = (body as BlobP)[blobState][_u8array].buffer.slice(0);
+        result = (body as BlobP)[blobState].toArrayBuffer().slice(0);
 
         if (setContentType && body.type) {
             setContentType(body.type);
@@ -477,8 +482,8 @@ export function convert(
     }
 
     else if (isPolyfillType<FormData>("FormData", body)) {
-        const blob = (body as FormDataP)[formDataState].toBlob();
-        result = (blob as BlobP)[blobState][_u8array].buffer;
+        let blob = (body as FormDataP)[formDataState].toBlob();
+        result = blob[blobState].toArrayBuffer();
 
         if (setContentType) {
             setContentType(blob.type);
@@ -528,6 +533,8 @@ export function convertBack(
         return temp;
     }
 }
+
+const zero = () => 0 as const;
 
 const statusMessages: Record<string, string> = {
     100: "Continue",

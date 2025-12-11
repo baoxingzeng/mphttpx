@@ -86,16 +86,16 @@ export function fire(this: EventTargetState, event: EventP) {
     s.eventPhase = EventP.AT_TARGET;
     s[_dispatched] = true;
 
-    const onceIndexes: number[] = [];
+    let onceIndexes: number[] = [];
 
     for (let i = 0; i < this[_executors].length; ++i) {
-        const executor = this[_executors][i]!;
+        let executor = this[_executors][i]!;
         if (executor.type !== event.type) continue;
 
         s[_passive] = !!executor.options.passive;
         if (executor.options.once) onceIndexes.push(i);
 
-        const { callback: cb } = executor;
+        let { callback: cb } = executor;
 
         try {
             if (typeof cb === "function") cb.call(this.target, event);

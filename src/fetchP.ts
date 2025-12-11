@@ -1,5 +1,5 @@
 import { bodyState, _body } from "./BodyP";
-import { RequestP } from "./RequestP";
+import { RequestP, requestState } from "./RequestP";
 import { ResponseP, responseState } from "./ResponseP";
 import { type AbortSignalP } from "./AbortSignalP";
 import { g, isObjectType, MPException, objectEntries } from "./isPolyfill";
@@ -12,10 +12,11 @@ export function fetchP(input: RequestInfo | URL, init?: RequestInit): Promise<Re
     }
 
     return new Promise(function (resolve, reject) {
-        let request = new RequestP(input, init);
+        const request = new RequestP(input, init);
+        const signal = request[requestState].signal;
 
-        if (request.signal && request.signal.aborted) {
-            return reject((request.signal as AbortSignalP).reason);
+        if (signal && signal.aborted) {
+            return reject((signal as AbortSignalP).reason);
         }
 
         let xhr = new XMLHttpRequest();
@@ -28,7 +29,7 @@ export function fetchP(input: RequestInfo | URL, init?: RequestInit): Promise<Re
             }
 
             setTimeout(() => {
-                const response = new ResponseP(xhr.response, options);
+                let response = new ResponseP(xhr.response, options);
                 response[responseState].url = xhr.responseURL;
 
                 resolve(response);
@@ -61,7 +62,7 @@ export function fetchP(input: RequestInfo | URL, init?: RequestInit): Promise<Re
             xhr.withCredentials = false
         }
 
-        if (init && isObjectHeaders(init.headers)) {
+        if (init && typeof init === "object" && isObjectHeaders(init.headers)) {
             let headers = init.headers;
             let names: string[] = [];
 
@@ -81,19 +82,19 @@ export function fetchP(input: RequestInfo | URL, init?: RequestInit): Promise<Re
             });
         }
 
-        if (request.signal) {
+        if (signal) {
             const abortXHR = () => { xhr.abort(); }
-            request.signal.addEventListener("abort", abortXHR);
+            signal.addEventListener("abort", abortXHR);
 
             xhr.onreadystatechange = function () {
                 // DONE (success or failure)
                 if (xhr.readyState === 4) {
-                    request.signal.removeEventListener("abort", abortXHR);
+                    signal.removeEventListener("abort", abortXHR);
                 }
             }
         }
 
-        xhr.send(request[bodyState][_body] as (XMLHttpRequestBodyInit | null));
+        xhr.send(request[bodyState][_body] as XMLHttpRequestBodyInit);
     });
 }
 

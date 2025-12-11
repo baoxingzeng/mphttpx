@@ -44,7 +44,7 @@ export class ResponseP extends BodyP implements Response {
     get url() { return this[state].url; }
 
     clone(): Response {
-        const response = new ResponseP(this[bodyState][_body], {
+        let response = new ResponseP(this[bodyState][_body], {
             headers: new HeadersP(this.headers),
             status: this.status,
             statusText: this.statusText,
@@ -59,7 +59,7 @@ export class ResponseP extends BodyP implements Response {
     }
 
     static error() {
-        const response = new ResponseP(null, {status: 200, statusText: ""});
+        let response = new ResponseP(null, {status: 200, statusText: ""});
         response[state].ok = false;
         response[state].status = 0;
         response[state].type = "error";

@@ -26,7 +26,7 @@ export class FormDataP implements FormData {
     }
 
     delete(name: string) {
-        const result: [string, FormDataEntryValue][] = [];
+        let result: [string, FormDataEntryValue][] = [];
         name = String(name);
 
         each(this[state][_formData], entry => {
@@ -37,7 +37,7 @@ export class FormDataP implements FormData {
     }
 
     get(name: string): FormDataEntryValue | null {
-        const entries = this[state][_formData];
+        let entries = this[state][_formData];
         name = String(name);
 
         for (let i = 0; i < entries.length; ++i) {
@@ -50,7 +50,7 @@ export class FormDataP implements FormData {
     }
 
     getAll(name: string): FormDataEntryValue[] {
-        const result: FormDataEntryValue[] = [];
+        let result: FormDataEntryValue[] = [];
         name = String(name);
 
         each(this[state][_formData], data => {
@@ -74,8 +74,8 @@ export class FormDataP implements FormData {
 
     set(name: string, value: string | Blob, filename?: string) {
         name = String(name);
-        const result: [string, FormDataEntryValue][] = [];
-        const args = normalizeArgs(name, value, filename);
+        let result: [string, FormDataEntryValue][] = [];
+        let args = normalizeArgs(name, value, filename);
         let replace = true;
 
         each(this[state][_formData], data => {
@@ -90,7 +90,7 @@ export class FormDataP implements FormData {
     }
 
     forEach(callbackfn: (value: FormDataEntryValue, key: string, parent: FormData) => void, thisArg?: any): void {
-        for (const [name, value] of this) {
+        for (let [name, value] of this) {
             callbackfn.call(thisArg, value, name, thisArg);
         }
     }
