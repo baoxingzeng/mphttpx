@@ -1,13 +1,17 @@
 {
   "name": "mphttpx",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "type": "module",
   "main": "dist/index.cjs.js",
   "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist",
-    "README.md"
+    "README.md",
+    "dist/index.d.ts",
+    "dist/index.cjs.js",
+    "dist/index.esm.js",
+    "dist/index.cjs.min.js",
+    "dist/index.esm.min.js"
   ],
   "scripts": {
     "build": "rollup --config",
