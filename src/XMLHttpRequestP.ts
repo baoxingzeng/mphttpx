@@ -131,7 +131,7 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
         const processContentLength = that.upload[eventTargetState][_executors].length > 0;
 
         let headers = { ...that[_requestHeaders] };
-        let contentLength: number | (() => number) = 0;
+        let contentLength: number | (() => number) = () => 0;
 
         let data = convert(
             body,
@@ -139,7 +139,7 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
             processContentLength ? v => { contentLength = v; } : void 0,
         );
 
-        that[_requestTask] = request({
+        let options: IRequestOptions = {
             url: that[_requestURL],
             method: that[_method] as NonNullable<IRequestOptions["method"]>,
             header: headers,
@@ -149,8 +149,14 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
             success: requestSuccess.bind(that),
             fail: requestFail.bind(that),
             complete: requestComplete.bind(that),
-        });
+        };
 
+        if (that.withCredentials) {
+            options.withCredentials = true;
+            options.enableCookie = true;
+        }
+
+        that[_requestTask] = request(options);
         emitProcessEvent(this, "loadstart");
 
         if (processContentLength) {
@@ -251,7 +257,7 @@ class XMLHttpRequestState {
     [_method] = "GET";
     [_requestHeaders]: Record<string, string> = { Accept: "*/*" };
     [_responseHeaders]: Record<string, string> | null = null;
-    [_responseContentLength]: number | (() => number) = 0;
+    [_responseContentLength]: number | (() => number) = () => 0;
 
     [_requestTask]: IRequestTask | null = null;
 }
@@ -369,7 +375,7 @@ function resetXHR(this: XMLHttpRequestState) {
 
     this[_requestHeaders] = {};
     this[_responseHeaders] = null;
-    this[_responseContentLength] = 0;
+    this[_responseContentLength] = () => 0;
 }
 
 function resetRequestTimeout(this: XMLHttpRequestState) {
@@ -488,8 +494,9 @@ export function convert(
     }
 
     if (setContentLength) {
-        if (typeof result === "string") { setContentLength(() => { return encode(result as string).byteLength; }); }
-        else { setContentLength(result.byteLength); }
+        setContentLength(() => {
+            return (typeof result === "string" ? encode(result) : result).byteLength;
+        });
     }
 
     return result;

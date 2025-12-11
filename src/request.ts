@@ -76,6 +76,15 @@ export interface IRequestOptions {
      */
     useHighPerformanceMode?: boolean;
 
+    withCredentials?: boolean;
+
+    /**
+     * 支付宝
+     * 是否手工设置 cookie。如果为 true，请求将使用 headers 中设置的 cookie；如果为 false，则 headers 中的 cookie 字段将被忽略，请求头中将包含服务端上一次返回的 cookie（如果有且未过期）
+     * 默认值：false
+     */
+    enableCookie?: boolean;
+
     /**
      * 开启 http2
      * 默认值：false
