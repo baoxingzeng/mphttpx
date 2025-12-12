@@ -134,7 +134,7 @@ function reply(this: EventTargetState, signal: AbortSignal, executor: Executor) 
     try {
         signal.addEventListener("abort", onAbort);
     } catch (e) {
-        console.error(e);
+        console.warn(e);
     }
 }
 

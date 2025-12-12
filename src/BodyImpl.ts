@@ -201,9 +201,7 @@ export function convert(
     }
 
     if (setContentLength) {
-        setContentLength(() => {
-            return (typeof result === "string" ? encode(result) : result).byteLength;
-        });
+        setContentLength(() => (typeof result === "string" ? encode(result) : result).byteLength);
     }
 
     return result;

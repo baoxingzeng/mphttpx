@@ -15,7 +15,7 @@ export const request = mp ? mp.request : function errorRequest(options: IRequest
     };
 
     Promise.resolve(err)
-        .then(err => { try { if (options.fail) { options.fail(err); } } catch (e) { console.warn(e); } })
+        .then(err => { try { if (options.fail) { options.fail(err); } } catch (e) { console.error(e); } })
         .then(() => { if (options.complete) { options.complete(err); } });
 
     throw new ReferenceError("request is not defined");
