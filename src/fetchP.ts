@@ -1,5 +1,5 @@
 import { type AbortSignalP } from "./AbortSignalP";
-import { bodyState, _body } from "./BodyP";
+import { bodyState, _body } from "./BodyImpl";
 import { RequestP, requestState } from "./RequestP";
 import { ResponseP, responseState } from "./ResponseP";
 import { normalizeName, normalizeValue, parseHeaders } from "./HeadersP";

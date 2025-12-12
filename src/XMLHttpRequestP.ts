@@ -1,6 +1,6 @@
 import { HeadersP } from "./HeadersP";
 import { normalizeMethod } from "./RequestP";
-import { convert, convertBack } from "./BodyP";
+import { convert, convertBack } from "./BodyImpl";
 import { u8array2base64 } from "./BlobP";
 import { TextEncoderP } from "./TextEncoderP";
 import { createInnerEvent } from "./EventP";

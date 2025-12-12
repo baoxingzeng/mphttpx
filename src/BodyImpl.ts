@@ -8,9 +8,9 @@ import { polyfill, isObjectType, isPolyfillType, defineStringTag } from "./isPol
 const state = Symbol(/* "BodyState" */);
 export { state as bodyState };
 
-export class BodyP implements Body {
+export class BodyImpl implements Body {
     constructor() {
-        if (new.target === BodyP) {
+        if (new.target === BodyImpl) {
             throw new TypeError("Failed to construct 'Body': Illegal constructor");
         }
 
@@ -61,7 +61,7 @@ export class BodyP implements Body {
     get isPolyfill() { return { symbol: polyfill, hierarchy: ["Body"] }; }
 }
 
-defineStringTag(BodyP, "Body");
+defineStringTag(BodyImpl, "Body");
 
 export /** @internal */ const _name = Symbol();
 export /** @internal */ const _body = Symbol();

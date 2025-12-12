@@ -1,13 +1,13 @@
 import { HeadersP } from "./HeadersP";
 import { AbortControllerP } from "./AbortControllerP";
-import { BodyP, bodyState, _name, _body, initFn } from "./BodyP";
+import { BodyImpl, bodyState, _name, _body, initFn } from "./BodyImpl";
 import { g, polyfill, isPolyfillType, defineStringTag } from "./isPolyfill";
 
 /** @internal */
 const state = Symbol(/* "RequestState" */);
 export { state as requestState };
 
-export class RequestP extends BodyP implements Request {
+export class RequestP extends BodyImpl implements Request {
     constructor(input: RequestInfo | URL, init?: RequestInit) {
         super();
         this[state] = new RequestState();

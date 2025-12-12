@@ -1,12 +1,12 @@
 import { HeadersP } from "./HeadersP";
 import { g, polyfill, defineStringTag } from "./isPolyfill";
-import { BodyP, bodyState, _name, _body, initFn } from "./BodyP";
+import { BodyImpl, bodyState, _name, _body, initFn } from "./BodyImpl";
 
 /** @internal */
 const state = Symbol(/* "ResponseState" */);
 export { state as responseState };
 
-export class ResponseP extends BodyP implements Response {
+export class ResponseP extends BodyImpl implements Response {
     constructor(body?: BodyInit | null, init?: ResponseInit) {
         super();
         this[state] = new ResponseState();
