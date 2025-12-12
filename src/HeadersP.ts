@@ -112,9 +112,13 @@ class SimpleMap<K, V> {
     }
 
     set(key: K, value: V) {
-        for (let i = 0; i < this.array.length; ++i) {
-            let pair = this.array[i]!;
-            if (pair[0] === key) { pair[1] = value; break; }
+        if (this.has(key)) {
+            for (let i = 0; i < this.array.length; ++i) {
+                let pair = this.array[i]!;
+                if (pair[0] === key) { this.array[i]![1] = value; break; }
+            }
+        } else {
+            this.array.push([key, value]);
         }
         return this.array;
     }
