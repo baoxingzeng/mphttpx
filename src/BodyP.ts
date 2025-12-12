@@ -176,7 +176,7 @@ export function convert(
     }
 
     else if (isPolyfillType<Blob>("Blob", body)) {
-        result = (body as BlobP)[blobState].toArrayBuffer().slice(0);
+        result = (body as BlobP)[blobState].toUint8Array().buffer.slice(0);
 
         if (setContentType && body.type) {
             setContentType(body.type);
@@ -185,7 +185,7 @@ export function convert(
 
     else if (isPolyfillType<FormData>("FormData", body)) {
         let blob = (body as FormDataP)[formDataState].toBlob();
-        result = blob[blobState].toArrayBuffer();
+        result = blob[blobState].toUint8Array().buffer;
 
         if (setContentType) {
             setContentType(blob.type);

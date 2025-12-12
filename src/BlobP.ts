@@ -86,10 +86,32 @@ class BlobState {
     toUint8Array() {
         return this[_u8array];
     }
+}
 
-    toArrayBuffer() {
-        return this[_u8array].buffer;
-    }
+function convert(buf: BufferSource): InstanceType<typeof Uint8Array> {
+    return buf instanceof ArrayBuffer
+        ? new Uint8Array(buf)
+        : new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength);
+}
+
+function clone(buf: BufferSource) {
+    let sourceArray = convert(buf);
+    let cloneArray = new Uint8Array(new ArrayBuffer(sourceArray.byteLength));
+
+    cloneArray.set(sourceArray);
+    return cloneArray;
+}
+
+function concat(chunks: Uint8Array[]) {
+    let totalByteLength = chunks.reduce((acc, cur) => acc + cur.byteLength, 0);
+    let result = new Uint8Array(totalByteLength);
+
+    chunks.reduce((offset, chunk) => {
+        result.set(chunk, offset);
+        return offset + chunk.byteLength;
+    }, 0);
+
+    return result;
 }
 
 export function u8array2base64(input: InstanceType<typeof Uint8Array>) {
@@ -123,32 +145,6 @@ export function u8array2base64(input: InstanceType<typeof Uint8Array>) {
     }
 
     return output.join("");
-}
-
-function convert(buf: BufferSource): InstanceType<typeof Uint8Array> {
-    return buf instanceof ArrayBuffer
-        ? new Uint8Array(buf)
-        : new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength);
-}
-
-function clone(buf: BufferSource) {
-    let sourceArray = convert(buf);
-    let cloneArray = new Uint8Array(new ArrayBuffer(sourceArray.byteLength));
-
-    cloneArray.set(sourceArray);
-    return cloneArray;
-}
-
-function concat(chunks: Uint8Array[]) {
-    let totalByteLength = chunks.reduce((acc, cur) => acc + cur.byteLength, 0);
-    let result = new Uint8Array(totalByteLength);
-
-    chunks.reduce((offset, chunk) => {
-        result.set(chunk, offset);
-        return offset + chunk.byteLength;
-    }, 0);
-
-    return result;
 }
 
 const BlobE = g["Blob"] || BlobP;

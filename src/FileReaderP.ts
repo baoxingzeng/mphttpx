@@ -40,7 +40,7 @@ export class FileReaderP extends EventTargetP implements FileReader {
 
     readAsArrayBuffer(blob: Blob) {
         read.call(this[state], "readAsArrayBuffer", blob, () => {
-            this[state].result = (blob as BlobP)[blobState].toArrayBuffer().slice(0);
+            this[state].result = (blob as BlobP)[blobState].toUint8Array().buffer.slice(0);
         });
     }
 
