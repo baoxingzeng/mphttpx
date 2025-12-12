@@ -33,10 +33,10 @@ export class HeadersP implements Headers {
 
     append(name: string, value: string): void {
         let key = normalizeName(name, "append");
-        value = normalizeValue(value);
+        let newValue = normalizeValue(value);
 
         let oldValue = this[state][_headersMap].get(key)?.[1];
-        this[state][_headersMap].set(key, ["" + name, oldValue ? `${oldValue}, ${value}` : value]);
+        this[state][_headersMap].set(key, ["" + name, oldValue ? `${oldValue}, ${newValue}` : newValue]);
     }
 
     delete(name: string): void {
@@ -97,7 +97,51 @@ const _headersMap = Symbol();
 
 /** @internal */
 class HeadersState {
-    [_headersMap] = new Map<string, [string, string]>();
+    [_headersMap] = new SimpleMap<string, [string, string]>();
+}
+
+/** @internal */
+class SimpleMap<K, V> {
+    array: [K, V][] = [];
+
+    get(key: K): V | void {
+        for (let i = 0; i < this.array.length; ++i) {
+            let pair = this.array[i]!;
+            if (pair[0] === key) { return pair[1]; }
+        }
+    }
+
+    set(key: K, value: V) {
+        for (let i = 0; i < this.array.length; ++i) {
+            let pair = this.array[i]!;
+            if (pair[0] === key) { pair[1] = value; break; }
+        }
+        return this.array;
+    }
+
+    has(key: K) {
+        for (let i = 0; i < this.array.length; ++i) {
+            let pair = this.array[i]!;
+            if (pair[0] === key) { return true; }
+        }
+        return false;
+    }
+
+    delete(key: K) {
+        let index = -1;
+        let array: [K, V][] = [];
+        for (let i = 0; i < this.array.length; ++i) {
+            let pair = this.array[i]!;
+            if (pair[0] === key) { index = i; continue; }
+            array.push(pair);
+        }
+        if (index > -1) { this.array = array; }
+        return index > -1;
+    }
+
+    values() {
+        return this.array.map(x => x[1]).values();
+    }
 }
 
 export function normalizeName(name: string, kind = "") {

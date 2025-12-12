@@ -55,7 +55,7 @@ export class FileReaderP extends EventTargetP implements FileReader {
 
     readAsDataURL(blob: Blob) {
         read.call(this[state], "readAsDataURL", blob, () => {
-            this[state].result = "data:" + blob.type + ";base64," + u8array2base64((blob as BlobP)[blobState].toUint8Array());
+            this[state].result = "data:" + (blob.type || "application/octet-stream") + ";base64," + u8array2base64((blob as BlobP)[blobState].toUint8Array());
         });
     }
 

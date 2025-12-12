@@ -1,6 +1,8 @@
-import { createFormDataFromBody } from "./FormDataP";
-import { convert, convertBack } from "./XMLHttpRequestP";
-import { polyfill, isObjectType, defineStringTag } from "./isPolyfill";
+import { BlobP, blobState } from "./BlobP";
+import { TextEncoderP } from "./TextEncoderP";
+import { TextDecoderP } from "./TextDecoderP";
+import { type FormDataP, formDataState, createFormDataFromBody } from "./FormDataP";
+import { polyfill, isObjectType, isPolyfillType, defineStringTag } from "./isPolyfill";
 
 /** @internal */
 const state = Symbol(/* "BodyState" */);
@@ -130,4 +132,106 @@ function consumed(this: BodyState, kind: string) {
         return Promise.reject(new TypeError(`TypeError: Failed to execute '${kind}' on '${this[_name]}': body stream already read`));
     }
     this.bodyUsed = true;
+}
+
+const encode = (str: string) => {
+    const encoder = new TextEncoderP();
+    return encoder.encode(str).buffer;
+}
+
+const decode = (buf: ArrayBuffer) => {
+    let decoder = new TextDecoderP();
+    return decoder.decode(buf);
+}
+
+export function convert(
+    body?: Parameters<XMLHttpRequest["send"]>[0],
+    setContentType?: (str: string) => void,
+    setContentLength?: (num: () => number) => void,
+): string | ArrayBuffer {
+    let result: string | ArrayBuffer;
+
+    if (typeof body === "string") {
+        result = body;
+
+        if (setContentType) {
+            setContentType("text/plain;charset=UTF-8");
+        }
+    }
+
+    else if (isObjectType<URLSearchParams>("URLSearchParams", body)) {
+        result = body.toString();
+
+        if (setContentType) {
+            setContentType("application/x-www-form-urlencoded;charset=UTF-8");
+        }
+    }
+
+    else if (body instanceof ArrayBuffer) {
+        result = body.slice(0);
+    }
+
+    else if (ArrayBuffer.isView(body)) {
+        result = body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength);
+    }
+
+    else if (isPolyfillType<Blob>("Blob", body)) {
+        result = (body as BlobP)[blobState].toArrayBuffer().slice(0);
+
+        if (setContentType && body.type) {
+            setContentType(body.type);
+        }
+    }
+
+    else if (isPolyfillType<FormData>("FormData", body)) {
+        let blob = (body as FormDataP)[formDataState].toBlob();
+        result = blob[blobState].toArrayBuffer();
+
+        if (setContentType) {
+            setContentType(blob.type);
+        }
+    }
+
+    else if (!body) {
+        result = "";
+    }
+
+    else {
+        result = String(body);
+    }
+
+    if (setContentLength) {
+        setContentLength(() => {
+            return (typeof result === "string" ? encode(result) : result).byteLength;
+        });
+    }
+
+    return result;
+}
+
+export function convertBack(
+    type: XMLHttpRequestResponseType,
+    data?: string | object | ArrayBuffer,
+): string | object | ArrayBuffer | Blob {
+    let temp = !!data ? (typeof data !== "string" && !(data instanceof ArrayBuffer) ? JSON.stringify(data) : data) : "";
+
+    if (!type || type === "text") {
+        return typeof temp === "string" ? temp : decode(temp);
+    }
+
+    else if (type === "json") {
+        return JSON.parse(typeof temp === "string" ? temp : decode(temp));
+    }
+
+    else if (type === "arraybuffer") {
+        return temp instanceof ArrayBuffer ? temp.slice(0) : encode(temp);
+    }
+
+    else if (type === "blob") {
+        return new BlobP([temp]);
+    }
+
+    else {
+        return temp;
+    }
 }

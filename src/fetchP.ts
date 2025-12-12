@@ -1,10 +1,13 @@
+import { type AbortSignalP } from "./AbortSignalP";
 import { bodyState, _body } from "./BodyP";
 import { RequestP, requestState } from "./RequestP";
 import { ResponseP, responseState } from "./ResponseP";
-import { type AbortSignalP } from "./AbortSignalP";
+import { normalizeName, normalizeValue, parseHeaders } from "./HeadersP";
 import { g, isObjectType, MPException, objectEntries } from "./isPolyfill";
-import { HeadersP, normalizeName, normalizeValue, parseHeaders } from "./HeadersP";
 import { XMLHttpRequest, XMLHttpRequestP, xhrState, _responseHeaders } from "./XMLHttpRequestP";
+
+const mp = { XMLHttpRequest: XMLHttpRequest };
+export const setXMLHttpRequest = (XHR: typeof globalThis["XMLHttpRequest"]) => { mp.XMLHttpRequest = XHR; }
 
 export function fetchP(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
     if (new.target === fetchP) {
@@ -19,11 +22,11 @@ export function fetchP(input: RequestInfo | URL, init?: RequestInit): Promise<Re
             return reject((signal as AbortSignalP).reason);
         }
 
-        let xhr = new XMLHttpRequest();
+        let xhr = new mp.XMLHttpRequest();
 
         xhr.onload = function () {
             let options = {
-                headers: xhr instanceof XMLHttpRequestP ? (new HeadersP(xhr[xhrState][_responseHeaders] || undefined)) : parseHeaders(xhr.getAllResponseHeaders() || ""),
+                headers: xhr instanceof XMLHttpRequestP ? xhr[xhrState][_responseHeaders]! : parseHeaders(xhr.getAllResponseHeaders() || ""),
                 status: xhr.status,
                 statusText: xhr.statusText,
             }

@@ -1,13 +1,15 @@
+import { HeadersP } from "./HeadersP";
+import { normalizeMethod } from "./RequestP";
+import { convert, convertBack } from "./BodyP";
+import { u8array2base64 } from "./BlobP";
 import { TextEncoderP } from "./TextEncoderP";
-import { TextDecoderP } from "./TextDecoderP";
 import { createInnerEvent } from "./EventP";
 import { emitProcessEvent } from "./ProgressEventP";
 import { eventTargetState, _executors, fire, attachFn, executeFn } from "./EventTargetP";
 import { XMLHttpRequestEventTargetP } from "./XMLHttpRequestEventTargetP";
 import { XMLHttpRequestUploadP, createXMLHttpRequestUploadP } from "./XMLHttpRequestUploadP";
-import { BlobP, blobState, u8array2base64 } from "./BlobP";
-import { type FormDataP, formDataState } from "./FormDataP";
 import type {
+    TRequestFunc,
     IRequestOptions,
     IRequestTask,
     IRequestSuccessCallbackBaseResult,
@@ -15,7 +17,10 @@ import type {
     IAliRequestFailCallbackResult
 } from "./request";
 import { request } from "./request";
-import { polyfill, isObjectType, isPolyfillType, defineStringTag, MPException, objectEntries } from "./isPolyfill";
+import { polyfill, defineStringTag, MPException } from "./isPolyfill";
+
+const mp = { request: request };
+export const setRequest = (request: TRequestFunc) => { mp.request = request; }
 
 /** @internal */
 const state = Symbol(/* "XMLHttpRequestState" */);
@@ -47,7 +52,7 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
     get responseText(): string { return (!this.responseType || this.responseType === "text") ? this.response : ""; }
 
     get responseType() { return this[state].responseType; }
-    set responseType(value) { this[state].responseType = value; }
+    set responseType(value) { this[state].responseType = normalizeResponseType(value); }
 
     get responseURL() { return this[state].responseURL; }
     get responseXML(): Document | null { return null; }
@@ -59,7 +64,7 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
     }
 
     get timeout() { return this[state].timeout; }
-    set timeout(value) { this[state].timeout = value; }
+    set timeout(value) { this[state].timeout = value > 0 ? value : 0; }
 
     get upload(): XMLHttpRequestUpload {
         const that = this[state];
@@ -68,7 +73,7 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
     }
 
     get withCredentials() { return this[state].withCredentials; }
-    set withCredentials(value) { this[state].withCredentials = value; }
+    set withCredentials(value) { this[state].withCredentials = !!value; }
 
     abort(): void {
         clearRequest.call(this[state]);
@@ -76,14 +81,12 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
 
     getAllResponseHeaders(): string {
         if (!this[state][_responseHeaders]) return "";
-        return objectEntries(this[state][_responseHeaders] || {}).map(([k, v]) => `${k}: ${v}\r\n`).join("");
+        return Array.from(this[state][_responseHeaders]!.entries()).map(([k, v]) => `${k}: ${v}\r\n`).join("");
     }
 
     getResponseHeader(name: string): string | null {
         if (!this[state][_responseHeaders]) return null;
-
-        let nameKey = name.toLowerCase();
-        return objectEntries(this[state][_responseHeaders] || {}).find(x => x[0].toLowerCase() === nameKey)?.[1] ?? null;
+        return this[state][_responseHeaders]!.get(name);
     }
 
     open(...args: [method: string, url: string | URL, async?: boolean, username?: string | null, password?: string | null]): void {
@@ -133,38 +136,39 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
         that[_inAfterOpenBeforeSend] = false;
 
         const allowsRequestBody = that[_method] !== "GET" && that[_method] !== "HEAD";
-        const processHeaders = allowsRequestBody && Object.keys(that[_requestHeaders]).map(x => x.toLowerCase()).indexOf("content-type") === -1;
+        const processHeaders = allowsRequestBody && !that[_requestHeaders].has("Content-Type");
 
         const upload = that.upload;
         const processContentLength = upload && upload[eventTargetState][_executors].length > 0;
 
-        let headers = processHeaders ? { ...that[_requestHeaders] } : that[_requestHeaders];
-        let contentLength: number | (() => number) = zero;
+        let headers = () => Array.from(that[_requestHeaders].entries())
+            .reduce(
+                (acc: Record<string, string>, cur) => { acc[cur[0]] = cur[1]; return acc; },
+                {}
+            );
 
-        let data = convert(
-            body,
-            processHeaders ? v => { assignRequestHeader(headers, "Content-Type", v); } : void 0,
-            processContentLength ? v => { contentLength = v; } : void 0,
-        );
+        let contentLength: () => number = zero;
+
+        const processHeadersFn = processHeaders ? (v: string) => { that[_requestHeaders].set("Content-Type", v); } : void 0;
+        const processContentLengthFn = processContentLength ? (v: () => number) => { contentLength = v; } : void 0;
+
+        let data = body as string | ArrayBuffer;
+        try { data = convert(body, processHeadersFn, processContentLengthFn); } catch (e) { console.warn(e); }
 
         let options: IRequestOptions = {
             url: that[_requestURL],
             method: that[_method] as NonNullable<IRequestOptions["method"]>,
-            header: headers,
+            header: headers(),
             data,
             dataType: that.responseType === "json" ? "json" : normalizeDataType(that.responseType),
             responseType: normalizeDataType(that.responseType),
+            withCredentials: that.withCredentials,
             success: requestSuccess.bind(that),
             fail: requestFail.bind(that),
             complete: requestComplete.bind(that),
         };
 
-        if (that.withCredentials) {
-            options.withCredentials = true;
-            options.enableCookie = true;
-        }
-
-        that[_requestTask] = request(options);
+        that[_requestTask] = mp.request(options);
         emitProcessEvent(this, "loadstart");
 
         if (processContentLength) {
@@ -196,7 +200,7 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
     }
 
     setRequestHeader(name: string, value: string): void {
-        assignRequestHeader(this[state][_requestHeaders], name, value);
+        this[state][_requestHeaders].append(name, value);
     }
 
     get onreadystatechange() { return this[state].onreadystatechange; }
@@ -263,9 +267,9 @@ class XMLHttpRequestState {
 
     [_requestURL] = "";
     [_method] = "GET";
-    [_requestHeaders]: Record<string, string> = { Accept: "*/*" };
-    [_responseHeaders]: Record<string, string> | null = null;
-    [_responseContentLength]: number | (() => number) = zero;
+    [_requestHeaders]: Headers = new HeadersP();
+    [_responseHeaders]: Headers | null = null;
+    [_responseContentLength]: () => number = zero;
 
     [_requestTask]: IRequestTask | null = null;
 }
@@ -273,9 +277,9 @@ class XMLHttpRequestState {
 function requestSuccess(this: XMLHttpRequestState, { statusCode, header, data }: IRequestSuccessCallbackBaseResult) {
     this.responseURL = this[_requestURL];
     this.status = statusCode;
-    this[_responseHeaders] = header as Record<string, string>;
+    this[_responseHeaders] = new HeadersP(header as Record<string, string>);
 
-    let lengthStr = this.target.getResponseHeader("Content-Length");
+    let lengthStr = this[_responseHeaders]!.get("Content-Length");
     this[_responseContentLength] = () => { return lengthStr ? parseInt(lengthStr) : 0; }
 
     if (this.readyState === XMLHttpRequestP.OPENED) {
@@ -381,7 +385,7 @@ function resetXHR(this: XMLHttpRequestState) {
     this.status = 0;
     this.statusText = "";
 
-    this[_requestHeaders] = {};
+    this[_requestHeaders] = new HeadersP();
     this[_responseHeaders] = null;
     this[_responseContentLength] = zero;
 }
@@ -409,132 +413,14 @@ function getHandlers(this: XMLHttpRequestState) {
     };
 }
 
-// HTTP methods whose capitalization should be normalized
-const methods = ["CONNECT", "DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT", "TRACE"];
+const responseTypes = ["", "text", "json", "arraybuffer", "blob", "document"];
 
-export function normalizeMethod(method: string) {
-    let upcased = method.toUpperCase();
-    return methods.indexOf(upcased) > -1 ? upcased : method;
+function normalizeResponseType(responseType: string): XMLHttpRequestResponseType {
+    return responseTypes.indexOf(responseType) > -1 ? responseType as XMLHttpRequestResponseType : "";
 }
 
 function normalizeDataType(responseType: XMLHttpRequestResponseType) {
     return (responseType === "blob" || responseType === "arraybuffer") ? "arraybuffer" : "text";
-}
-
-function assignRequestHeader(headers: Record<string, string>, name: string, value: string) {
-    let nameKey = name.toLowerCase();
-
-    for (let key of Object.keys(headers)) {
-        if (key.toLowerCase() === nameKey) {
-            headers[key] = value;
-            return;
-        }
-    }
-
-    Object.assign(headers, { [name]: value });
-    return;
-}
-
-const encode = (str: string) => {
-    const encoder = new TextEncoderP();
-    return encoder.encode(str).buffer;
-}
-
-const decode = (buf: ArrayBuffer) => {
-    let decoder = new TextDecoderP();
-    return decoder.decode(buf);
-}
-
-export function convert(
-    body?: Parameters<XMLHttpRequest["send"]>[0],
-    setContentType?: (str: string) => void,
-    setContentLength?: (num: number | (() => number)) => void,
-): string | ArrayBuffer {
-    let result: string | ArrayBuffer;
-
-    if (typeof body === "string") {
-        result = body;
-
-        if (setContentType) {
-            setContentType("text/plain;charset=UTF-8");
-        }
-    }
-
-    else if (isObjectType<URLSearchParams>("URLSearchParams", body)) {
-        result = body.toString();
-
-        if (setContentType) {
-            setContentType("application/x-www-form-urlencoded;charset=UTF-8");
-        }
-    }
-
-    else if (body instanceof ArrayBuffer) {
-        result = body.slice(0);
-    }
-
-    else if (ArrayBuffer.isView(body)) {
-        result = body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength);
-    }
-
-    else if (isPolyfillType<Blob>("Blob", body)) {
-        result = (body as BlobP)[blobState].toArrayBuffer().slice(0);
-
-        if (setContentType && body.type) {
-            setContentType(body.type);
-        }
-    }
-
-    else if (isPolyfillType<FormData>("FormData", body)) {
-        let blob = (body as FormDataP)[formDataState].toBlob();
-        result = blob[blobState].toArrayBuffer();
-
-        if (setContentType) {
-            setContentType(blob.type);
-        }
-    }
-
-    else if (!body) {
-        result = "";
-    }
-
-    else {
-        result = String(body);
-    }
-
-    if (setContentLength) {
-        setContentLength(() => {
-            return (typeof result === "string" ? encode(result) : result).byteLength;
-        });
-    }
-
-    return result;
-}
-
-export function convertBack(
-    type: XMLHttpRequestResponseType,
-    data?: IRequestSuccessCallbackBaseResult["data"]
-): string | object | ArrayBuffer | Blob {
-    let temp = !!data ? (typeof data !== "string" && !(data instanceof ArrayBuffer) ? JSON.stringify(data) : data) : "";
-
-    if (!type || type === "text") {
-        return typeof temp === "string" ? temp : decode(temp);
-    }
-
-    else if (type === "json") {
-        return JSON.parse(typeof temp === "string" ? temp : decode(temp));
-    }
-
-    else if (type === "arraybuffer") {
-        return temp instanceof ArrayBuffer ? temp.slice(0) : encode(temp);
-    }
-
-    else if (type === "blob") {
-        return new BlobP([temp]);
-    }
-
-    else {
-        return temp;
-    }
 }
 
 const zero = () => 0 as const;

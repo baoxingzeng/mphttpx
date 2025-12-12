@@ -21,3 +21,6 @@ export { fetch, fetchP } from "./fetchP";
 export { Headers, HeadersP } from "./HeadersP";
 export { Request, RequestP } from "./RequestP";
 export { Response, ResponseP } from "./ResponseP";
+
+export { setXMLHttpRequest } from "./fetchP";
+export { setRequest } from "./XMLHttpRequestP";
