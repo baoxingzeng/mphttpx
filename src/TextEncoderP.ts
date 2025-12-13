@@ -25,9 +25,9 @@ function encodeText(input: string, destination?: Uint8Array) {
     let read = 0;
     let len = input.length;
 
-    let at = 0; // output position
-    let tlen = Math.max(32, len + (len >> 1) + 7); // 1.5x size
-    let target = HAS_DESTINATION ? destination : new Uint8Array((tlen >> 3) << 3); // ... but at 8 byte offset
+    let at = 0;                                                                     // output position
+    let tlen = Math.max(32, len + (len >> 1) + 7);                                  // 1.5x size
+    let target = HAS_DESTINATION ? destination : new Uint8Array((tlen >> 3) << 3);  // ... but at 8 byte offset
 
     while (pos < len) {
         let value = input.charCodeAt(pos++);
@@ -50,9 +50,9 @@ function encodeText(input: string, destination?: Uint8Array) {
 
         // expand the buffer if we couldn't write 4 bytes
         if (!HAS_DESTINATION && at + 4 > target.length) {
-            tlen += 8; // minimum extra
-            tlen *= (1.0 + (pos / input.length) * 2); // take 2x the remaining
-            tlen = (tlen >> 3) << 3; // 8 byte offset
+            tlen += 8;                                  // minimum extra
+            tlen *= (1.0 + (pos / input.length) * 2);   // take 2x the remaining
+            tlen = (tlen >> 3) << 3;                    // 8 byte offset
 
             let update = new Uint8Array(tlen);
             update.set(target);
@@ -60,13 +60,13 @@ function encodeText(input: string, destination?: Uint8Array) {
         }
 
         let byteCount: number;
-        if ((value & 0xffffff80) === 0) { // 1-byte
+        if ((value & 0xffffff80) === 0) {           // 1-byte
             byteCount = 1;
-        } else if ((value & 0xfffff800) === 0) { // 2-byte
+        } else if ((value & 0xfffff800) === 0) {    // 2-byte
             byteCount = 2;
-        } else if ((value & 0xffff0000) === 0) { // 3-byte
+        } else if ((value & 0xffff0000) === 0) {    // 3-byte
             byteCount = 3;
-        } else if ((value & 0xffe00000) === 0) { // 4-byte
+        } else if ((value & 0xffe00000) === 0) {    // 4-byte
             byteCount = 4;
         } else {
             value = 0xfffd;
@@ -77,16 +77,16 @@ function encodeText(input: string, destination?: Uint8Array) {
             break;
         }
 
-        if (byteCount === 1) { // 1-byte
-            target[at++] = value; // ASCII
-        } else if (byteCount === 2) { // 2-byte
+        if (byteCount === 1) {                              // 1-byte
+            target[at++] = value;                           // ASCII
+        } else if (byteCount === 2) {                       // 2-byte
             target[at++] = ((value >> 6) & 0x1f) | 0xc0;
             target[at++] = (value & 0x3f) | 0x80;
-        } else if (byteCount === 3) { // 3-byte
+        } else if (byteCount === 3) {                       // 3-byte
             target[at++] = ((value >> 12) & 0x0f) | 0xe0;
             target[at++] = ((value >> 6) & 0x3f) | 0x80;
             target[at++] = (value & 0x3f) | 0x80;
-        } else if (byteCount === 4) { // 4-byte
+        } else if (byteCount === 4) {                       // 4-byte
             target[at++] = ((value >> 18) & 0x07) | 0xf0;
             target[at++] = ((value >> 12) & 0x3f) | 0x80;
             target[at++] = ((value >> 6) & 0x3f) | 0x80;
