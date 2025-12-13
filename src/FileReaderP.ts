@@ -1,8 +1,8 @@
 import { TextDecoderP } from "./TextDecoderP";
+import { Blob_toUint8Array, Uint8Array_toBase64 } from "./BlobP";
 import { emitProcessEvent } from "./ProgressEventP";
 import { EventTargetP, attachFn, executeFn } from "./EventTargetP";
-import { BlobP, blobState, u8array2base64 } from "./BlobP";
-import { g, polyfill, isPolyfillType, defineStringTag } from "./isPolyfill";
+import { g, polyfill, isPolyfillType, dfStringTag } from "./isPolyfill";
 
 /** @internal */
 const state = Symbol(/* "FileReaderState" */);
@@ -40,13 +40,13 @@ export class FileReaderP extends EventTargetP implements FileReader {
 
     readAsArrayBuffer(blob: Blob) {
         read.call(this[state], "readAsArrayBuffer", blob, () => {
-            this[state].result = (blob as BlobP)[blobState].toUint8Array().buffer.slice(0);
+            this[state].result = Blob_toUint8Array(blob).buffer.slice(0);
         });
     }
 
     readAsBinaryString(blob: Blob) {
         read.call(this[state], "readAsBinaryString", blob, () => {
-            this[state].result = (blob as BlobP)[blobState].toUint8Array().reduce((acc, cur) => {
+            this[state].result = Blob_toUint8Array(blob).reduce((acc, cur) => {
                 acc += String.fromCharCode(cur);
                 return acc;
             }, "");
@@ -55,13 +55,13 @@ export class FileReaderP extends EventTargetP implements FileReader {
 
     readAsDataURL(blob: Blob) {
         read.call(this[state], "readAsDataURL", blob, () => {
-            this[state].result = "data:" + (blob.type || "application/octet-stream") + ";base64," + u8array2base64((blob as BlobP)[blobState].toUint8Array());
+            this[state].result = "data:" + (blob.type || "application/octet-stream") + ";base64," + Uint8Array_toBase64(Blob_toUint8Array(blob));
         });
     }
 
     readAsText(blob: Blob, encoding?: string) {
         read.call(this[state], "readAsText", blob, () => {
-            this[state].result = (new TextDecoderP(encoding)).decode((blob as BlobP)[blobState].toUint8Array());
+            this[state].result = (new TextDecoderP(encoding)).decode(Blob_toUint8Array(blob));
         });
     }
 
@@ -96,7 +96,7 @@ const properties = {
 Object.defineProperties(FileReaderP, properties);
 Object.defineProperties(FileReaderP.prototype, properties);
 
-defineStringTag(FileReaderP, "FileReader");
+dfStringTag(FileReaderP, "FileReader");
 
 /** @internal */
 const _handlers = Symbol();

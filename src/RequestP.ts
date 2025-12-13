@@ -1,7 +1,7 @@
 import { HeadersP } from "./HeadersP";
 import { AbortControllerP } from "./AbortControllerP";
-import { BodyImpl, bodyState, _name, _body, initFn } from "./BodyImpl";
-import { g, polyfill, isPolyfillType, defineStringTag } from "./isPolyfill";
+import { g, polyfill, isPolyfillType, dfStringTag } from "./isPolyfill";
+import { BodyImpl, Body_init, Body_setName, Body_setBodyUsed, Body_toPayload } from "./BodyImpl";
 
 /** @internal */ const state = Symbol(/* "RequestState" */);
 /** @internal */ export { state as requestState };
@@ -9,10 +9,10 @@ import { g, polyfill, isPolyfillType, defineStringTag } from "./isPolyfill";
 export class RequestP extends BodyImpl implements Request {
     constructor(input: RequestInfo | URL, init?: RequestInit) {
         super();
+        Body_setName(this, "Request");
+
         this[state] = new RequestState();
         const that = this[state];
-
-        this[bodyState][_name] = "Request";
 
         let options = init ?? {};
         let body = options.body;
@@ -28,9 +28,10 @@ export class RequestP extends BodyImpl implements Request {
             let inputSignal = (input as RequestP)[state].signal; if (inputSignal) { that.signal = inputSignal; }
             that.url = input.url;
 
-            let _input = input as RequestP; if (!body && _input[bodyState][_body] !== null) {
-                body = _input[bodyState][_body];
-                _input[bodyState].bodyUsed = true;
+            let payload = Body_toPayload(input);
+            if (!body && payload !== null) {
+                body = payload;
+                Body_setBodyUsed(input, true);
             }
         } else {
             that.url = String(input);
@@ -46,7 +47,7 @@ export class RequestP extends BodyImpl implements Request {
             throw new TypeError("Failed to construct 'Request': Request with GET/HEAD method cannot have body.");
         }
 
-        initFn.call(this[bodyState], body, this.headers);
+        Body_init(this, body, this.headers);
 
         if (this.method === "GET" || this.method === "HEAD") {
             if (options.cache === "no-store" || options.cache === "no-cache") {
@@ -94,14 +95,14 @@ export class RequestP extends BodyImpl implements Request {
     get url() { return this[state].url; }
 
     clone(): Request {
-        return new RequestP(this, { body: this[bodyState][_body] ?? null });
+        return new RequestP(this, { body: Body_toPayload(this) ?? null });
     }
 
     toString() { return "[object Request]"; }
     get isPolyfill() { return { symbol: polyfill, hierarchy: ["Request", "Body"] }; }
 }
 
-defineStringTag(RequestP, "Request");
+dfStringTag(RequestP, "Request");
 
 /** @internal */
 class RequestState {

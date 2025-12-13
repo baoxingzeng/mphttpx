@@ -1,4 +1,5 @@
-/** @internal */ export const polyfill = Symbol("isPolyfill");
+/** @internal */
+export const polyfill = Symbol("isPolyfill");
 
 /* eslint-disable no-prototype-builtins */
 /** @internal */ export const g: typeof globalThis =
@@ -7,6 +8,15 @@
     // @ts-ignore eslint-disable-next-line no-undef
     (typeof global !== "undefined" && global) ||
     {};
+
+/** @internal */
+export class MPException extends Error {
+    constructor(message?: string, name?: string) {
+        super();
+        this.message = message ?? this.message;
+        this.name = name ?? this.name;
+    }
+}
 
 /** @internal */
 export function isObjectType<T>(name: string, value: unknown): value is T {
@@ -34,16 +44,7 @@ export function isPolyfillType<T>(name: string, value: unknown): value is T {
 }
 
 /** @internal */
-export class MPException extends Error {
-    constructor(message?: string, name?: string) {
-        super();
-        this.message = message ?? this.message;
-        this.name = name ?? this.name;
-    }
-}
-
-/** @internal */
-export function defineStringTag(targetFunc: Function, stringTag: string) {
+export function dfStringTag(targetFunc: Function, stringTag: string) {
     Object.defineProperty(targetFunc.prototype, Symbol.toStringTag, {
         configurable: true,
         value: stringTag,

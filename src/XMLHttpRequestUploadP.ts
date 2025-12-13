@@ -1,4 +1,4 @@
-import { polyfill, defineStringTag } from "./isPolyfill";
+import { polyfill, dfStringTag } from "./isPolyfill";
 import { EventTargetState, eventTargetState } from "./EventTargetP";
 import { XMLHttpRequestEventTargetP, XMLHttpRequestEventTargetState, xhrEventTargetState } from "./XMLHttpRequestEventTargetP";
 
@@ -15,7 +15,7 @@ export class XMLHttpRequestUploadP extends XMLHttpRequestEventTargetP implements
     get isPolyfill() { return { symbol: polyfill, hierarchy: ["XMLHttpRequestUpload", "XMLHttpRequestEventTarget", "EventTarget"] }; }
 }
 
-defineStringTag(XMLHttpRequestUploadP, "XMLHttpRequestUpload");
+dfStringTag(XMLHttpRequestUploadP, "XMLHttpRequestUpload");
 
 /** @internal */
 export function createXMLHttpRequestUploadP() {

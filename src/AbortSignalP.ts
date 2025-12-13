@@ -1,14 +1,14 @@
 import { createInnerEvent } from "./EventP";
-import { g, polyfill, defineStringTag, MPException } from "./isPolyfill";
-import { EventTargetP, EventTargetState, eventTargetState, fire, attachFn, executeFn } from "./EventTargetP";
+import { g, polyfill, dfStringTag, MPException } from "./isPolyfill";
+import { EventTargetP, EventTargetState, eventTargetState, EventTarget_fire, attachFn, executeFn } from "./EventTargetP";
 
-/** @internal */ const state = Symbol(/* "AbortSignalState" */);
-/** @internal */ export { state as abortSignalState };
+/** @internal */
+const state = Symbol(/* "AbortSignalState" */);
 
 export class AbortSignalP extends EventTargetP implements AbortSignal {
     static abort(reason?: any): AbortSignal {
         let signal = createAbortSignalP();
-        abort.call(signal[state], reason, false);
+        AbortSignal_abort(signal, reason, false);
 
         return signal;
     }
@@ -18,17 +18,20 @@ export class AbortSignalP extends EventTargetP implements AbortSignal {
         let abortedSignal = signals.find(x => x.aborted);
 
         if (abortedSignal) {
-            abort.call(signal[state], (abortedSignal as AbortSignalP).reason, false);
+            AbortSignal_abort(signal, (abortedSignal as AbortSignalP).reason, false);
         } else {
+            let _signals = Array.from(signals);
             function abortFn(this: AbortSignal, ev: Event) {
-                for (let sig of signals) {
+                for (let i = 0; i < _signals.length; ++i) {
+                    let sig = _signals[i]!;
                     sig.removeEventListener("abort", abortFn);
                 }
 
-                abort.call(signal[state], (this as AbortSignalP).reason, true, ev.isTrusted);
+                AbortSignal_abort(signal, (this as AbortSignalP).reason, true, ev.isTrusted);
             }
 
-            for (let sig of signals) {
+            for (let i = 0; i < _signals.length; ++i) {
+                let sig = _signals[1]!;
                 sig.addEventListener("abort", abortFn);
             }
         }
@@ -40,7 +43,7 @@ export class AbortSignalP extends EventTargetP implements AbortSignal {
         let signal = createAbortSignalP();
 
         setTimeout(() => {
-            abort.call(signal[state], new MPException("signal timed out", "TimeoutError"));
+            AbortSignal_abort(signal, new MPException("signal timed out", "TimeoutError"));
         }, milliseconds);
 
         return signal;
@@ -75,13 +78,13 @@ export class AbortSignalP extends EventTargetP implements AbortSignal {
     get isPolyfill() { return { symbol: polyfill, hierarchy: ["AbortSignal", "EventTarget"] }; }
 }
 
-defineStringTag(AbortSignalP, "AbortSignal");
+dfStringTag(AbortSignalP, "AbortSignal");
 
 /** @internal */
 const _handlers = Symbol();
 
 /** @internal */
-export class AbortSignalState {
+class AbortSignalState {
     constructor(target: AbortSignalP) {
         this.target = target;
     }
@@ -96,14 +99,15 @@ export class AbortSignalState {
 }
 
 /** @internal */
-export function abort(this: AbortSignalState, reason: any, notify = true, isTrusted = true) {
-    if (!this.aborted) {
-        this.aborted = true;
-        this.reason = reason ?? (new MPException("signal is aborted without reason", "AbortError"));
+export function AbortSignal_abort(signal: AbortSignalP, reason: any, notify = true, isTrusted = true) {
+    const that = signal[state];
+    if (!that.aborted) {
+        that.aborted = true;
+        that.reason = reason ?? (new MPException("signal is aborted without reason", "AbortError"));
 
         if (notify) {
-            let evt = createInnerEvent(this.target, "abort", undefined, isTrusted);
-            fire.call(this.target[eventTargetState], evt);
+            let evt = createInnerEvent(signal, "abort", undefined, isTrusted);
+            EventTarget_fire(signal, evt);
         }
     }
 }

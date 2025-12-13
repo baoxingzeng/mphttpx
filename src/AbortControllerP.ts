@@ -1,5 +1,5 @@
-import { g, polyfill, defineStringTag } from "./isPolyfill";
-import { abortSignalState, createAbortSignalP, abort } from "./AbortSignalP";
+import { g, polyfill, dfStringTag } from "./isPolyfill";
+import { createAbortSignalP, AbortSignal_abort } from "./AbortSignalP";
 
 /** @internal */
 const state = Symbol(/* "AbortControllerState" */);
@@ -15,14 +15,14 @@ export class AbortControllerP implements AbortController {
     get signal(): AbortSignal { return this[state].signal; }
 
     abort(reason?: any): void {
-        abort.call(this[state].signal[abortSignalState], reason);
+        AbortSignal_abort(this[state].signal, reason);
     }
 
     toString() { return "[object AbortController]"; }
     get isPolyfill() { return { symbol: polyfill, hierarchy: ["AbortController"] }; }
 }
 
-defineStringTag(AbortControllerP, "AbortController");
+dfStringTag(AbortControllerP, "AbortController");
 
 /** @internal */
 class AbortControllerState {

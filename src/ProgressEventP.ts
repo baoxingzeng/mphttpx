@@ -1,6 +1,6 @@
-import { EventP, eventState, _isTrusted } from "./EventP";
-import { g, polyfill, defineStringTag } from "./isPolyfill";
-import { EventTargetP, eventTargetState, fire } from "./EventTargetP";
+import { g, polyfill, dfStringTag } from "./isPolyfill";
+import { EventTargetP, EventTarget_fire } from "./EventTargetP";
+import { EventP, eventState, Event_setTrusted } from "./EventP";
 
 /** @internal */
 const state = Symbol(/* "ProgressEventState" */);
@@ -27,7 +27,7 @@ export class ProgressEventP extends EventP implements ProgressEvent {
     get isPolyfill() { return { symbol: polyfill, hierarchy: ["ProgressEvent", "Event"] }; }
 }
 
-defineStringTag(ProgressEventP, "ProgressEvent");
+dfStringTag(ProgressEventP, "ProgressEvent");
 
 /** @internal */
 class ProgressEventState {
@@ -61,7 +61,7 @@ function createInnerProgressEvent(
     event[state].total = total;
 
     event[eventState].target = target;
-    event[eventState][_isTrusted] = true;
+    Event_setTrusted(event, true);
     return event;
 }
 
@@ -73,7 +73,7 @@ export function emitProcessEvent(target: EventTargetP, type: string, loaded: num
         total,
     });
 
-    fire.call(target[eventTargetState], event);
+    EventTarget_fire(target, event);
 }
 
 const ProgressEventE = g["EventTarget"] ? g["ProgressEvent"] : ProgressEventP;

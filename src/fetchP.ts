@@ -1,10 +1,10 @@
 import { type AbortSignalP } from "./AbortSignalP";
-import { bodyState, _body } from "./BodyImpl";
+import { Body_toPayload } from "./BodyImpl";
 import { RequestP, requestState } from "./RequestP";
 import { ResponseP, responseState } from "./ResponseP";
-import { normalizeName, normalizeValue, parseHeaders } from "./HeadersP";
+import { normalizeName, normalizeValue } from "./HeadersP";
+import { XMLHttpRequest, getAllResponseHeaders } from "./XMLHttpRequestP";
 import { g, isObjectType, MPException, objectEntries } from "./isPolyfill";
-import { XMLHttpRequest, XMLHttpRequestP, xhrState, _responseHeaders } from "./XMLHttpRequestP";
 
 const mp = { XMLHttpRequest: XMLHttpRequest };
 export const setXMLHttpRequest = (XHR: typeof globalThis["XMLHttpRequest"]) => { mp.XMLHttpRequest = XHR; }
@@ -26,7 +26,7 @@ export function fetchP(input: RequestInfo | URL, init?: RequestInit): Promise<Re
 
         xhr.onload = function () {
             let options = {
-                headers: xhr instanceof XMLHttpRequestP ? xhr[xhrState][_responseHeaders]! : parseHeaders(xhr.getAllResponseHeaders() || ""),
+                headers: getAllResponseHeaders(xhr),
                 status: xhr.status,
                 statusText: xhr.statusText,
             }
@@ -97,7 +97,7 @@ export function fetchP(input: RequestInfo | URL, init?: RequestInit): Promise<Re
             }
         }
 
-        xhr.send(request[bodyState][_body] as XMLHttpRequestBodyInit);
+        xhr.send(Body_toPayload(request) as XMLHttpRequestBodyInit);
     });
 }
 

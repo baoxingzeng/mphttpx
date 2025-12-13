@@ -1,10 +1,9 @@
 import { BlobP } from "./BlobP";
 import { FileP } from "./FileP";
 import { TextEncoderP } from "./TextEncoderP";
-import { g, polyfill, isPolyfillType, defineStringTag } from "./isPolyfill";
+import { g, polyfill, isPolyfillType, dfStringTag } from "./isPolyfill";
 
 /** @internal */ const state = Symbol(/* "FormDataState" */);
-/** @internal */ export { state as formDataState };
 
 export class FormDataP implements FormData {
     constructor(form?: HTMLFormElement, submitter?: HTMLElement | null) {
@@ -91,8 +90,9 @@ export class FormDataP implements FormData {
     }
 
     forEach(callbackfn: (value: FormDataEntryValue, key: string, parent: FormData) => void, thisArg?: any): void {
-        for (let [name, value] of this) {
-            callbackfn.call(thisArg, value, name, thisArg);
+        for (let i = 0; i < this[state][_formData].length; ++i) {
+            let pair = this[state][_formData][i]!
+            callbackfn.call(thisArg, pair[1], pair[0], thisArg);
         }
     }
 
@@ -116,7 +116,7 @@ export class FormDataP implements FormData {
     get isPolyfill() { return { symbol: polyfill, hierarchy: ["FormData"] }; }
 }
 
-defineStringTag(FormDataP, "FormData");
+dfStringTag(FormDataP, "FormData");
 
 /** @internal */
 const _formData = Symbol();
@@ -124,27 +124,28 @@ const _formData = Symbol();
 /** @internal */
 class FormDataState {
     [_formData]: [string, FormDataEntryValue][] = [];
+}
 
-    toBlob() {
-        const boundary = "----formdata-polyfill-" + Math.random();
-        const p = `--${boundary}\r\nContent-Disposition: form-data; name="`;
+/** @internal */
+export function FormData_toBlob(formData: FormData) {
+    const boundary = "----formdata-polyfill-" + Math.random();
+    const p = `--${boundary}\r\nContent-Disposition: form-data; name="`;
 
-        let chunks: BlobPart[] = [];
+    let chunks: BlobPart[] = [];
 
-        for (const [name, value] of this[_formData].values()) {
-            if (typeof value === "string") {
-                chunks.push(p + escape(normalizeLinefeeds(name)) + `"\r\n\r\n${normalizeLinefeeds(value)}\r\n`);
-            } else {
-                chunks.push(p + escape(normalizeLinefeeds(name)) + `"; filename="${escape(value.name)}"\r\nContent-Type: ${value.type || "application/octet-stream"}\r\n\r\n`, value, `\r\n`);
-            }
+    for (let i = 0; i < (formData as FormDataP)[state][_formData].length; ++i) {
+        let pair = (formData as FormDataP)[state][_formData][i]!;
+        let name = pair[0];
+        let value = pair[1];
+        if (typeof value === "string") {
+            chunks.push(p + escape(normalizeLinefeeds(name)) + `"\r\n\r\n${normalizeLinefeeds(value)}\r\n`);
+        } else {
+            chunks.push(p + escape(normalizeLinefeeds(name)) + `"; filename="${escape(value.name)}"\r\nContent-Type: ${value.type || "application/octet-stream"}\r\n\r\n`, value, `\r\n`);
         }
-
-        chunks.push(`--${boundary}--`);
-
-        return new BlobP(chunks, {
-            type: "multipart/form-data; boundary=" + boundary,
-        });
     }
+
+    chunks.push(`--${boundary}--`);
+    return new BlobP(chunks, { type: "multipart/form-data; boundary=" + boundary });
 }
 
 function normalizeArgs(name: string, value: string | Blob, filename?: string): [string, FormDataEntryValue] {

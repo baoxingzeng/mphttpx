@@ -1,4 +1,4 @@
-import { g, polyfill, defineStringTag } from "./isPolyfill";
+import { g, polyfill, dfStringTag } from "./isPolyfill";
 
 export class TextEncoderP implements TextEncoder {
     get encoding() { return "utf-8"; }
@@ -16,7 +16,7 @@ export class TextEncoderP implements TextEncoder {
     get isPolyfill() { return { symbol: polyfill, hierarchy: ["TextEncoder"] }; }
 }
 
-defineStringTag(TextEncoderP, "TextEncoder");
+dfStringTag(TextEncoderP, "TextEncoder");
 
 function encodeText(input: string, destination?: Uint8Array) {
     const HAS_DESTINATION = typeof destination !== "undefined";

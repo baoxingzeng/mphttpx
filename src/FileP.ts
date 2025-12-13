@@ -1,5 +1,5 @@
 import { BlobP } from "./BlobP";
-import { g, polyfill, defineStringTag } from "./isPolyfill";
+import { g, polyfill, dfStringTag } from "./isPolyfill";
 
 /** @internal */
 const state = Symbol(/* "FileState" */);
@@ -24,7 +24,7 @@ export class FileP extends BlobP implements File {
     get isPolyfill() { return { symbol: polyfill, hierarchy: ["File", "Blob"] }; }
 }
 
-defineStringTag(FileP, "File");
+dfStringTag(FileP, "File");
 
 /** @internal */
 class FileState {

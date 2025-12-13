@@ -1,6 +1,6 @@
 import { HeadersP } from "./HeadersP";
-import { g, polyfill, defineStringTag } from "./isPolyfill";
-import { BodyImpl, bodyState, _name, _body, initFn } from "./BodyImpl";
+import { g, polyfill, dfStringTag } from "./isPolyfill";
+import { BodyImpl, Body_init, Body_setName, Body_toPayload } from "./BodyImpl";
 
 /** @internal */ const state = Symbol(/* "ResponseState" */);
 /** @internal */ export { state as responseState };
@@ -8,10 +8,10 @@ import { BodyImpl, bodyState, _name, _body, initFn } from "./BodyImpl";
 export class ResponseP extends BodyImpl implements Response {
     constructor(body?: BodyInit | null, init?: ResponseInit) {
         super();
+        Body_setName(this, "Response");
+
         this[state] = new ResponseState();
         const that = this[state];
-
-        this[bodyState][_name] = "Response";
 
         let options = init ?? {};
         let status = options.status === undefined ? 200 : options.status;
@@ -25,7 +25,7 @@ export class ResponseP extends BodyImpl implements Response {
         that.status = status;
         that.statusText = options.statusText === undefined ? "" : "" + options.statusText;
         
-        initFn.call(this[bodyState], body, this.headers);
+        Body_init(this, body, this.headers);
     }
 
     /** @internal */
@@ -45,7 +45,7 @@ export class ResponseP extends BodyImpl implements Response {
     get url() { return this[state].url; }
 
     clone(): Response {
-        let response = new ResponseP(this[bodyState][_body], {
+        let response = new ResponseP(Body_toPayload(this), {
             headers: new HeadersP(this.headers),
             status: this.status,
             statusText: this.statusText,
@@ -79,7 +79,7 @@ export class ResponseP extends BodyImpl implements Response {
     get isPolyfill() { return { symbol: polyfill, hierarchy: ["Response", "Body"] }; }
 }
 
-defineStringTag(ResponseP, "Response");
+dfStringTag(ResponseP, "Response");
 
 /** @internal */
 class ResponseState {

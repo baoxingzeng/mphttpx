@@ -1,4 +1,4 @@
-import { g, polyfill, defineStringTag } from "./isPolyfill";
+import { g, polyfill, dfStringTag } from "./isPolyfill";
 
 /** @internal */
 const state = Symbol(/* "TextDecoderState" */);
@@ -158,7 +158,7 @@ export class TextDecoderP implements TextDecoder {
     get isPolyfill() { return { symbol: polyfill, hierarchy: ["TextDecoder"] }; }
 }
 
-defineStringTag(TextDecoderP, "TextDecoder");
+dfStringTag(TextDecoderP, "TextDecoder");
 
 /** @internal */ const _bomSeen = Symbol();
 /** @internal */ const _partial = Symbol();

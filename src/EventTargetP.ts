@@ -1,5 +1,10 @@
-import { g, polyfill, defineStringTag } from "./isPolyfill";
-import { EventP, eventState, _isTrusted, _passive, _dispatched, _preventDefaultCalled, _stopImmediatePropagationCalled } from "./EventP";
+import { g, polyfill, dfStringTag } from "./isPolyfill";
+import { EventP, eventState, Event_setTrusted, type Event_EtFields, Event_getEtField, Event_setEtField } from "./EventP";
+
+const passive: Event_EtFields["Passive"] = 0;
+const dispatched: Event_EtFields["Dispatched"] = 1;
+const preventDefaultCalled: Event_EtFields["PreventDefaultCalled"] = 2;
+const stopImmediatePropagationCalled: Event_EtFields["StopImmediatePropagationCalled"] = 3;
 
 /** @internal */ const state = Symbol(/* "EventTargetState" */);
 /** @internal */ export { state as eventTargetState };
@@ -46,10 +51,10 @@ export class EventTargetP implements EventTarget {
             throw new TypeError("EventTarget.dispatchEvent: Argument 1 does not implement interface Event.");
         }
 
+        Event_setTrusted(event, false);
         event[eventState].target = this;
-        Object.defineProperty(event[eventState], _isTrusted, { value: false, configurable: true, enumerable: true, writable: true });
 
-        return fire.call(this[state], event);
+        return EventTarget_fire(this, event);
     }
 
     removeEventListener(type: string, callback: EventListenerOrEventListenerObject | null, options?: EventListenerOptions | boolean) {
@@ -66,10 +71,10 @@ export class EventTargetP implements EventTarget {
     get isPolyfill() { return { symbol: polyfill, hierarchy: ["EventTarget"] }; }
 }
 
-defineStringTag(EventTargetP, "EventTarget");
+dfStringTag(EventTargetP, "EventTarget");
 
 /** @internal */
-export const _executors = Symbol();
+const _executors = Symbol();
 
 /** @internal */
 export class EventTargetState {
@@ -82,37 +87,38 @@ export class EventTargetState {
 }
 
 /** @internal */
-export function fire(this: EventTargetState, event: EventP) {
+export function EventTarget_fire(target: EventTargetP, event: EventP) {
+    const that = target[state];
     const s = event[eventState];
-    if (!event.target) s.target = this.target;
 
-    s.currentTarget = this.target;
+    if (!event.target) s.target = target;
+    s.currentTarget = target;
     s.eventPhase = EventP.AT_TARGET;
-    s[_dispatched] = true;
+    Event_setEtField(event, dispatched, true);
 
     let onceIndexes: number[] = [];
 
-    for (let i = 0; i < this[_executors].length; ++i) {
-        let executor = this[_executors][i]!;
+    for (let i = 0; i < that[_executors].length; ++i) {
+        let executor = that[_executors][i]!;
         if (executor.type !== event.type) continue;
 
-        s[_passive] = !!executor.options.passive;
+        Event_setEtField(event, passive, !!executor.options.passive);
         if (executor.options.once) onceIndexes.push(i);
 
         let { callback: cb } = executor;
 
         try {
-            if (typeof cb === "function") cb.call(this.target, event);
+            if (typeof cb === "function") cb.call(target, event);
         } catch (e) {
             console.error(e);
         }
 
-        s[_passive] = false;
-        if (s[_stopImmediatePropagationCalled]) break;
+        Event_setEtField(event, passive, false);
+        if (Event_getEtField(event, stopImmediatePropagationCalled)) break;
     }
 
     if (onceIndexes.length > 0) {
-        this[_executors] = this[_executors].reduce((acc: Executor[], cur, index) => {
+        that[_executors] = that[_executors].reduce((acc: Executor[], cur, index) => {
             if (onceIndexes.indexOf(index) === -1) acc.push(cur);
             return acc;
         }, []);
@@ -120,9 +126,14 @@ export function fire(this: EventTargetState, event: EventP) {
 
     s.currentTarget = null;
     s.eventPhase = EventP.NONE;
-    s[_dispatched] = false;
+    Event_setEtField(event, dispatched, false);
 
-    return !(event.cancelable && s[_preventDefaultCalled]);
+    return !(event.cancelable && Event_getEtField(event, preventDefaultCalled));
+}
+
+/** @internal */
+export function EventTarget_count(eventTarget: EventTarget) {
+    return (eventTarget as EventTargetP)[state][_executors].length;
 }
 
 function reply(this: EventTargetState, signal: AbortSignal, executor: Executor) {

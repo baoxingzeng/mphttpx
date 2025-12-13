@@ -1,4 +1,4 @@
-import { g, polyfill, isObjectType, defineStringTag, objectEntries } from "./isPolyfill";
+import { g, polyfill, isObjectType, dfStringTag, objectEntries } from "./isPolyfill";
 
 /** @internal */
 const state = Symbol(/* "HeadersState" */);
@@ -90,7 +90,7 @@ export class HeadersP implements Headers {
     get isPolyfill() { return { symbol: polyfill, hierarchy: ["Headers"] }; }
 }
 
-defineStringTag(HeadersP, "Headers");
+dfStringTag(HeadersP, "Headers");
 
 /** @internal */
 const _headersMap = Symbol();

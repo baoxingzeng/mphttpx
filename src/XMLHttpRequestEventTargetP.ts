@@ -1,4 +1,4 @@
-import { polyfill, defineStringTag } from "./isPolyfill";
+import { polyfill, dfStringTag } from "./isPolyfill";
 import { EventTargetP, attachFn, executeFn } from "./EventTargetP";
 
 /** @internal */ const state = Symbol(/* "XMLHttpRequestEventTargetState" */);
@@ -42,7 +42,7 @@ export class XMLHttpRequestEventTargetP extends EventTargetP implements XMLHttpR
     get isPolyfill() { return { symbol: polyfill, hierarchy: ["XMLHttpRequestEventTarget", "EventTarget"] }; }
 }
 
-defineStringTag(XMLHttpRequestEventTargetP, "XMLHttpRequestEventTarget");
+dfStringTag(XMLHttpRequestEventTargetP, "XMLHttpRequestEventTarget");
 
 /** @internal */
 const _handlers = Symbol();

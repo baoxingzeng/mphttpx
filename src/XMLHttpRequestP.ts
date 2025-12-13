@@ -1,11 +1,11 @@
-import { HeadersP } from "./HeadersP";
 import { normalizeMethod } from "./RequestP";
 import { convert, convertBack } from "./BodyImpl";
-import { u8array2base64 } from "./BlobP";
+import { HeadersP, parseHeaders } from "./HeadersP";
 import { TextEncoderP } from "./TextEncoderP";
+import { Uint8Array_toBase64 } from "./BlobP";
 import { createInnerEvent } from "./EventP";
 import { emitProcessEvent } from "./ProgressEventP";
-import { eventTargetState, _executors, fire, attachFn, executeFn } from "./EventTargetP";
+import { EventTarget_fire, EventTarget_count, attachFn, executeFn } from "./EventTargetP";
 import { XMLHttpRequestEventTargetP } from "./XMLHttpRequestEventTargetP";
 import { XMLHttpRequestUploadP, createXMLHttpRequestUploadP } from "./XMLHttpRequestUploadP";
 import type {
@@ -17,13 +17,12 @@ import type {
     IAliRequestFailCallbackResult
 } from "./request";
 import { request } from "./request";
-import { polyfill, defineStringTag, MPException } from "./isPolyfill";
+import { polyfill, dfStringTag, MPException } from "./isPolyfill";
 
 const mp = { request: request };
 export const setRequest = (request: TRequestFunc) => { mp.request = request; }
 
 /** @internal */ const state = Symbol(/* "XMLHttpRequestState" */);
-/** @internal */ export { state as xhrState };
 
 export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHttpRequest {
     declare static readonly UNSENT: 0;
@@ -110,7 +109,7 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
             let _password = String(password ?? "");
 
             if (_username.length > 0 || _password.length > 0) {
-                let auth = `Basic ${u8array2base64((new TextEncoderP()).encode(_username + ":" + _password))}`;
+                let auth = `Basic ${Uint8Array_toBase64((new TextEncoderP()).encode(_username + ":" + _password))}`;
                 this.setRequestHeader("Authorization", auth);
             }
         }
@@ -138,7 +137,7 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
         const processHeaders = allowsRequestBody && !that[_requestHeaders].has("Content-Type");
 
         const upload = that.upload;
-        const processContentLength = upload && upload[eventTargetState][_executors].length > 0;
+        const processContentLength = upload && EventTarget_count(upload) > 0;
 
         let headers = () => Array.from(that[_requestHeaders].entries())
             .reduce(
@@ -223,7 +222,7 @@ const properties = {
 Object.defineProperties(XMLHttpRequestP, properties);
 Object.defineProperties(XMLHttpRequestP.prototype, properties);
 
-defineStringTag(XMLHttpRequestP, "XMLHttpRequest");
+dfStringTag(XMLHttpRequestP, "XMLHttpRequest");
 
 /** @internal */ const _handlers = Symbol();
 
@@ -234,7 +233,7 @@ defineStringTag(XMLHttpRequestP, "XMLHttpRequest");
 /** @internal */ const _requestURL = Symbol();
 /** @internal */ const _method = Symbol();
 /** @internal */ const _requestHeaders = Symbol();
-/** @internal */ export const _responseHeaders = Symbol();
+/** @internal */ const _responseHeaders = Symbol();
 /** @internal */ const _responseContentLength = Symbol();
 
 /** @internal */ const _requestTask = Symbol();
@@ -402,7 +401,7 @@ function setReadyStateAndNotify(this: XMLHttpRequestState, value: number) {
 
     if (hasChanged) {
         let evt = createInnerEvent(this.target, "readystatechange");
-        fire.call(this.target[eventTargetState], evt);
+        EventTarget_fire(this.target, evt);
     }
 }
 
@@ -420,6 +419,12 @@ function normalizeResponseType(responseType: string): XMLHttpRequestResponseType
 
 function normalizeDataType(responseType: XMLHttpRequestResponseType) {
     return (responseType === "blob" || responseType === "arraybuffer") ? "arraybuffer" : "text";
+}
+
+export function getAllResponseHeaders(xhr: XMLHttpRequest) {
+    return xhr instanceof XMLHttpRequestP
+        ? xhr[state][_responseHeaders]!
+        : parseHeaders(xhr.getAllResponseHeaders() || "");
 }
 
 const zero = () => 0 as const;

@@ -1,4 +1,4 @@
-import { g, polyfill, isObjectType, defineStringTag, objectValues, objectEntries } from "./isPolyfill";
+import { g, polyfill, isObjectType, dfStringTag, objectValues, objectEntries } from "./isPolyfill";
 
 /** @internal */
 const state = Symbol(/* "URLSearchParamsState" */);
@@ -28,7 +28,10 @@ export class URLSearchParamsP implements URLSearchParams {
 
     delete(name: string, value?: string): void {
         let dict: Record<string, string[]> = {};
-        for (let [key, values] of objectEntries(this[state][_urlspDict])) {
+        let pairs = objectEntries(this[state][_urlspDict]);
+
+        for (let i = 0; i < pairs.length; ++i) {
+            let pair = pairs[i]!; let key = pair[0]; let values = pair[1];
             if (key === name) {
                 if (value !== undefined) {
                     let vals = values.filter(x => x !== ("" + value));
@@ -66,11 +69,11 @@ export class URLSearchParamsP implements URLSearchParams {
 
     sort(): void {
         const that = this[state];
-        let keys = Object.keys(that[_urlspDict]);
-        keys.sort();
-
+        let keys = Object.keys(that[_urlspDict]); keys.sort();
         let dict: Record<string, string[]> = {};
-        for (let key of keys) {
+
+        for (let i = 0; i < keys.length; ++i) {
+            let key = keys[i]!;
             Object.assign(dict, { [key]: that[_urlspDict][key] });
         }
 
@@ -110,9 +113,14 @@ export class URLSearchParamsP implements URLSearchParams {
 
     toString(): string {
         let query: string[] = [];
-        for (let [key, values] of objectEntries(this[state][_urlspDict])) {
+        let pairs = objectEntries(this[state][_urlspDict]);
+
+        for (let i = 0; i < pairs.length; ++i) {
+            let pair = pairs[i]!; let key = pair[0]; let values = pair[1];
             let name = encode(key);
-            for (let val of values) {
+
+            for (let j = 0; j < values.length; ++j) {
+                let val = values[j]!;
                 query.push(name + "=" + encode(val));
             }
         }
@@ -123,7 +131,7 @@ export class URLSearchParamsP implements URLSearchParams {
     get isPolyfill() { return { symbol: polyfill, hierarchy: ["URLSearchParams"] }; }
 }
 
-defineStringTag(URLSearchParamsP, "URLSearchParams");
+dfStringTag(URLSearchParamsP, "URLSearchParams");
 
 /** @internal */
 const _urlspDict = Symbol();
@@ -148,7 +156,9 @@ function parseToDict(search: string[][] | Record<string, string> | string) {
                 }
             }
         } else {
-            for (let key in search) {
+            let keys = Object.keys(search);
+            for (let i = 0; i < keys.length; ++i) {
+                let key = keys[i]!
                 if (search.hasOwnProperty(key)) {
                     appendTo(dict, key, search[key]!);
                 }
@@ -215,7 +225,7 @@ function hasOwnProperty(obj: object, prop: PropertyKey) {
 }
 
 function flatCb<T>(acc: T[], cur: T[]) {
-    for (let item of cur) { acc.push(item); }
+    for (let i = 0; i < cur.length; ++i) { let item = cur[i]!; acc.push(item); }
     return acc;
 }
 

@@ -1,9 +1,9 @@
 import { TextEncoderP } from "./TextEncoderP";
 import { TextDecoderP } from "./TextDecoderP";
-import { g, polyfill, isPolyfillType, defineStringTag } from "./isPolyfill";
+import { g, polyfill, isPolyfillType, dfStringTag } from "./isPolyfill";
 
-/** @internal */ const state = Symbol(/* "BlobState" */);
-/** @internal */ export { state as blobState };
+/** @internal */
+const state = Symbol(/* "BlobState" */);
 
 export class BlobP implements Blob {
     constructor(blobParts: BlobPart[] = [], options?: BlobPropertyBag) {
@@ -14,9 +14,9 @@ export class BlobP implements Blob {
         let encoder: TextEncoderP | null = null;
         let chunks = blobParts.reduce((chunks: Array<InstanceType<typeof Uint8Array>>, part) => {
             if (isPolyfillType<Blob>("Blob", part)) {
-                chunks.push((part as BlobP)[state][_u8array]);
+                chunks.push((part as BlobP)[state][_buffer]);
             } else if (part instanceof ArrayBuffer || ArrayBuffer.isView(part)) {
-                chunks.push(convert(part));
+                chunks.push(BufferSource_toUint8Array(part));
             } else {
                 if (!encoder) { encoder = new TextEncoderP(); }
                 chunks.push(encoder.encode(String(part)));
@@ -28,7 +28,7 @@ export class BlobP implements Blob {
         this[state] = new BlobState(concat(chunks));
         const that = this[state];
 
-        that.size = that[_u8array].length;
+        that.size = that[_buffer].length;
 
         let rawType = options?.type || "";
         that.type = /[^\u0020-\u007E]/.test(rawType) ? "" : rawType.toLowerCase();
@@ -41,15 +41,15 @@ export class BlobP implements Blob {
     get type() { return this[state].type; }
 
     arrayBuffer(): Promise<ArrayBuffer> {
-        return Promise.resolve(clone(this[state][_u8array].buffer).buffer);
+        return Promise.resolve(clone(this[state][_buffer].buffer).buffer);
     }
 
     bytes() {
-        return Promise.resolve(clone(this[state][_u8array].buffer));
+        return Promise.resolve(clone(this[state][_buffer].buffer));
     }
 
     slice(start?: number, end?: number, contentType?: string): Blob {
-        let sliced = this[state][_u8array].slice(start ?? 0, end ?? this[state][_u8array].length);
+        let sliced = this[state][_buffer].slice(start ?? 0, end ?? this[state][_buffer].length);
         return new BlobP([sliced], { type: contentType ?? "" });
     }
 
@@ -59,42 +59,42 @@ export class BlobP implements Blob {
 
     text(): Promise<string> {
         let decoder = new TextDecoderP();
-        return Promise.resolve(decoder.decode(this[state][_u8array]));
+        return Promise.resolve(decoder.decode(this[state][_buffer]));
     }
 
     toString() { return "[object Blob]"; }
     get isPolyfill() { return { symbol: polyfill, hierarchy: ["Blob"] }; }
 }
 
-defineStringTag(BlobP, "Blob");
+dfStringTag(BlobP, "Blob");
 
 /** @internal */
-const _u8array = Symbol();
+const _buffer = Symbol();
 
 /** @internal */
 class BlobState {
     constructor(buffer: InstanceType<typeof Uint8Array>) {
-        this[_u8array] = buffer;
+        this[_buffer] = buffer;
     }
 
+    [_buffer]: InstanceType<typeof Uint8Array>;
     size = 0;
     type = "";
-
-    [_u8array]: InstanceType<typeof Uint8Array>;
-
-    toUint8Array() {
-        return this[_u8array];
-    }
 }
 
-function convert(buf: BufferSource): InstanceType<typeof Uint8Array> {
+/** @internal */
+export function Blob_toUint8Array(blob: Blob) {
+    return (blob as BlobP)[state][_buffer];
+}
+
+function BufferSource_toUint8Array(buf: BufferSource): InstanceType<typeof Uint8Array> {
     return buf instanceof ArrayBuffer
         ? new Uint8Array(buf)
         : new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength);
 }
 
 function clone(buf: BufferSource) {
-    let sourceArray = convert(buf);
+    let sourceArray = BufferSource_toUint8Array(buf);
     let cloneArray = new Uint8Array(new ArrayBuffer(sourceArray.byteLength));
 
     cloneArray.set(sourceArray);
@@ -114,7 +114,7 @@ function concat(chunks: Uint8Array[]) {
 }
 
 /** @internal */
-export function u8array2base64(input: InstanceType<typeof Uint8Array>) {
+export function Uint8Array_toBase64(input: InstanceType<typeof Uint8Array>) {
     let byteToCharMap = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
     let output: string[] = [];
 

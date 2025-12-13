@@ -1,11 +1,11 @@
-import { BlobP, blobState } from "./BlobP";
 import { TextEncoderP } from "./TextEncoderP";
 import { TextDecoderP } from "./TextDecoderP";
-import { type FormDataP, formDataState, createFormDataFromBody } from "./FormDataP";
-import { polyfill, isObjectType, isPolyfillType, defineStringTag } from "./isPolyfill";
+import { BlobP, Blob_toUint8Array } from "./BlobP";
+import { FormData_toBlob, createFormDataFromBody } from "./FormDataP";
+import { polyfill, isObjectType, isPolyfillType, dfStringTag } from "./isPolyfill";
 
-/** @internal */ const state = Symbol(/* "BodyState" */);
-/** @internal */ export { state as bodyState };
+/** @internal */
+const state = Symbol(/* "BodyState" */);
 
 export class BodyImpl implements Body {
     constructor() {
@@ -60,13 +60,10 @@ export class BodyImpl implements Body {
     get isPolyfill() { return { symbol: polyfill, hierarchy: ["Body"] }; }
 }
 
-defineStringTag(BodyImpl, "Body");
+dfStringTag(BodyImpl, "Body");
 
-/** @internal */
-export const _name = Symbol();
-
-/** @internal */
-export const _body = Symbol();
+/** @internal */ const _name = Symbol();
+/** @internal */ const _body = Symbol();
 
 /** @internal */
 class BodyState {
@@ -77,16 +74,31 @@ class BodyState {
 }
 
 /** @internal */
-export function initFn(this: BodyState, body?: ConstructorParameters<typeof Response>[0], headers?: Headers) {
-    if (isObjectType<ReadableStream>("ReadableStream", body)) {
+export function Body_init(body: BodyImpl, payload?: ConstructorParameters<typeof Response>[0], headers?: Headers) {
+    if (isObjectType<ReadableStream>("ReadableStream", payload)) {
         throw new ReferenceError("ReadableStream is not defined");
     }
 
-    this[_body] = convert(body, type => {
+    body[state][_body] = convert(payload, type => {
         if (headers && !headers.get("Content-Type")) {
             headers.set("Content-Type", type);
         }
     });
+}
+
+/** @internal */
+export function Body_setName(body: Body, name: string) {
+    (body as BodyImpl)[state][_name] = name;
+}
+
+/** @internal */
+export function Body_setBodyUsed(body: Body, bodyUsed: boolean) {
+    (body as BodyImpl)[state].bodyUsed = bodyUsed;
+}
+
+/** @internal */
+export function Body_toPayload(body: Body) {
+    return (body as BodyImpl)[state][_body];
 }
 
 function read(this: BodyState, kind: "arrayBuffer" | "blob" | "bytes" | "formData" | "json" | "text") {
@@ -180,7 +192,7 @@ export function convert(
     }
 
     else if (isPolyfillType<Blob>("Blob", body)) {
-        result = (body as BlobP)[blobState].toUint8Array().buffer.slice(0);
+        result = Blob_toUint8Array(body).buffer.slice(0);
 
         if (setContentType && body.type) {
             setContentType(body.type);
@@ -188,8 +200,8 @@ export function convert(
     }
 
     else if (isPolyfillType<FormData>("FormData", body)) {
-        let blob = (body as FormDataP)[formDataState].toBlob();
-        result = blob[blobState].toUint8Array().buffer;
+        let blob = FormData_toBlob(body);
+        result = Blob_toUint8Array(blob).buffer;
 
         if (setContentType) {
             setContentType(blob.type);

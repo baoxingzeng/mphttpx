@@ -1,4 +1,4 @@
-import { g, polyfill, defineStringTag } from "./isPolyfill";
+import { g, polyfill, dfStringTag } from "./isPolyfill";
 
 /** @internal */ const state = Symbol(/* "EventState" */);
 /** @internal */ export { state as eventState };
@@ -106,21 +106,18 @@ const properties = {
 Object.defineProperties(EventP, properties);
 Object.defineProperties(EventP.prototype, properties);
 
-defineStringTag(EventP, "Event");
+dfStringTag(EventP, "Event");
 
-/** @internal */ const _TimeStamp = Symbol();
+/** @internal */ const _timeStamp = (new Date()).getTime();
+/** @internal */ const _isTrusted = Symbol();
 
-/** @internal */ export const _isTrusted = Symbol();
-
-/** @internal */ export const _passive = Symbol();
-/** @internal */ export const _dispatched = Symbol();
-/** @internal */ export const _preventDefaultCalled = Symbol();
-/** @internal */ export const _stopImmediatePropagationCalled = Symbol();
+/** @internal */ const _passive = Symbol();
+/** @internal */ const _dispatched = Symbol();
+/** @internal */ const _preventDefaultCalled = Symbol();
+/** @internal */ const _stopImmediatePropagationCalled = Symbol();
 
 /** @internal */
 class EventState {
-    static [_TimeStamp] = (new Date()).getTime();
-
     type = "";
     bubbles = false;
     cancelable = false;
@@ -135,7 +132,7 @@ class EventState {
     defaultPrevented = false;
     returnValue = true;
 
-    timeStamp = (new Date()).getTime() - EventState[_TimeStamp];
+    timeStamp = (new Date()).getTime() - _timeStamp;
 
     [_isTrusted] = false;
 
@@ -143,6 +140,63 @@ class EventState {
     [_dispatched] = false;
     [_preventDefaultCalled] = false;
     [_stopImmediatePropagationCalled] = false;
+}
+
+/** @internal */
+export function Event_setTrusted(event: Event, isTrusted: boolean) {
+    Object.defineProperty((event as EventP)[state], _isTrusted, {
+        value: isTrusted,
+        writable: true,
+        enumerable: true,
+        configurable: true,
+    });
+}
+
+/** @internal */
+export type Event_EtFields = {
+    Passive: 0;
+    Dispatched: 1;
+    PreventDefaultCalled: 2;
+    StopImmediatePropagationCalled: 3;
+};
+
+const passive: Event_EtFields["Passive"] = 0;
+const dispatched: Event_EtFields["Dispatched"] = 1;
+const preventDefaultCalled: Event_EtFields["PreventDefaultCalled"] = 2;
+const stopImmediatePropagationCalled: Event_EtFields["StopImmediatePropagationCalled"] = 3;
+
+/** @internal */
+export function Event_getEtField(event: Event, field: Event_EtFields[keyof Event_EtFields]) {
+    const s = (event as EventP)[state];
+    switch (field) {
+        case passive:
+            return s[_passive];
+        case dispatched:
+            return s[_dispatched];
+        case preventDefaultCalled:
+            return s[_preventDefaultCalled];
+        case stopImmediatePropagationCalled:
+            return s[_stopImmediatePropagationCalled];
+    }
+}
+
+/** @internal */
+export function Event_setEtField(event: Event, field: Event_EtFields[keyof Event_EtFields], value: boolean) {
+    const s = (event as EventP)[state];
+    switch (field) {
+        case passive: 
+            s[_passive] = value;
+            break;
+        case dispatched:
+            s[_dispatched] = value;
+            break;
+        case preventDefaultCalled:
+            s[_preventDefaultCalled] = value;
+            break;
+        case stopImmediatePropagationCalled:
+            s[_stopImmediatePropagationCalled] = value;
+            break;
+    }
 }
 
 /** @internal */
