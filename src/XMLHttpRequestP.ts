@@ -172,7 +172,7 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
         emitProcessEvent(this, "loadstart");
 
         if (processContentLength) {
-            const hasRequestBody = allowsRequestBody && (typeof data === "string" ? data.length > 0 : data.byteLength > 0);
+            const hasRequestBody = allowsRequestBody && !!data;
 
             if (hasRequestBody) {
                 emitProcessEvent(upload, "loadstart", 0, contentLength);
