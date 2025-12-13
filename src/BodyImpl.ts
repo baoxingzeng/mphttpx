@@ -4,9 +4,8 @@ import { TextDecoderP } from "./TextDecoderP";
 import { type FormDataP, formDataState, createFormDataFromBody } from "./FormDataP";
 import { polyfill, isObjectType, isPolyfillType, defineStringTag } from "./isPolyfill";
 
-/** @internal */
-const state = Symbol(/* "BodyState" */);
-export { state as bodyState };
+/** @internal */ const state = Symbol(/* "BodyState" */);
+/** @internal */ export { state as bodyState };
 
 export class BodyImpl implements Body {
     constructor() {
@@ -63,8 +62,11 @@ export class BodyImpl implements Body {
 
 defineStringTag(BodyImpl, "Body");
 
-export /** @internal */ const _name = Symbol();
-export /** @internal */ const _body = Symbol();
+/** @internal */
+export const _name = Symbol();
+
+/** @internal */
+export const _body = Symbol();
 
 /** @internal */
 class BodyState {
@@ -74,6 +76,7 @@ class BodyState {
     [_body]: string | ArrayBuffer = "";
 }
 
+/** @internal */
 export function initFn(this: BodyState, body?: ConstructorParameters<typeof Response>[0], headers?: Headers) {
     if (isObjectType<ReadableStream>("ReadableStream", body)) {
         throw new ReferenceError("ReadableStream is not defined");
@@ -144,6 +147,7 @@ const decode = (buf: ArrayBuffer) => {
     return decoder.decode(buf);
 }
 
+/** @internal */
 export function convert(
     body?: Parameters<XMLHttpRequest["send"]>[0],
     setContentType?: (str: string) => void,
@@ -207,6 +211,7 @@ export function convert(
     return result;
 }
 
+/** @internal */
 export function convertBack(
     type: XMLHttpRequestResponseType,
     data?: string | object | ArrayBuffer,

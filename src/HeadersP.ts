@@ -146,6 +146,7 @@ class SimpleMap<K, V> {
     }
 }
 
+/** @internal */
 export function normalizeName(name: string, kind = "") {
     if (typeof name !== "string") {
         name = String(name);
@@ -158,6 +159,7 @@ export function normalizeName(name: string, kind = "") {
     return name.toLowerCase();
 }
 
+/** @internal */
 export function normalizeValue(value: string) {
     if (typeof value !== "string") {
         value = String(value);
@@ -165,6 +167,7 @@ export function normalizeValue(value: string) {
     return value;
 }
 
+/** @internal */
 export function parseHeaders(rawHeaders: string) {
     let headers = new HeadersP();
     let preProcessedHeaders = rawHeaders.replace(/\r?\n[\t ]+/g, " ");

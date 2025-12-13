@@ -1,8 +1,7 @@
 import { g, polyfill, defineStringTag } from "./isPolyfill";
 
-/** @internal */
-const state = Symbol(/* "EventState" */);
-export { state as eventState };
+/** @internal */ const state = Symbol(/* "EventState" */);
+/** @internal */ export { state as eventState };
 
 export class EventP implements Event {
     declare static readonly NONE: 0;
@@ -111,12 +110,12 @@ defineStringTag(EventP, "Event");
 
 /** @internal */ const _TimeStamp = Symbol();
 
-export /** @internal */ const _isTrusted = Symbol();
+/** @internal */ export const _isTrusted = Symbol();
 
-export /** @internal */ const _passive = Symbol();
-export /** @internal */ const _dispatched = Symbol();
-export /** @internal */ const _preventDefaultCalled = Symbol();
-export /** @internal */ const _stopImmediatePropagationCalled = Symbol();
+/** @internal */ export const _passive = Symbol();
+/** @internal */ export const _dispatched = Symbol();
+/** @internal */ export const _preventDefaultCalled = Symbol();
+/** @internal */ export const _stopImmediatePropagationCalled = Symbol();
 
 /** @internal */
 class EventState {
@@ -146,6 +145,7 @@ class EventState {
     [_stopImmediatePropagationCalled] = false;
 }
 
+/** @internal */
 export function createInnerEvent(target: EventTarget, type: string, eventInitDict?: EventInit, isTrusted = true) {
     let event = new EventP(type, eventInitDict);
     event[state].target = target;

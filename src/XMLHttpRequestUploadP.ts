@@ -17,6 +17,7 @@ export class XMLHttpRequestUploadP extends XMLHttpRequestEventTargetP implements
 
 defineStringTag(XMLHttpRequestUploadP, "XMLHttpRequestUpload");
 
+/** @internal */
 export function createXMLHttpRequestUploadP() {
     let instance: XMLHttpRequestUploadP = Object.create(XMLHttpRequestUploadP.prototype);
     instance[eventTargetState] = new EventTargetState(instance);

@@ -65,6 +65,7 @@ function createInnerProgressEvent(
     return event;
 }
 
+/** @internal */
 export function emitProcessEvent(target: EventTargetP, type: string, loaded: number | (() => number) = 0, total: number | (() => number) = 0) {
     let event = createInnerProgressEvent(target, type, {
         lengthComputable: () => { return getValue(total) > 0; },

@@ -2,9 +2,8 @@ import { TextEncoderP } from "./TextEncoderP";
 import { TextDecoderP } from "./TextDecoderP";
 import { g, polyfill, isPolyfillType, defineStringTag } from "./isPolyfill";
 
-/** @internal */
-const state = Symbol(/* "BlobState" */);
-export { state as blobState };
+/** @internal */ const state = Symbol(/* "BlobState" */);
+/** @internal */ export { state as blobState };
 
 export class BlobP implements Blob {
     constructor(blobParts: BlobPart[] = [], options?: BlobPropertyBag) {
@@ -114,6 +113,7 @@ function concat(chunks: Uint8Array[]) {
     return result;
 }
 
+/** @internal */
 export function u8array2base64(input: InstanceType<typeof Uint8Array>) {
     let byteToCharMap = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
     let output: string[] = [];

@@ -22,9 +22,8 @@ import { polyfill, defineStringTag, MPException } from "./isPolyfill";
 const mp = { request: request };
 export const setRequest = (request: TRequestFunc) => { mp.request = request; }
 
-/** @internal */
-const state = Symbol(/* "XMLHttpRequestState" */);
-export { state as xhrState };
+/** @internal */ const state = Symbol(/* "XMLHttpRequestState" */);
+/** @internal */ export { state as xhrState };
 
 export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHttpRequest {
     declare static readonly UNSENT: 0;
@@ -235,7 +234,7 @@ defineStringTag(XMLHttpRequestP, "XMLHttpRequest");
 /** @internal */ const _requestURL = Symbol();
 /** @internal */ const _method = Symbol();
 /** @internal */ const _requestHeaders = Symbol();
-export /** @internal */ const _responseHeaders = Symbol();
+/** @internal */ export const _responseHeaders = Symbol();
 /** @internal */ const _responseContentLength = Symbol();
 
 /** @internal */ const _requestTask = Symbol();

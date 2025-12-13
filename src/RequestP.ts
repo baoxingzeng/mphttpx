@@ -3,9 +3,8 @@ import { AbortControllerP } from "./AbortControllerP";
 import { BodyImpl, bodyState, _name, _body, initFn } from "./BodyImpl";
 import { g, polyfill, isPolyfillType, defineStringTag } from "./isPolyfill";
 
-/** @internal */
-const state = Symbol(/* "RequestState" */);
-export { state as requestState };
+/** @internal */ const state = Symbol(/* "RequestState" */);
+/** @internal */ export { state as requestState };
 
 export class RequestP extends BodyImpl implements Request {
     constructor(input: RequestInfo | URL, init?: RequestInit) {
@@ -124,6 +123,7 @@ class RequestState {
 // HTTP methods whose capitalization should be normalized
 const methods = ["CONNECT", "DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT", "TRACE"];
 
+/** @internal */
 export function normalizeMethod(method: string) {
     let upcased = method.toUpperCase();
     return methods.indexOf(upcased) > -1 ? upcased : method;

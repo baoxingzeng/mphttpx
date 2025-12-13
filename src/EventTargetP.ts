@@ -1,9 +1,8 @@
 import { g, polyfill, defineStringTag } from "./isPolyfill";
 import { EventP, eventState, _isTrusted, _passive, _dispatched, _preventDefaultCalled, _stopImmediatePropagationCalled } from "./EventP";
 
-/** @internal */
-const state = Symbol(/* "EventTargetState" */);
-export { state as eventTargetState };
+/** @internal */ const state = Symbol(/* "EventTargetState" */);
+/** @internal */ export { state as eventTargetState };
 
 export class EventTargetP implements EventTarget {
     constructor() {
@@ -82,6 +81,7 @@ export class EventTargetState {
     [_executors] = [] as Executor[];
 }
 
+/** @internal */
 export function fire(this: EventTargetState, event: EventP) {
     const s = event[eventState];
     if (!event.target) s.target = this.target;
@@ -170,6 +170,7 @@ function isEventListenerObject(cb: EventListenerObject | null): cb is EventListe
     return !!cb && "handleEvent" in cb && typeof cb.handleEvent === "function";
 }
 
+/** @internal */
 export function attachFn(this: EventTarget, type: string, cb: Function | null, listener: EventListener) {
     if (typeof cb === "function") {
         this.addEventListener(type, listener);
@@ -178,6 +179,7 @@ export function attachFn(this: EventTarget, type: string, cb: Function | null, l
     }
 }
 
+/** @internal */
 export function executeFn(this: EventTarget, cb: Function | null, ev: Event) {
     if (typeof cb === "function") cb.call(this, ev);
 }

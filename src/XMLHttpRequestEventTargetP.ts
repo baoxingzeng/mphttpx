@@ -1,9 +1,8 @@
 import { polyfill, defineStringTag } from "./isPolyfill";
 import { EventTargetP, attachFn, executeFn } from "./EventTargetP";
 
-/** @internal */
-const state = Symbol(/* "XMLHttpRequestEventTargetState" */);
-export { state as xhrEventTargetState };
+/** @internal */ const state = Symbol(/* "XMLHttpRequestEventTargetState" */);
+/** @internal */ export { state as xhrEventTargetState };
 
 export class XMLHttpRequestEventTargetP extends EventTargetP implements XMLHttpRequestEventTarget {
     constructor() {

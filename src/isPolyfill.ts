@@ -1,17 +1,19 @@
-export const polyfill = Symbol("isPolyfill");
+/** @internal */ export const polyfill = Symbol("isPolyfill");
 
 /* eslint-disable no-prototype-builtins */
-export const g: typeof globalThis =
+/** @internal */ export const g: typeof globalThis =
     (typeof globalThis !== "undefined" && globalThis) ||
     (typeof self !== "undefined" && self) ||
     // @ts-ignore eslint-disable-next-line no-undef
     (typeof global !== "undefined" && global) ||
     {};
 
+/** @internal */
 export function isObjectType<T>(name: string, value: unknown): value is T {
     return Object.prototype.toString.call(value) === `[object ${name}]`;
 }
 
+/** @internal */
 export function isPolyfillType<T>(name: string, value: unknown): value is T {
     type THasIsPolyfill = object & Record<"isPolyfill", unknown>;
     type TIsPolyfillObject = object & Record<"isPolyfill", object>;
@@ -31,6 +33,7 @@ export function isPolyfillType<T>(name: string, value: unknown): value is T {
         && (value as THierarchyIsArray).isPolyfill.hierarchy.indexOf(name) > -1;
 }
 
+/** @internal */
 export class MPException extends Error {
     constructor(message?: string, name?: string) {
         super();
@@ -39,6 +42,7 @@ export class MPException extends Error {
     }
 }
 
+/** @internal */
 export function defineStringTag(targetFunc: Function, stringTag: string) {
     Object.defineProperty(targetFunc.prototype, Symbol.toStringTag, {
         configurable: true,
@@ -46,10 +50,12 @@ export function defineStringTag(targetFunc: Function, stringTag: string) {
     });
 }
 
+/** @internal */
 export function objectValues<T extends object>(obj: T): Array<T[keyof T]> {
     return Object.keys(obj).map(key => obj[key as keyof T]);
 }
 
+/** @internal */
 export function objectEntries<T extends object>(obj: T): Array<[keyof T & string, T[keyof T]]> {
     return Object.keys(obj).map(key => [key as keyof T & string, obj[key as keyof T]]);
 }

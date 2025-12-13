@@ -3,9 +3,8 @@ import { FileP } from "./FileP";
 import { TextEncoderP } from "./TextEncoderP";
 import { g, polyfill, isPolyfillType, defineStringTag } from "./isPolyfill";
 
-/** @internal */
-const state = Symbol(/* "FormDataState" */);
-export { state as formDataState };
+/** @internal */ const state = Symbol(/* "FormDataState" */);
+/** @internal */ export { state as formDataState };
 
 export class FormDataP implements FormData {
     constructor(form?: HTMLFormElement, submitter?: HTMLElement | null) {
@@ -184,6 +183,7 @@ function escape(str: string) {
  * Parses multipart/form-data binary data, supporting restoration of text fields and files
  * @param body - Text in multipart/form-data format (including boundaries and data)
  * @returns Parsed FormData object (text fields as strings, files as File objects)
+ * @internal
  */
 export function createFormDataFromBody(body: string, errMsg = "Failed to fetch") {
     const formData = new FormDataP();

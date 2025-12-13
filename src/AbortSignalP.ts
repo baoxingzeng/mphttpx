@@ -2,9 +2,8 @@ import { createInnerEvent } from "./EventP";
 import { g, polyfill, defineStringTag, MPException } from "./isPolyfill";
 import { EventTargetP, EventTargetState, eventTargetState, fire, attachFn, executeFn } from "./EventTargetP";
 
-/** @internal */
-const state = Symbol(/* "AbortSignalState" */);
-export { state as abortSignalState };
+/** @internal */ const state = Symbol(/* "AbortSignalState" */);
+/** @internal */ export { state as abortSignalState };
 
 export class AbortSignalP extends EventTargetP implements AbortSignal {
     static abort(reason?: any): AbortSignal {
@@ -96,6 +95,7 @@ export class AbortSignalState {
     onabort: ((this: AbortSignal, ev: Event) => any) | null = null;
 }
 
+/** @internal */
 export function abort(this: AbortSignalState, reason: any, notify = true, isTrusted = true) {
     if (!this.aborted) {
         this.aborted = true;
@@ -114,6 +114,7 @@ function getHandlers(this: AbortSignalState) {
     };
 }
 
+/** @internal */
 export function createAbortSignalP(): AbortSignalP {
     let instance: AbortSignalP = Object.create(AbortSignalP.prototype);
     instance[eventTargetState] = new EventTargetState(instance);

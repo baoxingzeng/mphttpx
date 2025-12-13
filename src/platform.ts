@@ -2,6 +2,7 @@
 import { g } from "./isPolyfill";
 import type { TRequestFunc } from "./request";
 
+/** @internal */
 export const mp = (() => {
     let u = "undefined", r = "request", f = "function";
     let mp: { request: TRequestFunc };
