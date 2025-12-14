@@ -27,20 +27,21 @@ This allows web code to be reused in other environments (such as mini-programs).
     - [URLSearchParams](#urlsearchparams)
       - [Compatibility](#compatibility-6)
     - [fetch](#fetch)
-    - [Headers](#headers)
       - [Compatibility](#compatibility-7)
-    - [Request](#request)
+    - [Headers](#headers)
       - [Compatibility](#compatibility-8)
-    - [Response](#response)
+    - [Request](#request)
       - [Compatibility](#compatibility-9)
-    - [AbortController](#abortcontroller)
+    - [Response](#response)
       - [Compatibility](#compatibility-10)
-    - [AbortSignal](#abortsignal)
+    - [AbortController](#abortcontroller)
       - [Compatibility](#compatibility-11)
-    - [EventTarget](#eventtarget)
+    - [AbortSignal](#abortsignal)
       - [Compatibility](#compatibility-12)
-    - [XMLHttpRequest (mini-programs)](#xmlhttprequest-mini-programs)
+    - [EventTarget](#eventtarget)
       - [Compatibility](#compatibility-13)
+    - [XMLHttpRequest (mini-programs)](#xmlhttprequest-mini-programs)
+      - [Compatibility](#compatibility-14)
   - [UniApp \& Taro](#uniapp--taro)
   - [Node.js](#nodejs)
   - [License](#license)
@@ -370,6 +371,10 @@ fetch("https://example.com/profile/avatar", {
 | ------- | ---------  | -------------|
 | fetch(resource)          | ✔ | 
 | fetch(resource, options) | ✔ | 
+
+#### Compatibility
+
+Refer to Request below.
 
 ### Headers
 
