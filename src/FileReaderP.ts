@@ -114,7 +114,7 @@ class FileReaderState {
 
     error: DOMException | null = null;
 
-    [_handlers] = getHandlers(this);
+    readonly [_handlers] = getHandlers(this);
     onabort: ((this: FileReader, ev: ProgressEvent<FileReader>) => any) | null = null;
     onerror: ((this: FileReader, ev: ProgressEvent<FileReader>) => any) | null = null;
     onload: ((this: FileReader, ev: ProgressEvent<FileReader>) => any) | null = null;

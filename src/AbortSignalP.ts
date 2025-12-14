@@ -94,7 +94,7 @@ class AbortSignalState {
     aborted = false;
     reason: any = undefined;
 
-    [_handlers] = getHandlers(this);
+    readonly [_handlers] = getHandlers(this);
     onabort: ((this: AbortSignal, ev: Event) => any) | null = null;
 }
 

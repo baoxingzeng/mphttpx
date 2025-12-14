@@ -256,7 +256,7 @@ class XMLHttpRequestState {
     upload?: XMLHttpRequestUpload;
     withCredentials = false;
 
-    [_handlers] = getHandlers(this);
+    readonly [_handlers] = getHandlers(this);
     onreadystatechange: ((this: XMLHttpRequest, ev: Event) => any) | null = null;
 
     [_inAfterOpenBeforeSend] = false;

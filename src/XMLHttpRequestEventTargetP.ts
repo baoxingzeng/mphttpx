@@ -58,7 +58,7 @@ export class XMLHttpRequestEventTargetState {
 
     target: XMLHttpRequest;
 
-    [_handlers] = getHandlers(this);
+    readonly [_handlers] = getHandlers(this);
     onabort: ((this: XMLHttpRequest, ev: ProgressEvent) => any) | null = null;
     onerror: ((this: XMLHttpRequest, ev: ProgressEvent) => any) | null = null;
     onload: ((this: XMLHttpRequest, ev: ProgressEvent) => any) | null = null;
