@@ -7,7 +7,7 @@ import { createInnerEvent } from "./EventP";
 import { emitProcessEvent } from "./ProgressEventP";
 import { EventTarget_fire, EventTarget_count, attachFn, executeFn } from "./EventTargetP";
 import { XMLHttpRequestEventTargetP } from "./XMLHttpRequestEventTargetP";
-import { XMLHttpRequestUploadP, createXMLHttpRequestUploadP } from "./XMLHttpRequestUploadP";
+import { createXMLHttpRequestUpload } from "./XMLHttpRequestUploadP";
 import type {
     TRequestFunc,
     IRequestOptions,
@@ -64,9 +64,9 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
     get timeout() { return this[state].timeout; }
     set timeout(value) { this[state].timeout = value > 0 ? value : 0; }
 
-    get upload(): XMLHttpRequestUpload {
+    get upload() {
         const that = this[state];
-        if (!that.upload) { that.upload = createXMLHttpRequestUploadP(); }
+        if (!that.upload) { that.upload = createXMLHttpRequestUpload(); }
         return that.upload!;
     }
 
@@ -74,7 +74,7 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
     set withCredentials(value) { this[state].withCredentials = !!value; }
 
     abort(): void {
-        clearRequest.call(this[state]);
+        clearRequest(this);
     }
 
     getAllResponseHeaders(): string {
@@ -99,7 +99,7 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
             console.warn("Synchronous XMLHttpRequest is not supported because of its detrimental effects to the end user's experience.");
         }
 
-        clearRequest.call(that, false);
+        clearRequest(this, false);
 
         that[_method] = normalizeMethod(method);
         that[_requestURL] = String(url);
@@ -115,7 +115,7 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
         }
 
         that[_inAfterOpenBeforeSend] = true;
-        setReadyStateAndNotify.call(that, XMLHttpRequestP.OPENED);
+        setReadyStateAndNotify(this, XMLHttpRequestP.OPENED);
     }
 
     overrideMimeType(mime: string): void {
@@ -161,9 +161,9 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
             dataType: that.responseType === "json" ? "json" : normalizeDataType(that.responseType),
             responseType: normalizeDataType(that.responseType),
             withCredentials: that.withCredentials,
-            success: requestSuccess.bind(that),
-            fail: requestFail.bind(that),
-            complete: requestComplete.bind(that),
+            success: requestSuccess.bind(this),
+            fail: requestFail.bind(this),
+            complete: requestComplete.bind(this),
         };
 
         that[_requestTask] = mp.request(options);
@@ -194,7 +194,7 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
             });
         }
 
-        checkRequestTimeout.call(that);
+        checkRequestTimeout(this);
     }
 
     setRequestHeader(name: string, value: string): void {
@@ -204,7 +204,7 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
     get onreadystatechange() { return this[state].onreadystatechange; }
     set onreadystatechange(value) {
         this[state].onreadystatechange = value;
-        attachFn.call(this, "readystatechange", value, this[state][_handlers].onreadystatechange);
+        attachFn(this, "readystatechange", value, this[state][_handlers].onreadystatechange);
     }
 
     toString() { return "[object XMLHttpRequest]"; }
@@ -240,11 +240,11 @@ dfStringTag(XMLHttpRequestP, "XMLHttpRequest");
 
 /** @internal */
 class XMLHttpRequestState {
-    constructor(target: XMLHttpRequestP) {
+    constructor(target: XMLHttpRequest) {
         this.target = target;
     }
 
-    target: XMLHttpRequestP;
+    target: XMLHttpRequest;
 
     readyState: XMLHttpRequest["readyState"] = XMLHttpRequestP.UNSENT;
     response: any = "";
@@ -253,10 +253,10 @@ class XMLHttpRequestState {
     status = 0;
     statusText = "";
     timeout = 0;
-    upload?: XMLHttpRequestUploadP;
+    upload?: XMLHttpRequestUpload;
     withCredentials = false;
 
-    [_handlers] = getHandlers.call(this);
+    [_handlers] = getHandlers(this);
     onreadystatechange: ((this: XMLHttpRequest, ev: Event) => any) | null = null;
 
     [_inAfterOpenBeforeSend] = false;
@@ -272,35 +272,36 @@ class XMLHttpRequestState {
     [_requestTask]: IRequestTask | null = null;
 }
 
-function requestSuccess(this: XMLHttpRequestState, { statusCode, header, data }: IRequestSuccessCallbackBaseResult) {
-    this.responseURL = this[_requestURL];
-    this.status = statusCode;
-    this[_responseHeaders] = new HeadersP(header as Record<string, string>);
+function requestSuccess(this: XMLHttpRequest, { statusCode, header, data }: IRequestSuccessCallbackBaseResult) {
+    const s = (this as XMLHttpRequestP)[state];
+    s.responseURL = s[_requestURL];
+    s.status = statusCode;
+    s[_responseHeaders] = new HeadersP(header as Record<string, string>);
 
-    let lengthStr = this[_responseHeaders]!.get("Content-Length");
-    this[_responseContentLength] = () => { return lengthStr ? parseInt(lengthStr) : 0; }
+    let lengthStr = s[_responseHeaders]!.get("Content-Length");
+    s[_responseContentLength] = () => { return lengthStr ? parseInt(lengthStr) : 0; }
 
-    if (this.readyState === XMLHttpRequestP.OPENED) {
-        setReadyStateAndNotify.call(this, XMLHttpRequestP.HEADERS_RECEIVED);
-        setReadyStateAndNotify.call(this, XMLHttpRequestP.LOADING);
+    if (s.readyState === XMLHttpRequestP.OPENED) {
+        setReadyStateAndNotify(this, XMLHttpRequestP.HEADERS_RECEIVED);
+        setReadyStateAndNotify(this, XMLHttpRequestP.LOADING);
 
         setTimeout(() => {
-            if (!this[_inAfterOpenBeforeSend]) {
-                let l = this[_responseContentLength];
+            if (!s[_inAfterOpenBeforeSend]) {
+                let l = s[_responseContentLength];
 
                 try {
-                    this.response = convertBack(this.responseType, data);
-                    emitProcessEvent(this.target, "load", l, l);
+                    s.response = convertBack(s.responseType, data);
+                    emitProcessEvent(this, "load", l, l);
                 } catch (e) {
                     console.error(e);
-                    emitProcessEvent(this.target, "error");
+                    emitProcessEvent(this, "error");
                 }
             }
         });
     }
 }
 
-function requestFail(this: XMLHttpRequestState, err: IRequestFailCallbackResult | IAliRequestFailCallbackResult) {
+function requestFail(this: XMLHttpRequest, err: IRequestFailCallbackResult | IAliRequestFailCallbackResult) {
     // Alipay Mini Programs
     // error: 14 --- JSON parse data error
     // error: 19 --- http status error
@@ -314,100 +315,109 @@ function requestFail(this: XMLHttpRequestState, err: IRequestFailCallbackResult 
         return;
     }
 
-    this.status = 0;
-    this.statusText = "errMsg" in err ? err.errMsg : "errorMessage" in err ? err.errorMessage : "";
+    const s = (this as XMLHttpRequestP)[state];
+    s.status = 0;
+    s.statusText = "errMsg" in err ? err.errMsg : "errorMessage" in err ? err.errorMessage : "";
 
-    if (!this[_inAfterOpenBeforeSend] && this.readyState !== XMLHttpRequestP.UNSENT && this.readyState !== XMLHttpRequestP.DONE) {
-        emitProcessEvent(this.target, "error");
-        resetRequestTimeout.call(this);
+    if (!s[_inAfterOpenBeforeSend] && s.readyState !== XMLHttpRequestP.UNSENT && s.readyState !== XMLHttpRequestP.DONE) {
+        emitProcessEvent(this, "error");
+        resetRequestTimeout(this);
     }
 }
 
-function requestComplete(this: XMLHttpRequestState) {
-    this[_requestTask] = null;
+function requestComplete(this: XMLHttpRequest) {
+    const s = (this as XMLHttpRequestP)[state];
+    s[_requestTask] = null;
 
-    if (!this[_inAfterOpenBeforeSend] && (this.readyState === XMLHttpRequestP.OPENED || this.readyState === XMLHttpRequestP.LOADING)) {
-        setReadyStateAndNotify.call(this, XMLHttpRequestP.DONE);
+    if (!s[_inAfterOpenBeforeSend] && (s.readyState === XMLHttpRequestP.OPENED || s.readyState === XMLHttpRequestP.LOADING)) {
+        setReadyStateAndNotify(this, XMLHttpRequestP.DONE);
     }
 
     setTimeout(() => {
-        if (!this[_inAfterOpenBeforeSend]) {
-            let l = this[_responseContentLength];
-            emitProcessEvent(this.target, "loadend", l, l);
+        if (!s[_inAfterOpenBeforeSend]) {
+            let l = s[_responseContentLength];
+            emitProcessEvent(this, "loadend", l, l);
         }
     });
 }
 
-function clearRequest(this: XMLHttpRequestState, delay = true) {
+function clearRequest(xhr: XMLHttpRequest, delay = true) {
+    const s = (xhr as XMLHttpRequestP)[state];
     const timerFn = delay ? setTimeout : (f: () => void) => { f(); };
-    this[_resetPending] = true;
+    s[_resetPending] = true;
 
-    if (this[_requestTask] && this.readyState !== XMLHttpRequestP.DONE) {
-        if (delay) { setReadyStateAndNotify.call(this, XMLHttpRequestP.DONE); }
+    if (s[_requestTask] && s.readyState !== XMLHttpRequestP.DONE) {
+        if (delay) { setReadyStateAndNotify(xhr, XMLHttpRequestP.DONE); }
 
         timerFn(() => {
-            const requestTask = this[_requestTask];
+            const requestTask = s[_requestTask];
 
             if (requestTask) { requestTask.abort(); }
-            if (delay) { emitProcessEvent(this.target, "abort"); }
-            if (delay && !requestTask) { emitProcessEvent(this.target, "loadend"); }
+            if (delay) { emitProcessEvent(xhr, "abort"); }
+            if (delay && !requestTask) { emitProcessEvent(xhr, "loadend"); }
         });
     }
 
     timerFn(() => {
-        if (this[_resetPending]) {
-            if (delay) { this.readyState = XMLHttpRequestP.UNSENT; }
-            resetXHR.call(this);
+        if (s[_resetPending]) {
+            if (delay) { s.readyState = XMLHttpRequestP.UNSENT; }
+            resetXHR(xhr);
         }
     });
 }
 
-function checkRequestTimeout(this: XMLHttpRequestState) {
-    if (this.timeout) {
-        this[_timeoutId] = setTimeout(() => {
-            if (!this.status && this.readyState !== XMLHttpRequestP.DONE) {
-                if (this[_requestTask]) this[_requestTask]!.abort();
-                setReadyStateAndNotify.call(this, XMLHttpRequestP.DONE);
-                emitProcessEvent(this.target, "timeout");
+function checkRequestTimeout(xhr: XMLHttpRequest) {
+    const s = (xhr as XMLHttpRequestP)[state];
+    if (s.timeout) {
+        s[_timeoutId] = setTimeout(() => {
+            if (!s.status && s.readyState !== XMLHttpRequestP.DONE) {
+                if (s[_requestTask]) s[_requestTask]!.abort();
+                setReadyStateAndNotify(xhr, XMLHttpRequestP.DONE);
+                emitProcessEvent(xhr, "timeout");
             }
-        }, this.timeout);
+        }, s.timeout);
     }
 }
 
-function resetXHR(this: XMLHttpRequestState) {
-    this[_resetPending] = false;
-    resetRequestTimeout.call(this);
+function resetXHR(xhr: XMLHttpRequest) {
+    const s = (xhr as XMLHttpRequestP)[state];
 
-    this.response = "";
-    this.responseURL = "";
-    this.status = 0;
-    this.statusText = "";
+    s[_resetPending] = false;
+    resetRequestTimeout(xhr);
 
-    this[_requestHeaders] = new HeadersP();
-    this[_responseHeaders] = null;
-    this[_responseContentLength] = zero;
+    s.response = "";
+    s.responseURL = "";
+    s.status = 0;
+    s.statusText = "";
+
+    s[_requestHeaders] = new HeadersP();
+    s[_responseHeaders] = null;
+    s[_responseContentLength] = zero;
 }
 
-function resetRequestTimeout(this: XMLHttpRequestState) {
-    if (this[_timeoutId]) {
-        clearTimeout(this[_timeoutId]);
-        this[_timeoutId] = 0;
+function resetRequestTimeout(xhr: XMLHttpRequest) {
+    const s = (xhr as XMLHttpRequestP)[state];
+    if (s[_timeoutId]) {
+        clearTimeout(s[_timeoutId]);
+        s[_timeoutId] = 0;
     }
 }
 
-function setReadyStateAndNotify(this: XMLHttpRequestState, value: number) {
-    let hasChanged = value !== this.readyState;
-    this.readyState = value;
+function setReadyStateAndNotify(xhr: XMLHttpRequest, value: number) {
+    const s = (xhr as XMLHttpRequestP)[state];
+
+    let hasChanged = value !== s.readyState;
+    s.readyState = value;
 
     if (hasChanged) {
-        let evt = createInnerEvent(this.target, "readystatechange");
-        EventTarget_fire(this.target, evt);
+        let evt = createInnerEvent(xhr, "readystatechange");
+        EventTarget_fire(xhr, evt);
     }
 }
 
-function getHandlers(this: XMLHttpRequestState) {
+function getHandlers(s: XMLHttpRequestState) {
     return {
-        onreadystatechange: (ev: Event) => { executeFn.call(this.target, this.onreadystatechange, ev); },
+        onreadystatechange: (ev: Event) => { executeFn(s.target, s.onreadystatechange, ev); },
     };
 }
 

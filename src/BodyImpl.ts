@@ -28,32 +28,32 @@ export class BodyImpl implements Body {
 
     arrayBuffer(): Promise<ArrayBuffer> {
         const kind = "arrayBuffer";
-        return consumed.call(this[state], kind) || read.call(this[state], kind) as Promise<ArrayBuffer>;
+        return consumed(this, kind) || read(this, kind) as Promise<ArrayBuffer>;
     }
 
     blob(): Promise<Blob> {
         const kind = "blob";
-        return consumed.call(this[state], kind) || read.call(this[state], kind) as Promise<Blob>;
+        return consumed(this, kind) || read(this, kind) as Promise<Blob>;
     }
 
     bytes() {
         const kind = "bytes";
-        return consumed.call(this[state], kind) || read.call(this[state], kind) as Promise<InstanceType<typeof Uint8Array>>;
+        return consumed(this, kind) || read(this, kind) as Promise<InstanceType<typeof Uint8Array>>;
     }
 
     formData(): Promise<FormData> {
         const kind = "formData";
-        return consumed.call(this[state], kind) || read.call(this[state], kind) as Promise<FormData>;
+        return consumed(this, kind) || read(this, kind) as Promise<FormData>;
     }
 
     json(): Promise<any> {
         const kind = "json";
-        return consumed.call(this[state], kind) || read.call(this[state], kind);
+        return consumed(this, kind) || read(this, kind);
     }
 
     text(): Promise<string> {
         const kind = "text";
-        return consumed.call(this[state], kind) || read.call(this[state], kind) as Promise<string>;
+        return consumed(this, kind) || read(this, kind) as Promise<string>;
     }
 
     toString() { return "[object Body]"; }
@@ -74,12 +74,12 @@ class BodyState {
 }
 
 /** @internal */
-export function Body_init(body: BodyImpl, payload?: ConstructorParameters<typeof Response>[0], headers?: Headers) {
+export function Body_init(body: Body, payload?: ConstructorParameters<typeof Response>[0], headers?: Headers) {
     if (isObjectType<ReadableStream>("ReadableStream", payload)) {
         throw new ReferenceError("ReadableStream is not defined");
     }
 
-    body[state][_body] = convert(payload, type => {
+    (body as BodyImpl)[state][_body] = convert(payload, type => {
         if (headers && !headers.get("Content-Type")) {
             headers.set("Content-Type", type);
         }
@@ -101,52 +101,56 @@ export function Body_toPayload(body: Body) {
     return (body as BodyImpl)[state][_body];
 }
 
-function read(this: BodyState, kind: "arrayBuffer" | "blob" | "bytes" | "formData" | "json" | "text") {
+function read(body: Body, kind: "arrayBuffer" | "blob" | "bytes" | "formData" | "json" | "text") {
     return new Promise((resolve, reject) => {
         try {
-            resolve(readSync.call(this, kind));
+            resolve(readSync(body, kind));
         } catch (e) {
             reject(e);
         }
     });
 }
 
-type TReadSyncResult = ArrayBuffer | Blob | InstanceType<typeof Uint8Array> | FormData | object | string;
+function readSync(
+    body: Body,
+    kind: Parameters<typeof read>[1],
+): ArrayBuffer | Blob | InstanceType<typeof Uint8Array> | FormData | object | string {
+    const payload = (body as BodyImpl)[state][_body];
 
-function readSync(this: BodyState, kind: Parameters<typeof read>[0]): TReadSyncResult {
     if (kind === "arrayBuffer") {
-        return convertBack("arraybuffer", this[_body]) as ArrayBuffer;
+        return convertBack("arraybuffer", payload) as ArrayBuffer;
     }
 
     else if (kind === "blob") {
-        return convertBack("blob", this[_body]) as Blob;
+        return convertBack("blob", payload) as Blob;
     }
 
     else if (kind === "bytes") {
-        let arrayBuffer = convertBack("arraybuffer", this[_body]) as ArrayBuffer;
+        let arrayBuffer = convertBack("arraybuffer", payload) as ArrayBuffer;
         return new Uint8Array(arrayBuffer);
     }
 
     else if (kind === "formData") {
-        let text = convertBack("text", this[_body]) as string;
+        let text = convertBack("text", payload) as string;
         return createFormDataFromBody(text);
     }
 
     else if (kind === "json") {
-        return convertBack("json", this[_body]) as object;
+        return convertBack("json", payload) as object;
     }
 
     else {
-        return convertBack("text", this[_body]) as string;
+        return convertBack("text", payload) as string;
     }
 }
 
-function consumed(this: BodyState, kind: string) {
-    if (!this[_body]) return;
-    if (this.bodyUsed) {
-        return Promise.reject(new TypeError(`TypeError: Failed to execute '${kind}' on '${this[_name]}': body stream already read`));
+function consumed(body: Body, kind: string) {
+    const s = (body as BodyImpl)[state];
+    if (!s[_body]) return;
+    if (s.bodyUsed) {
+        return Promise.reject(new TypeError(`TypeError: Failed to execute '${kind}' on '${s[_name]}': body stream already read`));
     }
-    this.bodyUsed = true;
+    s.bodyUsed = true;
 }
 
 const encode = (str: string) => {

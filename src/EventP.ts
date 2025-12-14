@@ -52,7 +52,7 @@ export class EventP implements Event {
     declare readonly isTrusted: boolean;
     get timeStamp() { return this[state].timeStamp; }
 
-    composedPath(): EventTarget[] {
+    composedPath() {
         let path = !!this.target ? [this.target] : [];
         if (!!this.currentTarget && this.currentTarget !== this.target) path.push(this.currentTarget);
 
@@ -123,8 +123,8 @@ class EventState {
     cancelable = false;
     composed = false;
 
-    target = null as EventTarget | null;
-    currentTarget = null as EventTarget | null;
+    target: EventTarget | null = null;
+    currentTarget: EventTarget | null = null;
     eventPhase: Event["eventPhase"] = EventP.NONE;
 
     cancelBubble = false;

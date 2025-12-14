@@ -1,7 +1,7 @@
 import { g, polyfill, dfStringTag } from "./isPolyfill";
 import { EventP, type Event_EtFields, Event_getEtField } from "./EventP";
 
-let dispatched: Event_EtFields["Dispatched"] = 1;
+const dispatched: Event_EtFields["Dispatched"] = 1;
 
 /** @internal */
 const state = Symbol(/* "CustomEventState" */);

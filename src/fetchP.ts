@@ -60,9 +60,9 @@ export function fetchP(input: RequestInfo | URL, init?: RequestInit): Promise<Re
         xhr.open(request.method, request.url);
 
         if (request.credentials === "include") {
-            xhr.withCredentials = true
+            xhr.withCredentials = true;
         } else if (request.credentials === "omit") {
-            xhr.withCredentials = false
+            xhr.withCredentials = false;
         }
 
         if (init && typeof init === "object" && isObjectHeaders(init.headers)) {

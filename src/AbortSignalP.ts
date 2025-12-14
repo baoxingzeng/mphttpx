@@ -6,15 +6,15 @@ import { EventTargetP, EventTargetState, eventTargetState, EventTarget_fire, att
 const state = Symbol(/* "AbortSignalState" */);
 
 export class AbortSignalP extends EventTargetP implements AbortSignal {
-    static abort(reason?: any): AbortSignal {
-        let signal = createAbortSignalP();
+    static abort(reason?: any) {
+        let signal = createAbortSignal();
         AbortSignal_abort(signal, reason, false);
 
         return signal;
     }
 
-    static any(signals: AbortSignal[]): AbortSignal {
-        let signal = createAbortSignalP();
+    static any(signals: AbortSignal[]) {
+        let signal = createAbortSignal();
         let abortedSignal = signals.find(x => x.aborted);
 
         if (abortedSignal) {
@@ -39,8 +39,8 @@ export class AbortSignalP extends EventTargetP implements AbortSignal {
         return signal;
     }
 
-    static timeout(milliseconds: number): AbortSignal {
-        let signal = createAbortSignalP();
+    static timeout(milliseconds: number) {
+        let signal = createAbortSignal();
 
         setTimeout(() => {
             AbortSignal_abort(signal, new MPException("signal timed out", "TimeoutError"));
@@ -71,7 +71,7 @@ export class AbortSignalP extends EventTargetP implements AbortSignal {
     get onabort() { return this[state].onabort; }
     set onabort(value) {
         this[state].onabort = value;
-        attachFn.call(this, "abort", value, this[state][_handlers].onabort);
+        attachFn(this, "abort", value, this[state][_handlers].onabort);
     }
 
     toString() { return "[object AbortSignal]"; }
@@ -85,25 +85,25 @@ const _handlers = Symbol();
 
 /** @internal */
 class AbortSignalState {
-    constructor(target: AbortSignalP) {
+    constructor(target: AbortSignal) {
         this.target = target;
     }
 
-    target: AbortSignalP;
+    target: AbortSignal;
 
     aborted = false;
     reason: any = undefined;
 
-    [_handlers] = getHandlers.call(this);
+    [_handlers] = getHandlers(this);
     onabort: ((this: AbortSignal, ev: Event) => any) | null = null;
 }
 
 /** @internal */
-export function AbortSignal_abort(signal: AbortSignalP, reason: any, notify = true, isTrusted = true) {
-    const that = signal[state];
-    if (!that.aborted) {
-        that.aborted = true;
-        that.reason = reason ?? (new MPException("signal is aborted without reason", "AbortError"));
+export function AbortSignal_abort(signal: AbortSignal, reason: any, notify = true, isTrusted = true) {
+    const s = (signal as AbortSignalP)[state];
+    if (!s.aborted) {
+        s.aborted = true;
+        s.reason = reason ?? (new MPException("signal is aborted without reason", "AbortError"));
 
         if (notify) {
             let evt = createInnerEvent(signal, "abort", undefined, isTrusted);
@@ -112,18 +112,18 @@ export function AbortSignal_abort(signal: AbortSignalP, reason: any, notify = tr
     }
 }
 
-function getHandlers(this: AbortSignalState) {
+function getHandlers(s: AbortSignalState) {
     return {
-        onabort: (ev: Event) => { executeFn.call(this.target, this.onabort, ev); },
+        onabort: (ev: Event) => { executeFn(s.target, s.onabort, ev); },
     };
 }
 
 /** @internal */
-export function createAbortSignalP(): AbortSignalP {
-    let instance: AbortSignalP = Object.create(AbortSignalP.prototype);
-    instance[eventTargetState] = new EventTargetState(instance);
-    instance[state] = new AbortSignalState(instance);
-    return instance;
+export function createAbortSignal(): AbortSignal {
+    let signal: AbortSignalP = Object.create(AbortSignalP.prototype);
+    signal[eventTargetState] = new EventTargetState(signal);
+    signal[state] = new AbortSignalState(signal);
+    return signal;
 }
 
 const AbortSignalE = g["AbortSignal"] || AbortSignalP;

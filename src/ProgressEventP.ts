@@ -1,5 +1,5 @@
+import { EventTarget_fire } from "./EventTargetP";
 import { g, polyfill, dfStringTag } from "./isPolyfill";
-import { EventTargetP, EventTarget_fire } from "./EventTargetP";
 import { EventP, eventState, Event_setTrusted } from "./EventP";
 
 /** @internal */
@@ -54,7 +54,7 @@ function createInnerProgressEvent(
         loaded = 0,
         total = 0,
     }: Partial<TCreateExtraParams> = {},
-) {
+): ProgressEvent {
     let event = new ProgressEventP(type);
     event[state].lengthComputable = lengthComputable;
     event[state].loaded = loaded;
@@ -66,7 +66,7 @@ function createInnerProgressEvent(
 }
 
 /** @internal */
-export function emitProcessEvent(target: EventTargetP, type: string, loaded: number | (() => number) = 0, total: number | (() => number) = 0) {
+export function emitProcessEvent(target: EventTarget, type: string, loaded: number | (() => number) = 0, total: number | (() => number) = 0) {
     let event = createInnerProgressEvent(target, type, {
         lengthComputable: () => { return getValue(total) > 0; },
         loaded,

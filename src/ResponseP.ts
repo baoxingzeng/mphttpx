@@ -56,10 +56,10 @@ export class ResponseP extends BodyImpl implements Response {
     }
     
     static json(data: any, init?: ResponseInit): Response {
-        return new Response(JSON.stringify(data), init);
+        return new ResponseP(JSON.stringify(data), init);
     }
 
-    static error() {
+    static error(): Response {
         let response = new ResponseP(null, {status: 200, statusText: ""});
         response[state].ok = false;
         response[state].status = 0;
@@ -67,12 +67,12 @@ export class ResponseP extends BodyImpl implements Response {
         return response;
     }
 
-    static redirect(url: string | URL, status = 301) {
+    static redirect(url: string | URL, status = 301): Response {
         if ([301, 302, 303, 307, 308].indexOf(status) === -1) {
             throw new RangeError("Failed to execute 'redirect' on 'Response': Invalid status code");
         }
 
-        return new Response(null, { status, headers: { location: String(url) } });
+        return new ResponseP(null, { status, headers: { location: String(url) } });
     }
 
     toString() { return "[object Response]"; }

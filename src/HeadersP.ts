@@ -168,7 +168,7 @@ export function normalizeValue(value: string) {
 }
 
 /** @internal */
-export function parseHeaders(rawHeaders: string) {
+export function parseHeaders(rawHeaders: string): Headers {
     let headers = new HeadersP();
     let preProcessedHeaders = rawHeaders.replace(/\r?\n[\t ]+/g, " ");
 

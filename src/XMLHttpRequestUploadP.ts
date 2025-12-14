@@ -18,9 +18,9 @@ export class XMLHttpRequestUploadP extends XMLHttpRequestEventTargetP implements
 dfStringTag(XMLHttpRequestUploadP, "XMLHttpRequestUpload");
 
 /** @internal */
-export function createXMLHttpRequestUploadP() {
-    let instance: XMLHttpRequestUploadP = Object.create(XMLHttpRequestUploadP.prototype);
-    instance[eventTargetState] = new EventTargetState(instance);
-    instance[xhrEventTargetState] = new XMLHttpRequestEventTargetState(instance);
-    return instance;
+export function createXMLHttpRequestUpload(): XMLHttpRequestUpload {
+    let upload: XMLHttpRequestUploadP = Object.create(XMLHttpRequestUploadP.prototype);
+    upload[eventTargetState] = new EventTargetState(upload);
+    upload[xhrEventTargetState] = new XMLHttpRequestEventTargetState(upload);
+    return upload;
 }

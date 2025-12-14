@@ -127,7 +127,7 @@ class FormDataState {
 }
 
 /** @internal */
-export function FormData_toBlob(formData: FormData) {
+export function FormData_toBlob(formData: FormData): Blob {
     const boundary = "----formdata-polyfill-" + Math.random();
     const p = `--${boundary}\r\nContent-Disposition: form-data; name="`;
 
@@ -186,7 +186,7 @@ function escape(str: string) {
  * @returns Parsed FormData object (text fields as strings, files as File objects)
  * @internal
  */
-export function createFormDataFromBody(body: string, errMsg = "Failed to fetch") {
+export function createFormDataFromBody(body: string, errMsg = "Failed to fetch"): FormData {
     const formData = new FormDataP();
     if (typeof body !== "string" || body.trim() === "") {
         return formData;

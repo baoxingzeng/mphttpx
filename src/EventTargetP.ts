@@ -31,7 +31,7 @@ export class EventTargetP implements EventTarget {
 
                 if (signal) {
                     executor.options.signal = signal;
-                    reply.call(that, signal, executor);
+                    reply(this, signal, executor);
                 }
             }
 
@@ -42,7 +42,7 @@ export class EventTargetP implements EventTarget {
         }
     }
 
-    dispatchEvent(event: Event) {
+    dispatchEvent(event: Event): boolean {
         if (typeof event !== "object") {
             throw new TypeError("EventTarget.dispatchEvent: Argument 1 is not an object.");
         }
@@ -78,18 +78,18 @@ const _executors = Symbol();
 
 /** @internal */
 export class EventTargetState {
-    constructor(target: EventTargetP) {
+    constructor(target: EventTarget) {
         this.target = target;
     }
 
-    target: EventTargetP;
+    target: EventTarget;
     [_executors] = [] as Executor[];
 }
 
 /** @internal */
-export function EventTarget_fire(target: EventTargetP, event: EventP) {
-    const that = target[state];
-    const s = event[eventState];
+export function EventTarget_fire(target: EventTarget, event: Event) {
+    const that = (target as EventTargetP)[state];
+    const s = (event as EventP)[eventState];
 
     if (!event.target) s.target = target;
     s.currentTarget = target;
@@ -132,13 +132,14 @@ export function EventTarget_fire(target: EventTargetP, event: EventP) {
 }
 
 /** @internal */
-export function EventTarget_count(eventTarget: EventTarget) {
-    return (eventTarget as EventTargetP)[state][_executors].length;
+export function EventTarget_count(target: EventTarget) {
+    return (target as EventTargetP)[state][_executors].length;
 }
 
-function reply(this: EventTargetState, signal: AbortSignal, executor: Executor) {
+function reply(target: EventTarget, signal: AbortSignal, executor: Executor) {
+    const s = (target as EventTargetP)[state];
     const onAbort = () => {
-        this[_executors] = this[_executors].filter(x => !x.equals(executor));
+        s[_executors] = s[_executors].filter(x => !x.equals(executor));
         signal.removeEventListener("abort", onAbort);
     }
 
@@ -182,17 +183,17 @@ function isEventListenerObject(cb: EventListenerObject | null): cb is EventListe
 }
 
 /** @internal */
-export function attachFn(this: EventTarget, type: string, cb: Function | null, listener: EventListener) {
+export function attachFn(target: EventTarget, type: string, cb: Function | null, listener: EventListener) {
     if (typeof cb === "function") {
-        this.addEventListener(type, listener);
+        target.addEventListener(type, listener);
     } else {
-        this.removeEventListener(type, listener);
+        target.removeEventListener(type, listener);
     }
 }
 
 /** @internal */
-export function executeFn(this: EventTarget, cb: Function | null, ev: Event) {
-    if (typeof cb === "function") cb.call(this, ev);
+export function executeFn(target: EventTarget, cb: Function | null, ev: Event) {
+    if (typeof cb === "function") cb.call(target, ev);
 }
 
 const EventTargetE = g["EventTarget"] || EventTargetP;
