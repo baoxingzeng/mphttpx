@@ -99,22 +99,22 @@ export function EventTarget_fire(target: EventTarget, event: Event) {
     let onceIndexes: number[] = [];
 
     for (let i = 0; i < that[_executors].length; ++i) {
+        if (Event_getEtField(event, stopImmediatePropagationCalled)) break;
+
         let executor = that[_executors][i]!;
         if (executor.type !== event.type) continue;
-
-        Event_setEtField(event, passive, !!executor.options.passive);
         if (executor.options.once) onceIndexes.push(i);
 
-        let { callback: cb } = executor;
+        Event_setEtField(event, passive, !!executor.options.passive);
 
         try {
+            let { callback: cb } = executor;
             if (typeof cb === "function") cb.call(target, event);
         } catch (e) {
             console.error(e);
         }
 
         Event_setEtField(event, passive, false);
-        if (Event_getEtField(event, stopImmediatePropagationCalled)) break;
     }
 
     if (onceIndexes.length > 0) {
