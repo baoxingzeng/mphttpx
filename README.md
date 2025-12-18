@@ -28,11 +28,11 @@ This allows web code to be reused in other environments (such as mini-programs).
       - [Compatibility](#compatibility-6)
     - [fetch](#fetch)
       - [Compatibility](#compatibility-7)
-    - [Headers](#headers)
-      - [Compatibility](#compatibility-8)
     - [Request](#request)
-      - [Compatibility](#compatibility-9)
+      - [Compatibility](#compatibility-8)
     - [Response](#response)
+      - [Compatibility](#compatibility-9)
+    - [Headers](#headers)
       - [Compatibility](#compatibility-10)
     - [AbortController](#abortcontroller)
       - [Compatibility](#compatibility-11)
@@ -376,48 +376,6 @@ fetch("https://example.com/profile/avatar", {
 
 Refer to Request below.
 
-### Headers
-
-```javascript
-import { Headers } from "mphttpx";
-
-const myHeaders = new Headers();
-
-myHeaders.append("Content-Type", "text/plain");
-myHeaders.get("Content-Type"); // should return 'text/plain'
-```
-
-The same can be achieved by passing an array of arrays or an object literal to the constructor:
-
-```javascript
-import { Headers } from "mphttpx";
-
-let myHeaders = new Headers({
-    "Content-Type": "text/plain",
-});
-
-// or, using an array of arrays:
-myHeaders = new Headers([["Content-Type", "text/plain"]]);
-
-myHeaders.get("Content-Type"); // should return 'text/plain'
-```
-
-#### Compatibility
-
-| Method  | Available  | Description  |
-| ------- | ---------  | -------------|
-| append(name, value)          | ✔ | 
-| delete(name)                 | ✔ | 
-| entries()                    | ✔ | 
-| forEach(callbackFn)          | ✔ | 
-| forEach(callbackFn, thisArg) | ✔ | 
-| get(name)                    | ✔ | 
-| getSetCookie()               | ✔ | 
-| has(name)                    | ✔ | 
-| keys()                       | ✔ | 
-| set(name, value)             | ✔ | 
-| values()                     | ✔ | 
-
 ### Request
 
 ```javascript
@@ -529,6 +487,48 @@ const myResponse = new Response(myBlob, myOptions);
 | formData()    | ✔ | 
 | json()        | ✔ | 
 | text()        | ✔ | 
+
+### Headers
+
+```javascript
+import { Headers } from "mphttpx";
+
+const myHeaders = new Headers();
+
+myHeaders.append("Content-Type", "text/plain");
+myHeaders.get("Content-Type"); // should return 'text/plain'
+```
+
+The same can be achieved by passing an array of arrays or an object literal to the constructor:
+
+```javascript
+import { Headers } from "mphttpx";
+
+let myHeaders = new Headers({
+    "Content-Type": "text/plain",
+});
+
+// or, using an array of arrays:
+myHeaders = new Headers([["Content-Type", "text/plain"]]);
+
+myHeaders.get("Content-Type"); // should return 'text/plain'
+```
+
+#### Compatibility
+
+| Method  | Available  | Description  |
+| ------- | ---------  | -------------|
+| append(name, value)          | ✔ | 
+| delete(name)                 | ✔ | 
+| entries()                    | ✔ | 
+| forEach(callbackFn)          | ✔ | 
+| forEach(callbackFn, thisArg) | ✔ | 
+| get(name)                    | ✔ | 
+| getSetCookie()               | ✔ | 
+| has(name)                    | ✔ | 
+| keys()                       | ✔ | 
+| set(name, value)             | ✔ | 
+| values()                     | ✔ | 
 
 ### AbortController
 

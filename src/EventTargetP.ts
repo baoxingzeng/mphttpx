@@ -88,27 +88,27 @@ export class EventTargetState {
 
 /** @internal */
 export function EventTarget_fire(target: EventTarget, event: Event) {
-    const that = (target as EventTargetP)[state];
-    const s = (event as EventP)[eventState];
+    const s = (target as EventTargetP)[state];
+    const evs = (event as EventP)[eventState];
 
-    if (!event.target) s.target = target;
-    s.currentTarget = target;
-    s.eventPhase = EventP.AT_TARGET;
+    if (!event.target) evs.target = target;
+    evs.currentTarget = target;
+    evs.eventPhase = EventP.AT_TARGET;
     Event_setEtField(event, dispatched, true);
 
     let onceIndexes: number[] = [];
 
-    for (let i = 0; i < that[_executors].length; ++i) {
+    for (let i = 0; i < s[_executors].length; ++i) {
         if (Event_getEtField(event, stopImmediatePropagationCalled)) break;
 
-        let executor = that[_executors][i]!;
+        let executor = s[_executors][i]!;
         if (executor.type !== event.type) continue;
         if (executor.options.once) onceIndexes.push(i);
 
         Event_setEtField(event, passive, !!executor.options.passive);
 
         try {
-            let { callback: cb } = executor;
+            let cb = executor.callback;
             if (typeof cb === "function") cb.call(target, event);
         } catch (e) {
             console.error(e);
@@ -118,14 +118,14 @@ export function EventTarget_fire(target: EventTarget, event: Event) {
     }
 
     if (onceIndexes.length > 0) {
-        that[_executors] = that[_executors].reduce((acc: Executor[], cur, index) => {
+        s[_executors] = s[_executors].reduce((acc: Executor[], cur, index) => {
             if (onceIndexes.indexOf(index) === -1) acc.push(cur);
             return acc;
         }, []);
     }
 
-    s.currentTarget = null;
-    s.eventPhase = EventP.NONE;
+    evs.currentTarget = null;
+    evs.eventPhase = EventP.NONE;
     Event_setEtField(event, dispatched, false);
 
     return !(event.cancelable && Event_getEtField(event, preventDefaultCalled));

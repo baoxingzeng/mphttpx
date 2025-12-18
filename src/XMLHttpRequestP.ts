@@ -6,8 +6,8 @@ import { Uint8Array_toBase64 } from "./BlobP";
 import { createInnerEvent } from "./EventP";
 import { emitProcessEvent } from "./ProgressEventP";
 import { EventTarget_fire, EventTarget_count, attachFn, executeFn } from "./EventTargetP";
-import { XMLHttpRequestEventTargetP } from "./XMLHttpRequestEventTargetP";
 import { createXMLHttpRequestUpload } from "./XMLHttpRequestUploadP";
+import { XMLHttpRequestEventTargetP } from "./XMLHttpRequestEventTargetP";
 import type {
     TRequestFunc,
     IRequestOptions,
@@ -169,30 +169,31 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
         that[_requestTask] = mp.request(options);
         emitProcessEvent(this, "loadstart");
 
-        if (processContentLength) {
-            const hasRequestBody = allowsRequestBody && !!data;
+        if (processContentLength && allowsRequestBody && !!data) {
+            emitProcessEvent(upload, "loadstart", 0, contentLength);
+        }
 
-            if (hasRequestBody) {
-                emitProcessEvent(upload, "loadstart", 0, contentLength);
-            }
+        setTimeout(() => {
+            const upload = that.upload;
+            const processContentLength = upload && EventTarget_count(upload) > 0;
 
-            setTimeout(() => {
+            if (processContentLength) {
                 const _aborted = that[_inAfterOpenBeforeSend] || that.readyState !== XMLHttpRequestP.OPENED;
                 const _contentLength = _aborted ? 0 : contentLength;
 
                 if (_aborted) {
                     emitProcessEvent(upload, "abort");
                 } else {
-                    if (hasRequestBody) {
+                    if (allowsRequestBody && !!data) {
                         emitProcessEvent(upload, "load", _contentLength, _contentLength);
                     }
                 }
 
-                if (_aborted || hasRequestBody) {
+                if (_aborted || (allowsRequestBody && !!data)) {
                     emitProcessEvent(upload, "loadend", _contentLength, _contentLength);
                 }
-            });
-        }
+            }
+        });
 
         checkRequestTimeout(this);
     }
