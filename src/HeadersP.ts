@@ -168,6 +168,17 @@ export function normalizeValue(value: string) {
 }
 
 /** @internal */
+export function createHeadersFromDict(records: Record<string, string>): Headers {
+    let headers = new HeadersP();
+    let array = headers[state][_headersMap].array;
+    objectEntries(records).forEach(([name, value]) => {
+        let key = normalizeName(name, "set");
+        array.push([key, ["" + name, normalizeValue(value)]]);
+    });
+    return headers;
+}
+
+/** @internal */
 export function parseHeaders(rawHeaders: string): Headers {
     let headers = new HeadersP();
     let preProcessedHeaders = rawHeaders.replace(/\r?\n[\t ]+/g, " ");

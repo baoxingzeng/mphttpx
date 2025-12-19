@@ -1,6 +1,6 @@
 import { normalizeMethod } from "./RequestP";
 import { convert, convertBack } from "./BodyImpl";
-import { HeadersP, parseHeaders } from "./HeadersP";
+import { HeadersP, createHeadersFromDict, parseHeaders } from "./HeadersP";
 import { TextEncoderP } from "./TextEncoderP";
 import { Uint8Array_toBase64 } from "./BlobP";
 import { createInnerEvent } from "./EventP";
@@ -135,16 +135,13 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
 
         const allowsRequestBody = that[_method] !== "GET" && that[_method] !== "HEAD";
         const processHeaders = allowsRequestBody && !that[_requestHeaders].has("Content-Type");
-
-        const upload = that.upload;
-        const processContentLength = upload && EventTarget_count(upload) > 0;
+        const processContentLength = allowsRequestBody && !!body;
 
         let headers = () => Array.from(that[_requestHeaders].entries())
             .reduce(
                 (acc: Record<string, string>, cur) => { acc[cur[0]] = cur[1]; return acc; },
                 {}
             );
-
         let contentLength: () => number = zero;
 
         const processHeadersFn = processHeaders ? (v: string) => { that[_requestHeaders].set("Content-Type", v); } : void 0;
@@ -169,28 +166,25 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
         that[_requestTask] = mp.request(options);
         emitProcessEvent(this, "loadstart");
 
-        if (processContentLength && allowsRequestBody && !!data) {
-            emitProcessEvent(upload, "loadstart", 0, contentLength);
+        if (processContentLength && that.upload && EventTarget_count(this.upload) > 0) {
+            emitProcessEvent(this.upload, "loadstart", 0, contentLength);
         }
 
         setTimeout(() => {
-            const upload = that.upload;
-            const processContentLength = upload && EventTarget_count(upload) > 0;
-
-            if (processContentLength) {
+            if (that.upload && EventTarget_count(this.upload) > 0) {
                 const _aborted = that[_inAfterOpenBeforeSend] || that.readyState !== XMLHttpRequestP.OPENED;
                 const _contentLength = _aborted ? 0 : contentLength;
 
                 if (_aborted) {
-                    emitProcessEvent(upload, "abort");
+                    emitProcessEvent(this.upload, "abort");
                 } else {
-                    if (allowsRequestBody && !!data) {
-                        emitProcessEvent(upload, "load", _contentLength, _contentLength);
+                    if (processContentLength) {
+                        emitProcessEvent(this.upload, "load", _contentLength, _contentLength);
                     }
                 }
 
-                if (_aborted || (allowsRequestBody && !!data)) {
-                    emitProcessEvent(upload, "loadend", _contentLength, _contentLength);
+                if (_aborted || processContentLength) {
+                    emitProcessEvent(this.upload, "loadend", _contentLength, _contentLength);
                 }
             }
         });
@@ -275,9 +269,10 @@ class XMLHttpRequestState {
 
 function requestSuccess(this: XMLHttpRequest, { statusCode, header, data }: IRequestSuccessCallbackBaseResult) {
     const s = (this as XMLHttpRequestP)[state];
+
     s.responseURL = s[_requestURL];
     s.status = statusCode;
-    s[_responseHeaders] = new HeadersP(header as Record<string, string>);
+    s[_responseHeaders] = createHeadersFromDict(header as Record<string, string>);
 
     let lengthStr = s[_responseHeaders]!.get("Content-Length");
     s[_responseContentLength] = () => { return lengthStr ? parseInt(lengthStr) : 0; }
