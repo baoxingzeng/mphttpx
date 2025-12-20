@@ -1,5 +1,5 @@
-import { TextEncoderP } from "./TextEncoderP";
-import { TextDecoderP } from "./TextDecoderP";
+import { TextEncoder } from "./TextEncoderP";
+import { TextDecoder } from "./TextDecoderP";
 import { BlobP, Blob_toUint8Array } from "./BlobP";
 import { FormData_toBlob, createFormDataFromBody } from "./FormDataP";
 import { polyfill, isObjectType, isPolyfillType, dfStringTag } from "./isPolyfill";
@@ -154,12 +154,12 @@ function consumed(body: Body, kind: string) {
 }
 
 const encode = (str: string) => {
-    const encoder = new TextEncoderP();
+    const encoder = new TextEncoder();
     return encoder.encode(str).buffer;
 }
 
 const decode = (buf: ArrayBuffer) => {
-    let decoder = new TextDecoderP();
+    let decoder = new TextDecoder();
     return decoder.decode(buf);
 }
 

@@ -131,11 +131,6 @@ export function EventTarget_fire(target: EventTarget, event: Event) {
     return !(event.cancelable && Event_getEtField(event, preventDefaultCalled));
 }
 
-/** @internal */
-export function EventTarget_count(target: EventTarget) {
-    return (target as EventTargetP)[state][_executors].length;
-}
-
 function reply(target: EventTarget, signal: AbortSignal, executor: Executor) {
     const s = (target as EventTargetP)[state];
     const onAbort = () => {

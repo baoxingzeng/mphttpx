@@ -1,5 +1,5 @@
-import { TextEncoderP } from "./TextEncoderP";
-import { TextDecoderP } from "./TextDecoderP";
+import { TextEncoder } from "./TextEncoderP";
+import { TextDecoder } from "./TextDecoderP";
 import { g, polyfill, isPolyfillType, dfStringTag } from "./isPolyfill";
 
 /** @internal */
@@ -11,17 +11,16 @@ export class BlobP implements Blob {
             throw new TypeError("First argument to Blob constructor must be an Array.");
         }
 
-        let encoder: TextEncoderP | null = null;
+        let encoder: TextEncoder | null = null;
         let chunks = blobParts.reduce((chunks: Array<InstanceType<typeof Uint8Array>>, part) => {
             if (isPolyfillType<Blob>("Blob", part)) {
                 chunks.push((part as BlobP)[state][_buffer]);
             } else if (part instanceof ArrayBuffer || ArrayBuffer.isView(part)) {
                 chunks.push(BufferSource_toUint8Array(part));
             } else {
-                if (!encoder) { encoder = new TextEncoderP(); }
+                if (!encoder) { encoder = new TextEncoder(); }
                 chunks.push(encoder.encode(String(part)));
             }
-
             return chunks;
         }, []);
 
@@ -49,7 +48,7 @@ export class BlobP implements Blob {
     }
 
     slice(start?: number, end?: number, contentType?: string): Blob {
-        let sliced = this[state][_buffer].slice(start ?? 0, end ?? this[state][_buffer].length);
+        let sliced = this[state][_buffer].slice(start ?? 0, end ?? this[state][_buffer].length);    // × WeChat 2.5.0
         return new BlobP([sliced], { type: contentType ?? "" });
     }
 
@@ -58,7 +57,7 @@ export class BlobP implements Blob {
     }
 
     text(): Promise<string> {
-        let decoder = new TextDecoderP();
+        let decoder = new TextDecoder();
         return Promise.resolve(decoder.decode(this[state][_buffer]));
     }
 

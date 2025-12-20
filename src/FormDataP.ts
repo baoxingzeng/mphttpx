@@ -1,7 +1,7 @@
 import { BlobP } from "./BlobP";
 import { FileP } from "./FileP";
-import { TextEncoderP } from "./TextEncoderP";
-import { g, polyfill, isPolyfillType, dfStringTag } from "./isPolyfill";
+import { TextEncoder } from "./TextEncoderP";
+import { g, polyfill, isObjectType, isPolyfillType, dfStringTag } from "./isPolyfill";
 
 /** @internal */ const state = Symbol(/* "FormDataState" */);
 
@@ -128,7 +128,7 @@ class FormDataState {
 
 /** @internal */
 export function FormData_toBlob(formData: FormData): Blob {
-    const boundary = "----formdata-polyfill-" + Math.random();
+    const boundary = "----formdata-mphttpx-" + Math.random();
     const p = `--${boundary}\r\nContent-Disposition: form-data; name="`;
 
     let chunks: BlobPart[] = [];
@@ -156,7 +156,7 @@ function normalizeArgs(name: string, value: string | Blob, filename?: string): [
                 ? (value as File).name
                 : "blob";
 
-        if ((value as File).name !== filename || Object.prototype.toString.call(value) === "[object Blob]") {
+        if ((value as File).name !== filename || isObjectType<Blob>("Blob", value)) {
             value = new FileP([value], filename);
         }
 
@@ -248,7 +248,7 @@ export function createFormDataFromBody(body: string, errMsg = "Failed to fetch")
                 // Remove line breaks from content (simulating browser behavior)
                 const content = contentRaw.replace(/\r\n/g, "");
                 // Convert string to Uint8Array using TextEncoder
-                const encoder = new TextEncoderP();
+                const encoder = new TextEncoder();
                 const uint8Array = encoder.encode(content);
                 // Create File object (default filename is unknown-file)
                 const filename = filenameMatch[1] || "unknown-file";

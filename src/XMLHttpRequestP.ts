@@ -1,11 +1,11 @@
 import { normalizeMethod } from "./RequestP";
 import { convert, convertBack } from "./BodyImpl";
 import { HeadersP, Headers_toDict, createHeadersFromDict, parseHeaders } from "./HeadersP";
-import { TextEncoderP } from "./TextEncoderP";
+import { TextEncoder } from "./TextEncoderP";
 import { Uint8Array_toBase64 } from "./BlobP";
 import { createInnerEvent } from "./EventP";
 import { emitProcessEvent } from "./ProgressEventP";
-import { EventTarget_fire, EventTarget_count, attachFn, executeFn } from "./EventTargetP";
+import { EventTarget_fire, attachFn, executeFn } from "./EventTargetP";
 import { createXMLHttpRequestUpload } from "./XMLHttpRequestUploadP";
 import { XMLHttpRequestEventTargetP } from "./XMLHttpRequestEventTargetP";
 import type {
@@ -109,7 +109,7 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
             let _password = String(password ?? "");
 
             if (_username.length > 0 || _password.length > 0) {
-                let auth = `Basic ${Uint8Array_toBase64((new TextEncoderP()).encode(_username + ":" + _password))}`;
+                let auth = `Basic ${Uint8Array_toBase64((new TextEncoder()).encode(_username + ":" + _password))}`;
                 this.setRequestHeader("Authorization", auth);
             }
         }
@@ -144,7 +144,7 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
         const processContentLengthFn = processContentLength ? (v: () => number) => { contentLength = v; } : void 0;
 
         let data = body as string | ArrayBuffer;
-        try { data = convert(body, processHeadersFn, processContentLengthFn); } catch (e) { console.warn(e); }
+        if (!that[_converted]) { try { data = convert(body, processHeadersFn, processContentLengthFn); } catch (e) { console.warn(e); } }
 
         let options: IRequestOptions = {
             url: that[_requestURL],
@@ -162,12 +162,12 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
         that[_requestTask] = mp.request(options);
         emitProcessEvent(this, "loadstart");
 
-        if (processContentLength && that.upload && EventTarget_count(this.upload) > 0) {
+        if (processContentLength && that.upload) {
             emitProcessEvent(this.upload, "loadstart", 0, contentLength);
         }
 
         setTimeout(() => {
-            if (that.upload && EventTarget_count(this.upload) > 0) {
+            if (that.upload) {
                 const _aborted = that[_inAfterOpenBeforeSend] || that.readyState !== XMLHttpRequestP.OPENED;
                 const _contentLength = _aborted ? 0 : contentLength;
 
@@ -223,6 +223,7 @@ dfStringTag(XMLHttpRequestP, "XMLHttpRequest");
 
 /** @internal */ const _requestURL = Symbol();
 /** @internal */ const _method = Symbol();
+/** @internal */ const _converted = Symbol();
 /** @internal */ const _requestHeaders = Symbol();
 /** @internal */ const _responseHeaders = Symbol();
 /** @internal */ const _responseContentLength = Symbol();
@@ -256,6 +257,7 @@ class XMLHttpRequestState {
 
     [_requestURL] = "";
     [_method] = "GET";
+    [_converted] = false;
     [_requestHeaders]: Headers = new HeadersP();
     [_responseHeaders]: Headers | null = null;
     [_responseContentLength]: () => number = zero;
@@ -382,6 +384,7 @@ function resetXHR(xhr: XMLHttpRequest) {
     s.status = 0;
     s.statusText = "";
 
+    s[_converted] = false;
     s[_requestHeaders] = new HeadersP();
     s[_responseHeaders] = null;
     s[_responseContentLength] = zero;
@@ -392,6 +395,13 @@ function resetRequestTimeout(xhr: XMLHttpRequest) {
     if (s[_timeoutId]) {
         clearTimeout(s[_timeoutId]);
         s[_timeoutId] = 0;
+    }
+}
+
+/** @internal */
+export function XHR_setConverted(xhr: XMLHttpRequest, value: boolean) {
+    if (xhr instanceof XMLHttpRequestP) {
+        xhr[state][_converted] = value;
     }
 }
 
@@ -423,6 +433,7 @@ function normalizeDataType(responseType: XMLHttpRequestResponseType) {
     return (responseType === "blob" || responseType === "arraybuffer") ? "arraybuffer" : "text";
 }
 
+/** @internal */
 export function getAllResponseHeaders(xhr: XMLHttpRequest) {
     return xhr instanceof XMLHttpRequestP
         ? xhr[state][_responseHeaders]!

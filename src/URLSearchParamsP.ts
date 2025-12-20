@@ -1,25 +1,48 @@
-import { g, polyfill, isObjectType, dfStringTag, objectValues, objectEntries } from "./isPolyfill";
+import { g, polyfill, isObjectType, dfStringTag } from "./isPolyfill";
 
 /** @internal */
 const state = Symbol(/* "URLSearchParamsState" */);
 
 export class URLSearchParamsP implements URLSearchParams {
     constructor(init?: string[][] | Record<string, string> | string | URLSearchParams) {
+        this[state] = new URLSearchParamsState();
         let search = init || "";
 
-        if (isObjectType<URLSearchParams>("URLSearchParams", search)) {
-            search = search.toString();
+        if (search instanceof URLSearchParamsP) {
+            let source = search[state][_urlspDict];
+            let destination = this[state][_urlspDict];
+            let keys = Object.getOwnPropertyNames(source);
+            for (let i = 0; i < keys.length; ++i) {
+                let key = keys[i]!;
+                let values = source[key]!;
+                let vals: string[] = [];
+                for (let j = 0; j < values.length; ++j) {
+                    let val = values[j]!;
+                    vals.push(val);
+                }
+                destination[key] = vals;
+            }
+        } else {
+            if (isObjectType<URLSearchParams>("URLSearchParams", search)) {
+                search = search.toString();
+            }
+            this[state][_urlspDict] = parseToDict(search);
         }
-
-        this[state] = new URLSearchParamsState();
-        this[state][_urlspDict] = parseToDict(search);
     }
 
     /** @internal */
     [state]: URLSearchParamsState;
 
     get size() {
-        return objectValues(this[state][_urlspDict]).reduce((acc, cur) => acc + cur.length, 0);
+        let count = 0;
+        let dict = this[state][_urlspDict];
+        let keys = Object.getOwnPropertyNames(dict);
+        for (let i = 0; i < keys.length; ++i) {
+            let key = keys[i]!;
+            let values = dict[key]!;
+            count += values.length;
+        }
+        return count;
     }
 
     append(name: string, value: string): void {
@@ -27,22 +50,22 @@ export class URLSearchParamsP implements URLSearchParams {
     }
 
     delete(name: string, value?: string): void {
-        let dict: Record<string, string[]> = {};
-        let pairs = objectEntries(this[state][_urlspDict]);
-
-        for (let i = 0; i < pairs.length; ++i) {
-            let pair = pairs[i]!; let key = pair[0]; let values = pair[1];
+        let source = this[state][_urlspDict];
+        let destination: Record<string, string[]> = {};
+        let keys = Object.getOwnPropertyNames(source);
+        for (let i = 0; i < keys.length; ++i) {
+            let key = keys[i]!;
+            let values = source[key]!;
             if (key === name) {
                 if (value !== undefined) {
                     let vals = values.filter(x => x !== ("" + value));
-                    if (vals.length > 0) Object.assign(dict, { [key]: vals });
+                    if (vals.length > 0) { destination[key] = vals; }
                 }
                 continue;
             }
-            Object.assign(dict, { [key]: values });
+            destination[key] = values;
         }
-
-        this[state][_urlspDict] = dict;
+        this[state][_urlspDict] = destination;
     }
 
     get(name: string): string | null {
@@ -69,7 +92,7 @@ export class URLSearchParamsP implements URLSearchParams {
 
     sort(): void {
         const that = this[state];
-        let keys = Object.keys(that[_urlspDict]); keys.sort();
+        let keys = Object.getOwnPropertyNames(that[_urlspDict]); keys.sort();
         let dict: Record<string, string[]> = {};
 
         for (let i = 0; i < keys.length; ++i) {
@@ -81,30 +104,50 @@ export class URLSearchParamsP implements URLSearchParams {
     }
 
     forEach(callbackfn: (value: string, key: string, parent: URLSearchParams) => void, thisArg?: any): void {
-        objectEntries(this[state][_urlspDict]).forEach(([key, values]) => {
-            values.forEach(value => {
+        let dict = this[state][_urlspDict];
+        let keys = Object.getOwnPropertyNames(dict);
+        for (let i = 0; i < keys.length; ++i) {
+            let key = keys[i]!;
+            let values = dict[key]!;
+            for (let j = 0; j < values.length; ++j) {
+                let value = values[j]!;
                 callbackfn.call(thisArg, value, key, this);
-            });
-        });
+            }
+        }
     }
 
     entries() {
-        return objectEntries(this[state][_urlspDict])
-            .map(([key, values]) => {
-                return values.map(value => {
-                    return [key, value] as [string, string];
-                });
-            })
-            .reduce(flatCb, [])
-            .values();
+        let destination: [string, string][] = [];
+        let dict = this[state][_urlspDict];
+        let keys = Object.getOwnPropertyNames(dict);
+        for (let i = 0; i < keys.length; ++i) {
+            let key = keys[i]!;
+            let values = dict[key]!
+            for (let j = 0; j < values.length; ++j) {
+                let value = values[j]!;
+                destination.push([key, value]);
+            }
+        }
+        return destination.values();
     }
 
     keys() {
-        return Object.keys(this[state][_urlspDict]).values();
+        return Object.getOwnPropertyNames(this[state][_urlspDict]).values();
     }
 
     values() {
-        return objectValues(this[state][_urlspDict]).reduce(flatCb, []).values();
+        let results: string[] = [];
+        let dict = this[state][_urlspDict];
+        let keys = Object.getOwnPropertyNames(dict);
+        for (let i = 0; i < keys.length; ++i) {
+            let key = keys[i]!;
+            let cur = dict[key]!;
+            for (let j = 0; j < cur.length; ++j) {
+                let val = cur[j]!
+                results.push(val);
+            }
+        }
+        return results.values();
     }
 
     [Symbol.iterator]() {
@@ -113,18 +156,17 @@ export class URLSearchParamsP implements URLSearchParams {
 
     toString(): string {
         let query: string[] = [];
-        let pairs = objectEntries(this[state][_urlspDict]);
-
-        for (let i = 0; i < pairs.length; ++i) {
-            let pair = pairs[i]!; let key = pair[0]; let values = pair[1];
+        let dict = this[state][_urlspDict];
+        let keys = Object.getOwnPropertyNames(dict);
+        for (let i = 0; i < keys.length; ++i) {
+            let key = keys[i]!;
             let name = encode(key);
-
+            let values = dict[key]!;
             for (let j = 0; j < values.length; ++j) {
                 let val = values[j]!;
                 query.push(name + "=" + encode(val));
             }
         }
-
         return query.join("&");
     }
 
@@ -146,17 +188,23 @@ function parseToDict(search: string[][] | Record<string, string> | string) {
 
     if (typeof search === "object") {
         // if `search` is an array, treat it as a sequence
-        if (Array.isArray(search)) {
-            for (let i = 0; i < search.length; ++i) {
-                let item = search[i];
-                if (Array.isArray(item) && item.length === 2) {
-                    appendTo(dict, item[0]!, item[1]!);
+        if (Symbol.iterator in search) {
+            let records = Array.isArray(search) ? search : Array.from<string[]>(search);
+            for (let i = 0; i < records.length; ++i) {
+                let item = records[i]!;
+                if (Symbol.iterator in item) {
+                    let record = Array.isArray(item) ? item : Array.from<string>(item);
+                    if (record.length === 2) {
+                        appendTo(dict, record[0]!, record[1]!);
+                    } else {
+                        throw new TypeError("Failed to construct 'URLSearchParams': Sequence initializer must only contain pair elements");
+                    }
                 } else {
-                    throw new TypeError("Failed to construct 'URLSearchParams': Sequence initializer must only contain pair elements");
+                    throw new TypeError("Failed to construct 'URLSearchParams': The provided value cannot be converted to a sequence.");
                 }
             }
         } else {
-            let keys = Object.keys(search);
+            let keys = Object.getOwnPropertyNames(search);
             for (let i = 0; i < keys.length; ++i) {
                 let key = keys[i]!
                 if (search.hasOwnProperty(key)) {
@@ -165,12 +213,13 @@ function parseToDict(search: string[][] | Record<string, string> | string) {
             }
         }
     } else {
+        let str = typeof search === "string" ? search : String(search);
         // remove first '?'
-        if (search.indexOf("?") === 0) {
-            search = search.slice(1);
+        if (str.indexOf("?") === 0) {
+            str = str.slice(1);
         }
 
-        let pairs = search.split("&");
+        let pairs = str.split("&");
         for (let j = 0; j < pairs.length; ++j) {
             let value = pairs[j], index = value!.indexOf("=");
 
@@ -222,11 +271,6 @@ function decode(str: string) {
 
 function hasOwnProperty(obj: object, prop: PropertyKey) {
     return Object.prototype.hasOwnProperty.call(obj, prop);
-}
-
-function flatCb<T>(acc: T[], cur: T[]) {
-    for (let i = 0; i < cur.length; ++i) { let item = cur[i]!; acc.push(item); }
-    return acc;
 }
 
 const URLSearchParamsE = g["URLSearchParams"] || URLSearchParamsP;

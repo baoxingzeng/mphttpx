@@ -1,4 +1,4 @@
-import { TextDecoderP } from "./TextDecoderP";
+import { TextDecoder } from "./TextDecoderP";
 import { Blob_toUint8Array, Uint8Array_toBase64 } from "./BlobP";
 import { emitProcessEvent } from "./ProgressEventP";
 import { EventTargetP, attachFn, executeFn } from "./EventTargetP";
@@ -46,10 +46,13 @@ export class FileReaderP extends EventTargetP implements FileReader {
 
     readAsBinaryString(blob: Blob) {
         read(this, "readAsBinaryString", blob, () => {
-            this[state].result = Blob_toUint8Array(blob).reduce((acc, cur) => {
-                acc += String.fromCharCode(cur);
-                return acc;
-            }, "");
+            let str = "";
+            let buf = Blob_toUint8Array(blob);
+            for (let i = 0; i < buf.length; ++i) {
+                let char = buf[i]!;
+                str += String.fromCharCode(char);
+            }
+            this[state].result = str;
         });
     }
 
@@ -61,7 +64,7 @@ export class FileReaderP extends EventTargetP implements FileReader {
 
     readAsText(blob: Blob, encoding?: string) {
         read(this, "readAsText", blob, () => {
-            this[state].result = (new TextDecoderP(encoding)).decode(Blob_toUint8Array(blob));
+            this[state].result = (new TextDecoder(encoding)).decode(Blob_toUint8Array(blob));
         });
     }
 

@@ -1,5 +1,5 @@
 /** @internal */
-export const polyfill = Symbol("isPolyfill");
+export const polyfill = "MPHTTPX";
 
 /* eslint-disable no-prototype-builtins */
 /** @internal */ export const g: typeof globalThis =
@@ -8,6 +8,14 @@ export const polyfill = Symbol("isPolyfill");
     // @ts-ignore eslint-disable-next-line no-undef
     (typeof global !== "undefined" && global) ||
     {};
+
+/** @internal */
+export function dfStringTag(targetFunc: Function, stringTag: string) {
+    Object.defineProperty(targetFunc.prototype, Symbol.toStringTag, {
+        configurable: true,
+        value: stringTag,
+    });
+}
 
 /** @internal */
 export class MPException extends Error {
@@ -41,22 +49,4 @@ export function isPolyfillType<T>(name: string, value: unknown): value is T {
         && "hierarchy" in (value as TIsPolyfillObject).isPolyfill
         && Array.isArray((value as THasHierarchy).isPolyfill.hierarchy)
         && (value as THierarchyIsArray).isPolyfill.hierarchy.indexOf(name) > -1;
-}
-
-/** @internal */
-export function dfStringTag(targetFunc: Function, stringTag: string) {
-    Object.defineProperty(targetFunc.prototype, Symbol.toStringTag, {
-        configurable: true,
-        value: stringTag,
-    });
-}
-
-/** @internal */
-export function objectValues<T extends object>(obj: T): Array<T[keyof T]> {
-    return Object.keys(obj).map(key => obj[key as keyof T]);
-}
-
-/** @internal */
-export function objectEntries<T extends object>(obj: T): Array<[keyof T & string, T[keyof T]]> {
-    return Object.keys(obj).map(key => [key as keyof T & string, obj[key as keyof T]]);
 }

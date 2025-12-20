@@ -75,8 +75,8 @@ export class TextDecoderP implements TextDecoder {
                 i--;
             }
 
-            that[_partial] = Array.from(buf.slice(end)); // save tail
-            buf = buf.slice(0, end);
+            that[_partial] = Array.from(buf.slice(end)); // save tail   // × WeChat 2.5.0
+            buf = buf.slice(0, end);                                    // × WeChat 2.5.0
         }
 
         let i = 0;
