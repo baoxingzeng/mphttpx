@@ -1,6 +1,6 @@
 import { normalizeMethod } from "./RequestP";
 import { convert, convertBack } from "./BodyImpl";
-import { HeadersP, createHeadersFromDict, parseHeaders } from "./HeadersP";
+import { HeadersP, Headers_toDict, createHeadersFromDict, parseHeaders } from "./HeadersP";
 import { TextEncoderP } from "./TextEncoderP";
 import { Uint8Array_toBase64 } from "./BlobP";
 import { createInnerEvent } from "./EventP";
@@ -137,11 +137,7 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
         const processHeaders = allowsRequestBody && !that[_requestHeaders].has("Content-Type");
         const processContentLength = allowsRequestBody && !!body;
 
-        let headers = () => Array.from(that[_requestHeaders].entries())
-            .reduce(
-                (acc: Record<string, string>, cur) => { acc[cur[0]] = cur[1]; return acc; },
-                {}
-            );
+        let headers = () => Headers_toDict(that[_requestHeaders]);
         let contentLength: () => number = zero;
 
         const processHeadersFn = processHeaders ? (v: string) => { that[_requestHeaders].set("Content-Type", v); } : void 0;

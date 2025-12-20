@@ -168,12 +168,23 @@ export function normalizeValue(value: string) {
 }
 
 /** @internal */
+export function Headers_toDict(headers: Headers) {
+    let dict: Record<string, string> = {};
+    let array = (headers as HeadersP)[state][_headersMap].array;
+    for (let i = 0; i < array.length; ++i) {
+        let pair = array[i]![1];
+        dict[pair[0]] = pair[1];
+    }
+    return dict;
+}
+
+/** @internal */
 export function createHeadersFromDict(records: Record<string, string>): Headers {
     let headers = new HeadersP();
     let array = headers[state][_headersMap].array;
     objectEntries(records).forEach(([name, value]) => {
         let key = normalizeName(name, "set");
-        array.push([key, ["" + name, normalizeValue(value)]]);
+        array.push([key, [name, value]]);
     });
     return headers;
 }
