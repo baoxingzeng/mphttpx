@@ -9,7 +9,7 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import "../../mpx/testTextEncoder";
+import "../../mphttpx";
 
 export default Vue.extend({
 	data() {
