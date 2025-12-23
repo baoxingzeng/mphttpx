@@ -1,52 +1,38 @@
 <template>
-	<view class="content">
-		<image class="logo" src="../../static/logo.png"></image>
-		<view>
-			<text class="title">{{ title }}</text>
-		</view>
-	</view>
+    <view>
+        <view v-for="(item, i) of data" :key="i" style="margin-bottom: 16px;">
+            <view style="color: #303133; font-size: 24px;">{{ item[0] }}</view>
+            <view v-for="(record, j) of item[1]" :key="j" style="margin-bottom: 4px;">
+                <view style="padding-left: 16px;">
+                    <text style="padding-right: 8px;">
+                        <text v-if="record[0]" style="color: green;">✔</text>
+                        <text v-else style="color: red;">✖</text>
+                    </text>
+                    <text style="color: #909399">{{ record[1] }}</text>
+                </view>
+            </view>
+        </view>
+    </view>
 </template>
 
 <script lang="ts">
 import Vue from 'vue';
 import "../../mphttpx";
+import { Notify } from  "../../mphttpx/utils";
 
 export default Vue.extend({
-	data() {
-		return {
-			title: 'Hello'
-		}
-	},
-	onLoad() {
+    data() {
+        return {
+            data: [] as [string, [boolean, string][]][],
+        };
+    },
 
-	},
-	methods: {
-
-	}
+    mounted() {
+        Notify.subscribe(v => { this.data = v; });
+    },
 });
 </script>
 
 <style>
-.content {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-}
 
-.logo {
-	height: 200rpx;
-	width: 200rpx;
-	margin: 200rpx auto 50rpx auto;
-}
-
-.text-area {
-	display: flex;
-	justify-content: center;
-}
-
-.title {
-	font-size: 36rpx;
-	color: #8f8f94;
-}
 </style>

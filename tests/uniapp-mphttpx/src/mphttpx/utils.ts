@@ -44,6 +44,25 @@ function print(...data: any[]) {
     if (log) console.log(...data);
 }
 
-export function updateUI() {
+type TListener = (v: [string, [boolean, string][]][]) => any;
 
+export class Notify {
+    static listeners: TListener[] = [];
+    static subscribe(f: TListener) {
+        Notify.listeners.push(f);
+        updateUI();
+        return {
+            unsubscribe: function () {
+                Notify.listeners = Notify.listeners.filter(x => x !== f);
+            },
+        };
+    }
+}
+
+function updateUI() {
+    let r = Array.from(results.entries());
+    for (const f of Notify.listeners) {
+        try { f(r); }
+        catch (e) { console.error(e); }
+    }
 }

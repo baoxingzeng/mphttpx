@@ -30,22 +30,30 @@ function encodeText(input: string, destination?: Uint8Array) {
     let target = HAS_DESTINATION ? destination : new Uint8Array((tlen >> 3) << 3);  // ... but at 8 byte offset
 
     while (pos < len) {
-        let value = input.charCodeAt(pos++);
+        let value = input.charCodeAt(pos);
+        let codeUnitCount = 1;
+
         if (value >= 0xd800 && value <= 0xdbff) {
             // high surrogate
-            if (pos < len) {
-                let extra = input.charCodeAt(pos);
+            if (pos + 1 < len) {
+                let extra = input.charCodeAt(pos + 1);
                 if ((extra & 0xfc00) === 0xdc00) {
-                    ++pos;
+                    codeUnitCount = 2;
+                    pos += 2;
                     value = ((value & 0x3ff) << 10) + (extra & 0x3ff) + 0x10000;
                 } else {
+                    pos += 1;
                     value = 0xfffd;
                 }
             } else {
+                pos += 1;
                 value = 0xfffd;
             }
         } else if (value >= 0xdc00 && value <= 0xdfff) {
+            pos += 1;
             value = 0xfffd;
+        } else {
+            pos += 1;
         }
 
         // expand the buffer if we couldn't write 4 bytes
@@ -93,7 +101,7 @@ function encodeText(input: string, destination?: Uint8Array) {
             target[at++] = (value & 0x3f) | 0x80;
         }
 
-        read++;
+        read += codeUnitCount;
     }
 
     return {
