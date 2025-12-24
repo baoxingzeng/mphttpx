@@ -45,9 +45,9 @@ export class TextDecoderP implements TextDecoder {
             return "";
         }
 
-        if (!that[_bomSeen] && this.ignoreBOM && buf.length >= 3) {
+        if (!that[_bomSeen] && buf.length >= 3) {
             if (buf[0] === 0xef && buf[1] === 0xbb && buf[2] === 0xbf) {
-                buf = buf.subarray(3);
+                buf = buf.subarray(3);                                  // × WeChat 2.5.0
                 that[_bomSeen] = true;
             }
         }
@@ -123,6 +123,7 @@ export class TextDecoderP implements TextDecoder {
                                 codePoint = tempCodePoint;
                             }
                         }
+                        break;
                 }
             }
 
@@ -130,10 +131,13 @@ export class TextDecoderP implements TextDecoder {
                 if (this.fatal) {
                     throw new TypeError("TextDecoder.decode: Decoding failed.")
                 } else {
-                    // we did not generate a valid codePoint so insert a
-                    // replacement char (U+FFFD) and advance only 1 byte
-                    codePoint = 0xFFFD;
-                    bytesPerSequence = 1;
+                    res.push(0xFFFD);
+                    let skip = 1;
+                    while (i + skip < end && (buf[i + skip]! & 0b11000000) === 0b10000000) {
+                        skip += 1;
+                    }
+                    i += skip;
+                    continue;
                 }
             } else if (codePoint > 0xFFFF) {
                 // encode to utf16 (surrogate pair dance)
@@ -169,7 +173,7 @@ class TextDecoderState {
     ignoreBOM = false;
 
     [_bomSeen] = false;
-    [_partial] = [] as number[];
+    [_partial]: number[] = [];
 }
 
 const UTF8Labels = ["utf-8", "utf8", "unicode-1-1-utf-8"];
