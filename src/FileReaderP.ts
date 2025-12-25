@@ -2,7 +2,7 @@ import { TextDecoder } from "./TextDecoderP";
 import { Blob_toUint8Array, Uint8Array_toBase64 } from "./BlobP";
 import { emitProcessEvent } from "./ProgressEventP";
 import { EventTargetP, attachFn, executeFn } from "./EventTargetP";
-import { g, polyfill, isPolyfillType, dfStringTag } from "./isPolyfill";
+import { g, polyfill, isPolyfillType, dfStringTag, MPException } from "./isPolyfill";
 
 /** @internal */
 const state = Symbol(/* "FileReaderState" */);
@@ -27,12 +27,13 @@ export class FileReaderP extends EventTargetP implements FileReader {
     declare readonly LOADING: 1;
     declare readonly DONE: 2;
 
-    get error() { return this[state].error; }
+    get error() { return this[state].error as (DOMException | null); }
 
     abort(): void {
         if (this.readyState === FileReaderP.LOADING) {
             this[state].readyState = FileReaderP.DONE;
             this[state].result = null;
+            this[state].error = new MPException("An ongoing operation was aborted, typically with a call to abort().", "AbortError");
 
             emitProcessEvent(this, "abort");
         }
@@ -115,7 +116,7 @@ class FileReaderState {
     readyState: FileReader["readyState"] = FileReaderP.EMPTY;
     result: string | ArrayBuffer | null = null;
 
-    error: DOMException | null = null;
+    error: DOMException | MPException | null = null;
 
     readonly [_handlers] = getHandlers(this);
     onabort: ((this: FileReader, ev: ProgressEvent<FileReader>) => any) | null = null;

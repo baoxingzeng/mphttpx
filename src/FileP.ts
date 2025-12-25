@@ -10,7 +10,7 @@ export class FileP extends BlobP implements File {
         this[state] = new FileState();
 
         this[state].lastModified = +(options?.lastModified ? new Date(options.lastModified) : new Date());
-        this[state].name = fileName.replace(/\//g, ":");
+        this[state].name = fileName;
     }
 
     /** @internal */
