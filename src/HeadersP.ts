@@ -7,11 +7,11 @@ export class HeadersP implements Headers {
     constructor(init?: HeadersInit) {
         this[state] = new HeadersState();
 
-        if (!!init) {
+        if (init) {
             if (isObjectType<Headers>("Headers", init)) {
                 if (init instanceof HeadersP) {
-                    let source = init[state][_headersMap].array;
-                    let destination = this[state][_headersMap].array;
+                    let source = init[state][_headersArray];
+                    let destination = this[state][_headersArray];
                     for (let i = 0; i < source.length; ++i) {
                         let item = source[i]!;
                         destination.push([item[0], [item[1][0], item[1][1]]]);
@@ -21,16 +21,17 @@ export class HeadersP implements Headers {
                         this.append(name, value);
                     });
                 }
-            } else if (Symbol.iterator in init) {
-                let headers = Array.isArray(init) ? init : Array.from<[string, string]>(init);
+            } else if (Array.isArray(init) || Symbol.iterator in init) {
+                let _init = init as string[][];
+                let headers = Array.isArray(_init) ? _init : Array.from<[string, string]>(_init);
                 for (let i = 0; i < headers.length; ++i) {
                     let record = headers[i]!;
-                    if (Symbol.iterator in record) {
+                    if (Array.isArray(record) || Symbol.iterator in record) {
                         let header = Array.isArray(record) ? record : Array.from(record) as [string, string];
                         if (header.length !== 2) {
                             throw new TypeError("Failed to construct 'Headers': Invalid value");
                         }
-                        this.append(header[0], header[1]);
+                        this.append(header[0]!, header[1]!);
                     } else {
                         throw new TypeError("Failed to construct 'Headers': The provided value cannot be converted to a sequence.");
                     }
@@ -39,10 +40,11 @@ export class HeadersP implements Headers {
                 if (typeof init !== "object") {
                     throw new TypeError("Failed to construct 'Headers': The provided value is not of type '(record<ByteString, ByteString> or sequence<sequence<ByteString>>)'.");
                 }
-                let keys = Object.getOwnPropertyNames(init);
+                let _init = init as Record<string, string>;
+                let keys = Object.getOwnPropertyNames(_init);
                 for (let i = 0; i < keys.length; ++i) {
                     let key = keys[i]!;
-                    this.append(key, init[key]!);
+                    this.append(key, _init[key]!);
                 }
             }
         }
@@ -54,19 +56,40 @@ export class HeadersP implements Headers {
     append(name: string, value: string): void {
         let key = normalizeName(name, "append");
         let newValue = normalizeValue(value);
-
-        let oldValue = this[state][_headersMap].get(key)?.[1];
-        this[state][_headersMap].set(key, ["" + name, oldValue ? `${oldValue}, ${newValue}` : newValue]);
+        let index = -1;
+        let array = this[state][_headersArray];
+        for (let i = 0; i < array.length; ++i) {
+            let item = array[i]!;
+            if (key === item[0]) {
+                item[1] = ["" + name, item[1][1] + `, ${newValue}`];
+                index = i;
+                break;
+            }
+        }
+        if (index === -1) { array.push([key, ["" + name, newValue]]); }
     }
 
     delete(name: string): void {
         let key = normalizeName(name, "delete");
-        this[state][_headersMap].delete(key);
+        let index = -1;
+        let source = this[state][_headersArray];
+        let destination: [string, [string, string]][] = [];
+        for (let i = 0; i < source.length; ++i) {
+            let item = source[i]!;
+            if (key === item[0]) { index = i; continue; }
+            destination.push(item);
+        }
+        if (index > -1) { this[state][_headersArray] = destination; }
     }
 
     get(name: string): string | null {
         let key = normalizeName(name, "get");
-        return this[state][_headersMap].get(key)?.[1] ?? null;
+        let array = this[state][_headersArray];
+        for (let i = 0; i < array.length; ++i) {
+            let item = array[i]!;
+            if (key === item[0]) { return item[1][1]; }
+        }
+        return null;
     }
 
     getSetCookie(): string[] {
@@ -76,32 +99,49 @@ export class HeadersP implements Headers {
 
     has(name: string): boolean {
         let key = normalizeName(name, "has");
-        return this[state][_headersMap].has(key);
+        let array = this[state][_headersArray];
+        for (let i = 0; i < array.length; ++i) {
+            let item = array[i]!;
+            if (key === item[0]) { return true; }
+        }
+        return false;
     }
 
     set(name: string, value: string): void {
         let key = normalizeName(name, "set");
-        this[state][_headersMap].set(key, ["" + name, normalizeValue(value)]);
+        let index = -1;
+        let array = this[state][_headersArray];
+        for (let i = 0; i < array.length; ++i) {
+            let item = array[i]!;
+            if (key === item[0]) {
+                item[1] = ["" + name, normalizeName(value)];
+                index = i;
+                break;
+            }
+        }
+        if (index === -1) { array.push([key, ["" + name, normalizeName(value)]]); }
     }
 
     forEach(callbackfn: (value: string, key: string, parent: Headers) => void, thisArg?: any): void {
-        let array = this[state][_headersMap].array;
+        let array = this[state][_headersArray];
         for (let i = 0; i < array.length; ++i) {
-            let pair = array[i]![1];
-            callbackfn.call(thisArg, pair[1], pair[0], this);
+            let item = array[i]!
+            let key = item[0];
+            let pair = item[1];
+            callbackfn.call(thisArg, pair[1], key, this);
         }
     }
 
     entries() {
-        return this[state][_headersMap].values();
+        return this[state][_headersArray].map(x => [x[0], x[1][1]] as [string, string]).values();
     }
 
     keys() {
-        return Array.from(this.entries()).map(pair => pair[0]).values();
+        return this[state][_headersArray].map(x => x[0]).values();
     }
 
     values() {
-        return Array.from(this.entries()).map(pair => pair[1]).values();
+        return this[state][_headersArray].map(x => x[1][1]).values();
     }
 
     [Symbol.iterator]() {
@@ -115,57 +155,11 @@ export class HeadersP implements Headers {
 dfStringTag(HeadersP, "Headers");
 
 /** @internal */
-const _headersMap = Symbol();
+const _headersArray = Symbol();
 
 /** @internal */
 class HeadersState {
-    [_headersMap] = new SimpleMap<string, [string, string]>();
-}
-
-/** @internal */
-class SimpleMap<K, V> {
-    array: [K, V][] = [];
-
-    get(key: K): V | void {
-        for (let i = 0; i < this.array.length; ++i) {
-            let pair = this.array[i]!;
-            if (pair[0] === key) { return pair[1]; }
-        }
-    }
-
-    set(key: K, value: V) {
-        let index = -1;
-        for (let i = 0; i < this.array.length; ++i) {
-            let pair = this.array[i]!;
-            if (pair[0] === key) { pair[1] = value; index = i; break; }
-        }
-        if (index === -1) { this.array.push([key, value]); }
-        return this.array;
-    }
-
-    has(key: K) {
-        for (let i = 0; i < this.array.length; ++i) {
-            let pair = this.array[i]!;
-            if (pair[0] === key) { return true; }
-        }
-        return false;
-    }
-
-    delete(key: K) {
-        let index = -1;
-        let array: [K, V][] = [];
-        for (let i = 0; i < this.array.length; ++i) {
-            let pair = this.array[i]!;
-            if (pair[0] === key) { index = i; continue; }
-            array.push(pair);
-        }
-        if (index > -1) { this.array = array; }
-        return index > -1;
-    }
-
-    values() {
-        return this.array.map(x => x[1]).values();
-    }
+    [_headersArray]: [string, [string, string]][] = [];
 }
 
 /** @internal */
@@ -190,27 +184,36 @@ export function normalizeValue(value: string) {
 }
 
 /** @internal */
-export function Headers_toDict(headers: Headers) {
-    let dict: Record<string, string> = {};
-    let array = (headers as HeadersP)[state][_headersMap].array;
-    for (let i = 0; i < array.length; ++i) {
-        let pair = array[i]![1];
-        dict[pair[0]] = pair[1];
+export function XHR_setRequestHeaders(xhr: XMLHttpRequest, request: Request, init?: RequestInit) {
+    let array = (request.headers as HeadersP)[state][_headersArray];
+    if (init && typeof init === "object" && isObjectHeaders(init.headers)) {
+        let headers = init.headers;
+        let names: string[] = [];
+
+        let keys = Object.getOwnPropertyNames(headers);
+        for (let i = 0; i < keys.length; ++i) {
+            let name = keys[i]!;
+            names.push(normalizeName(name));
+            xhr.setRequestHeader(name, normalizeValue(headers[name]!));
+        }
+
+        for (let i = 0; i < array.length; ++i) {
+            let name = array[i]![0];
+            let pair = array[i]![1];
+            if (names.indexOf(name) === -1) {
+                xhr.setRequestHeader(pair[0], pair[1]);
+            }
+        }
+    } else {
+        for (let i = 0; i < array.length; ++i) {
+            let pair = array[i]![1];
+            xhr.setRequestHeader(pair[0], pair[1]);
+        }
     }
-    return dict;
 }
 
-/** @internal */
-export function createHeadersFromDict(records: Record<string, string>): Headers {
-    let headers = new HeadersP();
-    let array = headers[state][_headersMap].array;
-    let names = Object.getOwnPropertyNames(records);
-    for (let i = 0; i < names.length; ++i) {
-        let name = names[i]!;
-        let key = normalizeName(name, "set");
-        array.push([key, [name, records[name]!]]);
-    }
-    return headers;
+function isObjectHeaders(val: unknown): val is Record<string, string> {
+    return typeof val === "object" && !isObjectType<Headers>("Headers", val);
 }
 
 /** @internal */
@@ -240,37 +243,27 @@ export function parseHeaders(rawHeaders: string): Headers {
 }
 
 /** @internal */
-export function XHR_setRequestHeaders(xhr: XMLHttpRequest, request: Request, init?: RequestInit) {
-    if (init && typeof init === "object" && isObjectHeaders(init.headers)) {
-        let headers = init.headers;
-        let names: string[] = [];
-
-        let keys = Object.getOwnPropertyNames(headers);
-        for (let i = 0; i < keys.length; ++i) {
-            let name = keys[i]!;
-            names.push(normalizeName(name));
-            xhr.setRequestHeader(name, normalizeValue(headers[name]!));
-        }
-
-        let array = (request.headers as HeadersP)[state][_headersMap].array;
-        for (let i = 0; i < array.length; ++i) {
-            let name = array[i]![0];
-            let pair = array[i]![1];
-            if (names.indexOf(name) === -1) {
-                xhr.setRequestHeader(pair[0], pair[1]);
-            }
-        }
-    } else {
-        let array = (request.headers as HeadersP)[state][_headersMap].array;
-        for (let i = 0; i < array.length; ++i) {
-            let pair = array[i]![1];
-            xhr.setRequestHeader(pair[0], pair[1]);
-        }
+export function Headers_toDict(headers: Headers) {
+    let dict: Record<string, string> = {};
+    let array = (headers as HeadersP)[state][_headersArray];
+    for (let i = 0; i < array.length; ++i) {
+        let pair = array[i]![1];
+        dict[pair[0]] = pair[1];
     }
+    return dict;
 }
 
-function isObjectHeaders(val: unknown): val is Record<string, string> {
-    return typeof val === "object" && !isObjectType<Headers>("Headers", val);
+/** @internal */
+export function createHeadersFromDict(records: Record<string, string>): Headers {
+    let headers = new HeadersP();
+    let array = headers[state][_headersArray];
+    let names = Object.getOwnPropertyNames(records);
+    for (let i = 0; i < names.length; ++i) {
+        let name = names[i]!;
+        let key = normalizeName(name, "set");
+        array.push([key, [name, records[name]!]]);
+    }
+    return headers;
 }
 
 const HeadersE = g["Headers"] || HeadersP;

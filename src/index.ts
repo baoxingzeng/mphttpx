@@ -5,8 +5,8 @@ export { Blob, BlobP } from "./BlobP";
 export { File, FileP } from "./FileP";
 export { FileReader, FileReaderP } from "./FileReaderP";
 
-export { FormData, FormDataP } from "./FormDataP";
 export { URLSearchParams, URLSearchParamsP } from "./URLSearchParamsP";
+export { FormData, FormDataP } from "./FormDataP";
 
 export { fetch, fetchP } from "./fetchP";
 export { Headers, HeadersP } from "./HeadersP";

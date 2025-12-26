@@ -11,8 +11,8 @@ export class TextDecoderP implements TextDecoder {
 
         this[state] = new TextDecoderState();
 
-        this[state].fatal = fatal;
-        this[state].ignoreBOM = ignoreBOM;
+        this[state].fatal = !!fatal;
+        this[state].ignoreBOM = !!ignoreBOM;
     }
 
     /** @internal */
@@ -27,12 +27,14 @@ export class TextDecoderP implements TextDecoder {
         let buf: Uint8Array;
 
         if (typeof buffer !== "undefined") {
-            if (buffer instanceof Uint8Array) {
+            if (buffer instanceof ArrayBuffer) {
+                buf = new Uint8Array(buffer);
+            } else if (buffer instanceof Uint8Array) {
                 buf = buffer;
             } else if (ArrayBuffer.isView(buffer)) {
                 buf = new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength);
             } else {
-                buf = new Uint8Array(buffer);
+                throw new TypeError("Failed to execute 'decode' on 'TextDecoder': parameter 1 is not of type 'ArrayBuffer'.");
             }
         } else {
             if (that[_partial].length > 0) {
@@ -150,12 +152,7 @@ export class TextDecoderP implements TextDecoder {
             i += bytesPerSequence;
         }
 
-        let str = "";
-        for (let j = 0, len = res.length; j < len; j += 0x1000) {
-            str += String.fromCharCode.apply(String, res.slice(j, j + 0x1000));
-        }
-
-        return str;
+        return res.length > 0x4000 ? buildString(res) : concatString(res);
     }
 
     toString() { return "[object TextDecoder]"; }
@@ -180,6 +177,22 @@ const UTF8Labels = ["utf-8", "utf8", "unicode-1-1-utf-8"];
 
 function getBytesPerSequence(byte: number) {
     return (byte > 0xEF) ? 4 : (byte > 0xDF) ? 3 : (byte > 0xBF) ? 2 : 1;
+}
+
+const buildString = (res: number[]) => {
+    let arr: string[] = [];
+    for (let j = 0, len = res.length; j < len; j += 0x1000) {
+        arr.push(String.fromCharCode.apply(String, res.slice(j, j + 0x1000)));
+    }
+    return arr.join("");
+}
+
+const concatString = (res: number[]) => {
+    let str = "";
+    for (let j = 0, len = res.length; j < len; j += 0x1000) {
+        str += String.fromCharCode.apply(String, res.slice(j, j + 0x1000));
+    }
+    return str;
 }
 
 const TextDecoderE = g["TextDecoder"] || TextDecoderP;

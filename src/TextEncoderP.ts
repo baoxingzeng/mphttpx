@@ -4,11 +4,16 @@ export class TextEncoderP implements TextEncoder {
     get encoding() { return "utf-8"; }
 
     encode(input = "") {
-        return encodeText(input).encoded;
+        let _input = String(input);
+        return encodeText(_input).encoded;
     }
 
     encodeInto(source: string, destination: Uint8Array): TextEncoderEncodeIntoResult {
-        let result = encodeText(source, destination);
+        let _source = String(source);
+        if (!(destination instanceof Uint8Array)) {
+            throw new TypeError("Failed to execute 'encodeInto' on 'TextEncoder': parameter 2 is not of type 'Uint8Array'.");
+        }
+        let result = encodeText(_source, destination);
         return { read: result.read, written: result.written };
     }
 

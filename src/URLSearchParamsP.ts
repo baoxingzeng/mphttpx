@@ -201,11 +201,12 @@ function parseToArray(search: string[][] | Record<string, string> | string) {
     let array: [string, string][] = [];
 
     if (typeof search === "object") {
-        if (Symbol.iterator in search) {
-            let records = Array.isArray(search) ? search : Array.from<string[]>(search);
+        if (Array.isArray(search) || Symbol.iterator in search) {
+            let _search = search as string[][];
+            let records = Array.isArray(_search) ? _search : Array.from<string[]>(_search);
             for (let i = 0; i < records.length; ++i) {
                 let item = records[i]! as [string, string];
-                if (Symbol.iterator in item) {
+                if (Array.isArray(item) || Symbol.iterator in item) {
                     let record = Array.isArray(item) ? item : Array.from<string>(item) as [string, string];
                     if (record.length === 2) {
                         array.push([String(record[0]), normalizeValue(record[1])]);
@@ -217,11 +218,12 @@ function parseToArray(search: string[][] | Record<string, string> | string) {
                 }
             }
         } else {
-            let keys = Object.getOwnPropertyNames(search);
+            let _search = search as Record<string, string>;
+            let keys = Object.getOwnPropertyNames(_search);
             for (let i = 0; i < keys.length; ++i) {
                 let key = keys[i]!;
-                if (search.hasOwnProperty(key)) {
-                    array.push([key, normalizeValue(search[key])]);
+                if (_search.hasOwnProperty(key)) {
+                    array.push([key, normalizeValue(_search[key])]);
                 }
             }
         }
