@@ -21,6 +21,7 @@ export class RequestP extends BodyImpl implements Request {
             if (input.bodyUsed) {
                 throw new TypeError("Failed to construct 'Request': Cannot construct a Request with a Request object that has already been used.");
             }
+            that.cache = input.cache;
             that.credentials = input.credentials;
             if (!options.headers) { that.headers = new HeadersP(input.headers); }
             that.method = input.method;
@@ -37,6 +38,7 @@ export class RequestP extends BodyImpl implements Request {
             that.url = String(input);
         }
 
+        if (options.cache) { that.cache = options.cache; }
         if (options.credentials) { that.credentials = options.credentials; }
         if (options.headers) { that.headers = new HeadersP(options.headers); }
         if (options.method) { that.method = normalizeMethod(options.method); }

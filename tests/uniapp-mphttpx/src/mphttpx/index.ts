@@ -8,3 +8,9 @@ import "./FileReaderTest";
 import "./URLSearchParamsTest";
 import "./FormDataTest";
 import "./HeadersTest";
+
+import "./RequestTest";
+import "./ResponseTest";
+
+import "./AbortControllerTest";
+import "./EventTargetTest";

@@ -21,7 +21,7 @@ export class ResponseP extends BodyImpl implements Response {
         }
 
         if (options.headers) { that.headers = new HeadersP(options.headers); }
-        that.ok = this.status >= 200 && this.status < 300;
+        that.ok = status >= 200 && status < 300;
         that.status = status;
         that.statusText = options.statusText === undefined ? "" : "" + options.statusText;
         
@@ -45,6 +45,10 @@ export class ResponseP extends BodyImpl implements Response {
     get url() { return this[state].url; }
 
     clone(): Response {
+        if (this.bodyUsed) {
+            throw new TypeError("Failed to execute 'clone' on 'Response': Response body is already used.");
+        }
+
         let response = new ResponseP(Body_toPayload(this), {
             headers: new HeadersP(this.headers),
             status: this.status,
@@ -56,7 +60,9 @@ export class ResponseP extends BodyImpl implements Response {
     }
     
     static json(data: any, init?: ResponseInit): Response {
-        return new ResponseP(JSON.stringify(data), init);
+        let response = new ResponseP(typeof data === "string" ? data : JSON.stringify(data), init);
+        response.headers.set("Content-Type", "application/json");
+        return response;
     }
 
     static error(): Response {
