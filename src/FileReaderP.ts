@@ -1,12 +1,14 @@
-import { TextDecoder } from "./TextDecoderP";
-import { Blob_toUint8Array, Uint8Array_toBase64 } from "./BlobP";
-import { emitProcessEvent } from "./ProgressEventP";
 import { EventTargetP, attachFn, executeFn } from "./EventTargetP";
-import { g, polyfill, isPolyfillType, dfStringTag, MPException } from "./isPolyfill";
+import { emitProcessEvent } from "./ProgressEventP";
+import { Blob_toUint8Array, Uint8Array_toBase64, decode } from "./BlobP";
+import { g, polyfill, Class_setStringTag, checkArgs, MPException, isPolyfillType } from "./isPolyfill";
 
 /** @internal */
 const state = Symbol(/* "FileReaderState" */);
 
+/********************************************************/
+/*                   FileReader Class                   */
+/********************************************************/
 export class FileReaderP extends EventTargetP implements FileReader {
     declare static readonly EMPTY: 0;
     declare static readonly LOADING: 1;
@@ -31,41 +33,48 @@ export class FileReaderP extends EventTargetP implements FileReader {
 
     abort(): void {
         if (this.readyState === FileReaderP.LOADING) {
-            this[state].readyState = FileReaderP.DONE;
-            this[state].result = null;
-            this[state].error = new MPException("An ongoing operation was aborted, typically with a call to abort().", "AbortError");
-
+            const s = this[state];
+            s.readyState = FileReaderP.DONE;
+            s.result = null;
+            s.error = new MPException("An ongoing operation was aborted, typically with a call to abort().", "AbortError");
             emitProcessEvent(this, "abort");
         }
     }
 
-    readAsArrayBuffer(blob: Blob) {
-        read(this, "readAsArrayBuffer", blob, () => {
+    readAsArrayBuffer(...args: [Blob]) {
+        read(this, "readAsArrayBuffer", args, blob => {
             this[state].result = Blob_toUint8Array(blob).buffer.slice(0);
         });
     }
 
-    readAsBinaryString(blob: Blob) {
-        read(this, "readAsBinaryString", blob, () => {
-            let str = "";
+    readAsBinaryString(...args: [Blob]) {
+        read(this, "readAsBinaryString", args, blob => {
+            let str: string[] = [];
             let buf = Blob_toUint8Array(blob);
             for (let i = 0; i < buf.length; ++i) {
                 let char = buf[i]!;
-                str += String.fromCharCode(char);
+                str.push(String.fromCharCode(char));
             }
-            this[state].result = str;
+            this[state].result = str.join("");
         });
     }
 
-    readAsDataURL(blob: Blob) {
-        read(this, "readAsDataURL", blob, () => {
+    readAsDataURL(...args: [Blob]) {
+        read(this, "readAsDataURL", args, blob => {
             this[state].result = "data:" + (blob.type || "application/octet-stream") + ";base64," + Uint8Array_toBase64(Blob_toUint8Array(blob));
         });
     }
 
-    readAsText(blob: Blob, encoding?: string) {
-        read(this, "readAsText", blob, () => {
-            this[state].result = (new TextDecoder(encoding)).decode(Blob_toUint8Array(blob));
+    readAsText(...args: [Blob, string?]) {
+        const encoding = args.length > 1 ? args[1] : undefined;
+        read(this, "readAsText", args, blob => {
+            if (encoding !== undefined) {
+                let _encoding = "" + encoding;
+                if (["utf-8", "utf8", "unicode-1-1-utf-8"].indexOf(_encoding.toLowerCase()) === -1) {
+                    console.warn(`RangeError: FileReader.readAsText: The encoding provided ('${_encoding}') is not implemented.`);
+                }
+            }
+            this[state].result = decode(Blob_toUint8Array(blob));
         });
     }
 
@@ -87,8 +96,8 @@ export class FileReaderP extends EventTargetP implements FileReader {
     get onprogress() { return this[state].onprogress; }
     set onprogress(value) { this[state].onprogress = value; attach(this, "progress"); }
 
-    toString() { return "[object FileReader]"; }
-    get isPolyfill() { return { symbol: polyfill, hierarchy: ["FileReader", "EventTarget"] }; }
+    /** @internal */ toString() { return "[object FileReader]"; }
+    /** @internal */ get isPolyfill() { return { symbol: polyfill, hierarchy: ["FileReader", "EventTarget"] }; }
 }
 
 const properties = {
@@ -100,7 +109,7 @@ const properties = {
 Object.defineProperties(FileReaderP, properties);
 Object.defineProperties(FileReaderP.prototype, properties);
 
-dfStringTag(FileReaderP, "FileReader");
+Class_setStringTag(FileReaderP, "FileReader");
 
 /** @internal */
 const _handlers = Symbol();
@@ -115,7 +124,6 @@ class FileReaderState {
 
     readyState: FileReader["readyState"] = FileReaderP.EMPTY;
     result: string | ArrayBuffer | null = null;
-
     error: DOMException | MPException | null = null;
 
     readonly [_handlers] = getHandlers(this);
@@ -127,7 +135,9 @@ class FileReaderState {
     onprogress: ((this: FileReader, ev: ProgressEvent<FileReader>) => any) | null = null;
 }
 
-function read(reader: FileReader, kind: string, blob: Blob, setResult: () => void) {
+function read(reader: FileReader, kind: string, args: [Blob, string?], setResult: (blob: Blob) => void) {
+    const [blob] = args;
+    checkArgs(args, "FileReader", kind, 1);
     if (!isPolyfillType<Blob>("Blob", blob)) {
         throw new TypeError("Failed to execute '" + kind + "' on 'FileReader': parameter 1 is not of type 'Blob'.");
     }
@@ -143,7 +153,7 @@ function read(reader: FileReader, kind: string, blob: Blob, setResult: () => voi
             s.readyState = FileReaderP.DONE;
 
             try {
-                setResult();
+                setResult(blob);
                 emitProcessEvent(s.target, "load", blob.size, blob.size);
             } catch (e: unknown) {
                 s.result = null;

@@ -1,35 +1,39 @@
-import { TextEncoder } from "./TextEncoderP";
-import { TextDecoder } from "./TextDecoderP";
-import { g, polyfill, isPolyfillType, dfStringTag } from "./isPolyfill";
+import { TextEncoderP } from "./TextEncoderP";
+import { TextDecoderP } from "./TextDecoderP";
+import { g, polyfill, Class_setStringTag, isPolyfillType } from "./isPolyfill";
 
 /** @internal */
 const state = Symbol(/* "BlobState" */);
 
+/********************************************************/
+/*                      Blob Class                      */
+/********************************************************/
 export class BlobP implements Blob {
     constructor(blobParts: BlobPart[] = [], options?: BlobPropertyBag) {
-        if (!Array.isArray(blobParts)) {
-            throw new TypeError("First argument to Blob constructor must be an Array.");
+        if (!(Array.isArray(blobParts) || (blobParts && typeof blobParts === "object" && Symbol.iterator in blobParts))) {
+            throw new TypeError(`First argument to ${new.target.name.substring(0, 4)} constructor must be an Array.`);
         }
 
-        let encoder: TextEncoder | null = null;
-        let chunks = blobParts.reduce((chunks: Array<InstanceType<typeof Uint8Array>>, part) => {
-            if (isPolyfillType<Blob>("Blob", part)) {
-                chunks.push((part as BlobP)[state][_buffer]);
-            } else if (part instanceof ArrayBuffer || ArrayBuffer.isView(part)) {
-                chunks.push(BufferSource_toUint8Array(part));
+        let _blobParts = Array.isArray(blobParts) ? blobParts : Array.from<BlobPart>(blobParts as never);
+        let chunks: Uint8Array[] = [];
+
+        for (let i = 0; i < _blobParts.length; ++i) {
+            let chunk = _blobParts[i]!;
+            if (isPolyfillType<Blob>("Blob", chunk)) {
+                chunks.push((chunk as BlobP)[state][_buffer]);
+            } else if (chunk instanceof ArrayBuffer || ArrayBuffer.isView(chunk)) {
+                chunks.push(BufferSource_toUint8Array(chunk));
             } else {
-                if (!encoder) { encoder = new TextEncoder(); }
-                chunks.push(encoder.encode(String(part)));
+                chunks.push(encode("" + chunk));
             }
-            return chunks;
-        }, []);
+        }
 
         this[state] = new BlobState(concat(chunks));
         const that = this[state];
 
         that.size = that[_buffer].length;
 
-        let rawType = options?.type || "";
+        let rawType = "" + (options?.type || "");
         that.type = /[^\u0020-\u007E]/.test(rawType) ? "" : rawType.toLowerCase();
     }
 
@@ -49,23 +53,22 @@ export class BlobP implements Blob {
 
     slice(start?: number, end?: number, contentType?: string): Blob {
         let sliced = this[state][_buffer].slice(start ?? 0, end ?? this[state][_buffer].length);    // × WeChat 2.5.0
-        return new BlobP([sliced], { type: contentType ?? "" });
+        return new BlobP([sliced], { type: "" + (contentType ?? "") });
     }
 
     stream(): ReturnType<Blob["stream"]> {
-        throw new ReferenceError("ReadableStream is not defined");
+        throw new TypeError("Failed to execute 'stream' on 'Blob': method not implemented.");
     }
 
     text(): Promise<string> {
-        let decoder = new TextDecoder();
-        return Promise.resolve(decoder.decode(this[state][_buffer]));
+        return Promise.resolve(decode(this[state][_buffer]));
     }
 
-    toString() { return "[object Blob]"; }
-    get isPolyfill() { return { symbol: polyfill, hierarchy: ["Blob"] }; }
+    /** @internal */ toString() { return "[object Blob]"; }
+    /** @internal */ get isPolyfill() { return { symbol: polyfill, hierarchy: ["Blob"] }; }
 }
 
-dfStringTag(BlobP, "Blob");
+Class_setStringTag(BlobP, "Blob");
 
 /** @internal */
 const _buffer = Symbol();
@@ -76,9 +79,9 @@ class BlobState {
         this[_buffer] = buffer;
     }
 
-    [_buffer]: InstanceType<typeof Uint8Array>;
     size = 0;
     type = "";
+    [_buffer]: InstanceType<typeof Uint8Array>;
 }
 
 /** @internal */
@@ -110,6 +113,18 @@ function concat(chunks: Uint8Array[]) {
     }, 0);
 
     return result;
+}
+
+/** @internal */
+export function encode(str?: string) {
+    let encoder = new TextEncoderP();
+    return encoder.encode(str);
+}
+
+/** @internal */
+export function decode(buf?: Parameters<TextDecoder["decode"]>[0]) {
+    let decoder = new TextDecoderP();
+    return decoder.decode(buf);
 }
 
 /** @internal */

@@ -1,27 +1,34 @@
-import { g, polyfill, dfStringTag } from "./isPolyfill";
+import { g, polyfill, Class_setStringTag, checkArgs } from "./isPolyfill";
 
+/********************************************************/
+/*                 TextEncoder polyfill                 */
+/********************************************************/
 export class TextEncoderP implements TextEncoder {
     get encoding() { return "utf-8"; }
 
     encode(input = "") {
-        let _input = String(input);
+        let _input = "" + input;
         return encodeText(_input).encoded;
     }
 
-    encodeInto(source: string, destination: Uint8Array): TextEncoderEncodeIntoResult {
-        let _source = String(source);
+    encodeInto(...args: Parameters<TextEncoder["encodeInto"]>): TextEncoderEncodeIntoResult {
+        const [source, destination] = args;
+        checkArgs(args, "TextEncoder", "encodeInto", 2);
+
+        let _source = "" + source;
         if (!(destination instanceof Uint8Array)) {
             throw new TypeError("Failed to execute 'encodeInto' on 'TextEncoder': parameter 2 is not of type 'Uint8Array'.");
         }
+
         let result = encodeText(_source, destination);
         return { read: result.read, written: result.written };
     }
 
-    toString() { return "[object TextEncoder]"; }
-    get isPolyfill() { return { symbol: polyfill, hierarchy: ["TextEncoder"] }; }
+    /** @internal */ toString() { return "[object TextEncoder]"; }
+    /** @internal */ get isPolyfill() { return { symbol: polyfill, hierarchy: ["TextEncoder"] }; }
 }
 
-dfStringTag(TextEncoderP, "TextEncoder");
+Class_setStringTag(TextEncoderP, "TextEncoder");
 
 function encodeText(input: string, destination?: Uint8Array) {
     const HAS_DESTINATION = typeof destination !== "undefined";
@@ -68,11 +75,11 @@ function encodeText(input: string, destination?: Uint8Array) {
             tlen = (tlen >> 3) << 3;                    // 8 byte offset
 
             let update = new Uint8Array(tlen);
-            update.set(target);
-            target = update;
+            update.set(target); target = update;
         }
 
-        let byteCount: number;
+        let byteCount: 1 | 2 | 3 | 4;
+
         if ((value & 0xffffff80) === 0) {           // 1-byte
             byteCount = 1;
         } else if ((value & 0xfffff800) === 0) {    // 2-byte
@@ -90,27 +97,35 @@ function encodeText(input: string, destination?: Uint8Array) {
             break;
         }
 
-        if (byteCount === 1) {                              // 1-byte
-            target[at++] = value;                           // ASCII
-        } else if (byteCount === 2) {                       // 2-byte
-            target[at++] = ((value >> 6) & 0x1f) | 0xc0;
-            target[at++] = (value & 0x3f) | 0x80;
-        } else if (byteCount === 3) {                       // 3-byte
-            target[at++] = ((value >> 12) & 0x0f) | 0xe0;
-            target[at++] = ((value >> 6) & 0x3f) | 0x80;
-            target[at++] = (value & 0x3f) | 0x80;
-        } else if (byteCount === 4) {                       // 4-byte
-            target[at++] = ((value >> 18) & 0x07) | 0xf0;
-            target[at++] = ((value >> 12) & 0x3f) | 0x80;
-            target[at++] = ((value >> 6) & 0x3f) | 0x80;
-            target[at++] = (value & 0x3f) | 0x80;
+        switch (byteCount) {
+            case 1:                                             // 1-byte
+                target[at++] = value;                           // ASCII
+                break;
+
+            case 2:                                             // 2-byte
+                target[at++] = ((value >> 6) & 0x1f) | 0xc0;
+                target[at++] = (value & 0x3f) | 0x80;
+                break;
+
+            case 3:                                             // 3-byte
+                target[at++] = ((value >> 12) & 0x0f) | 0xe0;
+                target[at++] = ((value >> 6) & 0x3f) | 0x80;
+                target[at++] = (value & 0x3f) | 0x80;
+                break;
+
+            case 4:                                             // 4-byte
+                target[at++] = ((value >> 18) & 0x07) | 0xf0;
+                target[at++] = ((value >> 12) & 0x3f) | 0x80;
+                target[at++] = ((value >> 6) & 0x3f) | 0x80;
+                target[at++] = (value & 0x3f) | 0x80;
+                break;
         }
 
         read += codeUnitCount;
     }
 
     return {
-        encoded: !HAS_DESTINATION ? target.slice(0, at) : destination.slice(),  // × WeChat 2.5.0
+        encoded: !HAS_DESTINATION ? target.slice(0, at) : destination,
         read: read,
         written: at,
     };

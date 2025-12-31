@@ -1,16 +1,19 @@
 import { BlobP } from "./BlobP";
-import { g, polyfill, dfStringTag } from "./isPolyfill";
+import { g, polyfill, Class_setStringTag } from "./isPolyfill";
 
 /** @internal */
 const state = Symbol(/* "FileState" */);
 
+/********************************************************/
+/*                      File Class                      */
+/********************************************************/
 export class FileP extends BlobP implements File {
     constructor(fileBits: BlobPart[], fileName: string, options?: FilePropertyBag) {
         super(fileBits, options);
         this[state] = new FileState();
 
         this[state].lastModified = +(options?.lastModified ? new Date(options.lastModified) : new Date());
-        this[state].name = fileName;
+        this[state].name = "" + fileName;
     }
 
     /** @internal */
@@ -20,11 +23,11 @@ export class FileP extends BlobP implements File {
     get name() { return this[state].name; }
     get webkitRelativePath() { return ""; }
 
-    toString() { return "[object File]"; }
-    get isPolyfill() { return { symbol: polyfill, hierarchy: ["File", "Blob"] }; }
+    /** @internal */ toString() { return "[object File]"; }
+    /** @internal */ get isPolyfill() { return { symbol: polyfill, hierarchy: ["File", "Blob"] }; }
 }
 
-dfStringTag(FileP, "File");
+Class_setStringTag(FileP, "File");
 
 /** @internal */
 class FileState {
