@@ -3,6 +3,7 @@ import { EventTargetState, eventTargetState } from "./EventTargetP";
 import { XMLHttpRequestEventTargetP, XMLHttpRequestEventTargetState, xhrEventTargetState } from "./XMLHttpRequestEventTargetP";
 
 export class XMLHttpRequestUploadP extends XMLHttpRequestEventTargetP implements XMLHttpRequestUpload {
+    /** @internal */
     constructor() {
         if (new.target === XMLHttpRequestUploadP) {
             throw new TypeError("Failed to construct 'XMLHttpRequestUpload': Illegal constructor");

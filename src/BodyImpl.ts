@@ -6,6 +6,7 @@ import { polyfill, Class_setStringTag, isObjectType, isPolyfillType } from "./is
 /** @internal */ export { state as bodyState };
 
 export abstract class BodyImpl implements Body {
+    /** @internal */
     constructor() {
         if (new.target === BodyImpl) {
             throw new TypeError("Failed to construct 'Body': Illegal constructor");

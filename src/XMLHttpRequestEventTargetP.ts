@@ -5,6 +5,7 @@ import { EventTargetP, attachFn, executeFn } from "./EventTargetP";
 /** @internal */ export { state as xhrEventTargetState };
 
 export class XMLHttpRequestEventTargetP extends EventTargetP implements XMLHttpRequestEventTarget {
+    /** @internal */
     constructor() {
         if (new.target === XMLHttpRequestEventTargetP) {
             throw new TypeError("Failed to construct 'XMLHttpRequestEventTarget': Illegal constructor");
