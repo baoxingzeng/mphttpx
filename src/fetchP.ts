@@ -1,17 +1,20 @@
+import { XMLHttpRequest } from "./XMLHttpRequestP";
+import { normalizeName, normalizeValue, parseHeaders } from "./HeadersP";
 import { Body_toPayload } from "./BodyImpl";
-import { g, MPException } from "./isPolyfill";
-import { XHR_setRequestHeaders } from "./HeadersP";
 import { RequestP, requestState } from "./RequestP";
 import { ResponseP, responseState } from "./ResponseP";
-import { XMLHttpRequest, getAllResponseHeaders, XHR_setConverted } from "./XMLHttpRequestP";
+import { g, checkArgs, MPException, isObjectType } from "./isPolyfill";
 
 const mp = { XMLHttpRequest: XMLHttpRequest };
 export const setXMLHttpRequest = (XHR: typeof globalThis["XMLHttpRequest"]) => { mp.XMLHttpRequest = XHR; }
 
-export function fetchP(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+export function fetchP(...args: [RequestInfo | URL, RequestInit?]): Promise<Response> {
     if (new.target === fetchP) {
         throw new TypeError("fetch is not a constructor");
     }
+
+    const [input, init] = args;
+    checkArgs(args, "Window", "fetch", 1);
 
     return new Promise((resolve, reject) => {
         const request = new RequestP(input, init);
@@ -25,15 +28,20 @@ export function fetchP(input: RequestInfo | URL, init?: RequestInit): Promise<Re
 
         xhr.onload = function () {
             let options = {
-                headers: getAllResponseHeaders(xhr),
+                headers: parseHeaders(xhr.getAllResponseHeaders() || ""),
                 status: xhr.status,
                 statusText: xhr.statusText,
             }
 
-            setTimeout(() => {
-                let response = new ResponseP(xhr.response, options);
-                response[responseState].url = xhr.responseURL;
+            // This check if specifically for when a user fetches a file locally from the file system
+            // Only if the status is out of a normal range
+            if (request.url.indexOf("file://") === 0 && (xhr.status < 200 || xhr.status > 599)) {
+                options.status = 200;
+            }
 
+            setTimeout(() => {
+                let response = new ResponseP("response" in xhr ? xhr.response : (xhr as XMLHttpRequest).responseText, options);
+                response[responseState].url = "responseURL" in xhr ? xhr.responseURL : (options.headers.get("X-Request-URL") || "");
                 resolve(response);
             });
         }
@@ -56,7 +64,7 @@ export function fetchP(input: RequestInfo | URL, init?: RequestInit): Promise<Re
             });
         }
 
-        xhr.open(request.method, request.url);
+        xhr.open(request.method, request.url, true);
 
         if (request.credentials === "include") {
             xhr.withCredentials = true;
@@ -64,7 +72,29 @@ export function fetchP(input: RequestInfo | URL, init?: RequestInit): Promise<Re
             xhr.withCredentials = false;
         }
 
-        XHR_setRequestHeaders(xhr, request, init);
+        if ("responseType" in xhr) {
+            xhr.responseType = "arraybuffer";
+        }
+
+        if (init && typeof init === "object" && typeof init.headers === "object" && !isObjectType<Headers>("Headers", init.headers)) {
+            let headers = init.headers as Record<string, string>;
+            let names: string[] = [];
+
+            Object.getOwnPropertyNames(headers).forEach(name => {
+                names.push(normalizeName(name));
+                xhr.setRequestHeader(name, normalizeValue(headers[name]!));
+            });
+
+            request.headers.forEach((value, name) => {
+                if (names.indexOf(name) === -1) {
+                    xhr.setRequestHeader(name, value);
+                }
+            });
+        } else {
+            request.headers.forEach((value, name) => {
+                xhr.setRequestHeader(name, value);
+            });
+        }
 
         if (signal) {
             const abortXHR = () => { xhr.abort(); }
@@ -78,7 +108,6 @@ export function fetchP(input: RequestInfo | URL, init?: RequestInit): Promise<Re
             }
         }
 
-        XHR_setConverted(xhr, true);
         xhr.send(Body_toPayload(request) as XMLHttpRequestBodyInit);
     });
 }
