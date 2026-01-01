@@ -1,7 +1,6 @@
 import { suite } from "uvu";
 import * as assert from "uvu/assert";
 import { ui_rec } from "./utils";
-// import { TextDecoder } from "../../../../src/TextDecoderP";
 import { TextDecoderP as TextDecoder } from "../../../../src/TextDecoderP";
 
 const _name = "TextDecoder";

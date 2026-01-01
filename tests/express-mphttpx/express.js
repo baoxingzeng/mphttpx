@@ -1,22 +1,61 @@
+const fs = require("fs");
 const express = require("express");
-const formidable = require("formidable");
+const cors = require("cors");
+const { formidable } = require("formidable");
 
 const app = express();
+app.use(cors());
 
-app.get("/", (req, res) => {
-    res.send("Hello World");
-});
-
-app.post("/api/formdata", (req, res, next) => {
-    const form = formidable.formidable({});
-
-    form.parse(req, (err, fields, files) => {
-        if (err) {
-            next(err);
-            return;
-        }
-        res.json({ fields, files });
+app.get("/api/user", (req, res) => {
+    const { id } = req.query;
+    res.status(200).json({
+        id: id || 1,
+        name: "张三🎉",
+        age: 25
     });
 });
 
-app.listen(3000);
+app.post("/api/upload", (req, res, next) => {
+    formidable({}).parse(req, (err, fields, files) => {
+        if (err) {
+            return next(err);
+        }
+        const file = files?.file?.[0];
+        res.status(201).json({
+            code: 0,
+            message: "success",
+            data: {
+                name: fields?.name?.[0] || null,
+                age: fields?.age?.[0] || null,
+                file: file ? {
+                    filename: file.originalFilename,
+                    size: file.size,
+                    content: fs.readFileSync(file.filepath, "utf-8"),
+                } : null,
+            }
+        });
+    });
+});
+
+app.get("/api/timeout", async (req, res) => {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    res.status(200).json({ code: 0, message: "success" });
+});
+
+app.get("/api/not-found", (req, res) => {
+    res.status(404).json({ code: 404, message: "Not Found" });
+});
+
+app.get("/api/header-test", (req, res) => {
+    res.json({
+        token: req.headers["x-token"],
+        contentType: req.headers["content-type"]
+    });
+});
+
+const PORT = 3000;
+const server = app.listen(PORT, () => {
+    console.log(`Mock server started: http://localhost:${PORT}`);
+});
+
+module.exports = server;

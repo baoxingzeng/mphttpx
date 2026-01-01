@@ -1,0 +1,89 @@
+import { suite } from "uvu";
+import * as assert from "uvu/assert";
+import { ui_rec } from "./utils";
+import { BlobP as Blob } from "../../../../src/BlobP";
+import { FormDataP as FormData } from "../../../../src/FormDataP";
+import { AbortControllerP as AbortController } from "../../../../src/AbortControllerP";
+import { fetchP as fetch } from "../../../../src/fetchP";
+
+let _name = "fetch";
+let _test = suite(_name);
+
+let test = (n: string, t: Parameters<typeof _test>[1]) => {
+    return _test(...ui_rec(_name, n, t));
+}
+
+test("fetch basic GET request", async () => {
+    let response = await fetch("http://localhost:3000/api/user?id=88");
+    assert.equal(response.ok, true);
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get("content-type"), "application/json; charset=utf-8");
+    let data = await response.json();
+    assert.equal(data.id, "88");
+    assert.equal(data.name, "张三🎉");
+    assert.equal(data.age, 25);
+});
+
+test("fetch POST request (FormData upload)", async () => {
+    let formData = new FormData();
+    formData.append("name", "李四");
+    formData.append("age", "26");
+    let fileContent = "This is the content of the test file.";
+    let blob = new Blob([fileContent], { type: "text/plain" });
+    formData.append("file", blob, "test-file.txt");
+    let response = await fetch("http://localhost:3000/api/upload", {
+        method: "POST",
+        body: formData,
+        headers: {
+            "X-Custom-Header": "polyfill-test"
+        },
+    });
+    assert.equal(response.status, 201);
+    let data = await response.json();
+    assert.equal(data.code, 0);
+    assert.equal(data.message, "success");
+    assert.equal(data.data.name, "李四");
+    assert.equal(data.data.age, "26");
+    assert.equal(data.data.file.filename, "test-file.txt");
+    assert.equal(data.data.file.content, fileContent);
+});
+
+test("fetch abort request (AbortController)", async () => {
+    let controller = new AbortController();
+    let signal = controller.signal;
+    let fetchPromise = fetch("http://localhost:3000/api/timeout", { signal });
+    controller.abort();
+    let abortError = null;
+    try {
+        await fetchPromise;
+    } catch (e) {
+        abortError = e;
+    }
+    assert.ok(abortError instanceof Error);
+    assert.equal(abortError.name, "AbortError");
+    assert.equal(signal.aborted, true);
+});
+
+test("fetch dealing with 404 error response", async () => {
+    let response = await fetch("http://localhost:3000/api/not-found");
+    assert.equal(response.ok, false);
+    assert.equal(response.status, 404);
+    let data = await response.json();
+    assert.equal(data.code, 404);
+    assert.equal(data.message, "Not Found");
+});
+
+test("fetch custom request header", async () => {
+    let response = await fetch("http://localhost:3000/api/header-test", {
+        headers: {
+            "X-Token": "123456789",
+            "Content-Type": "application/json"
+        }
+    });
+
+    let data = await response.json();
+    assert.equal(data.token, "123456789");
+    assert.equal(data.contentType, "application/json");
+});
+
+_test.run();
