@@ -11,7 +11,7 @@ const state = Symbol(/* "BlobState" */);
 export class BlobP implements Blob {
     constructor(blobParts: BlobPart[] = [], options?: BlobPropertyBag) {
         if (!(Array.isArray(blobParts) || (blobParts && typeof blobParts === "object" && Symbol.iterator in blobParts))) {
-            throw new TypeError(`First argument to ${new.target.name.substring(0, 4)} constructor must be an Array.`);
+            throw new TypeError(`First argument to ${new.target.name} constructor must be an Array.`);
         }
 
         let _blobParts = Array.isArray(blobParts) ? blobParts : Array.from<BlobPart>(blobParts as never);
