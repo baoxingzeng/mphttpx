@@ -1,5 +1,5 @@
+import { g, polyfill, Class_setStringTag } from "./isPolyfill";
 import { EventTarget_fire } from "./EventTargetP";
-import { g, polyfill, dfStringTag } from "./isPolyfill";
 import { EventP, eventState, Event_setTrusted } from "./EventP";
 
 /** @internal */
@@ -9,11 +9,18 @@ export class ProgressEventP extends EventP implements ProgressEvent {
     constructor(type: string, eventInitDict?: ProgressEventInit) {
         super(type, eventInitDict);
         this[state] = new ProgressEventState();
-        const that = this[state];
+        const s = this[state];
 
-        that.lengthComputable = !!eventInitDict?.lengthComputable;
-        that.loaded = eventInitDict?.loaded ?? 0;
-        that.total = eventInitDict?.total ?? 0;
+        s.lengthComputable = !!eventInitDict?.lengthComputable;
+        s.loaded = Number(eventInitDict?.loaded ?? 0);
+        s.total = Number(eventInitDict?.total ?? 0);
+
+        let errField = "";
+        if (isNaN(s.loaded)) { errField = "loaded"; }
+        if (isNaN(s.total)) { errField = "total"; }
+        if (errField) {
+            throw new TypeError(`Failed to construct 'ProgressEvent': Failed to read the '${errField}' property from 'ProgressEventInit': The provided double value is non-finite.`);
+        }
     }
 
     /** @internal */
@@ -23,11 +30,11 @@ export class ProgressEventP extends EventP implements ProgressEvent {
     get loaded() { return getValue(this[state].loaded); }
     get total() { return getValue(this[state].total); }
 
-    toString() { return "[object ProgressEvent]"; }
-    get isPolyfill() { return { symbol: polyfill, hierarchy: ["ProgressEvent", "Event"] }; }
+    /** @internal */ toString() { return "[object ProgressEvent]"; }
+    /** @internal */ get isPolyfill() { return { symbol: polyfill, hierarchy: ["ProgressEvent", "Event"] }; }
 }
 
-dfStringTag(ProgressEventP, "ProgressEvent");
+Class_setStringTag(ProgressEventP, "ProgressEvent");
 
 /** @internal */
 class ProgressEventState {
@@ -40,6 +47,7 @@ function getValue<T>(val: T | (() => T)) {
     return typeof val === "function" ? (val as () => T)() : val;
 }
 
+/** @internal */
 interface TCreateExtraParams {
     lengthComputable: boolean | (() => boolean);
     loaded: number | (() => number);

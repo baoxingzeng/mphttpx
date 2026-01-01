@@ -1,5 +1,6 @@
-import { g, polyfill, dfStringTag } from "./isPolyfill";
-import { EventP, type Event_EtFields, Event_getEtField } from "./EventP";
+import { type Event_EtFields } from "./EventP";
+import { EventP, Event_getEtField } from "./EventP";
+import { g, polyfill, Class_setStringTag, checkArgs } from "./isPolyfill";
 
 const dispatched: Event_EtFields["Dispatched"] = 1;
 
@@ -18,18 +19,20 @@ export class CustomEventP<T> extends EventP implements CustomEvent {
 
     get detail() { return this[state].detail as T; }
 
-    initCustomEvent(type: string, bubbles?: boolean, cancelable?: boolean, detail?: T): void {
+    initCustomEvent(...args: [string, boolean?, boolean?, T?]): void {
+        const [type, bubbles, cancelable, detail] = args;
+        checkArgs(args, "CustomEvent", "initCustomEvent", 1);
         if (Event_getEtField(this, dispatched)) return;
 
         this.initEvent(type, bubbles, cancelable);
         this[state].detail = detail ?? null;
     }
 
-    toString() { return "[object CustomEvent]"; }
-    get isPolyfill() { return { symbol: polyfill, hierarchy: ["CustomEvent", "Event"] }; }
+    /** @internal */ toString() { return "[object CustomEvent]"; }
+    /** @internal */ get isPolyfill() { return { symbol: polyfill, hierarchy: ["CustomEvent", "Event"] }; }
 }
 
-dfStringTag(CustomEventP, "CustomEvent");
+Class_setStringTag(CustomEventP, "CustomEvent");
 
 /** @internal */
 class CustomEventState {

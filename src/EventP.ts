@@ -1,4 +1,4 @@
-import { g, polyfill, dfStringTag } from "./isPolyfill";
+import { g, polyfill, Class_setStringTag, checkArgs } from "./isPolyfill";
 
 /** @internal */ const state = Symbol(/* "EventState" */);
 /** @internal */ export { state as eventState };
@@ -9,14 +9,19 @@ export class EventP implements Event {
     declare static readonly AT_TARGET: 2;
     declare static readonly BUBBLING_PHASE: 3;
 
-    constructor(type: string, eventInitDict?: EventInit) {
-        this[state] = new EventState();
-        const that = this[state];
+    constructor(...args: [string, EventInit?]) {
+        const [type, eventInitDict] = args;
+        if (args.length < 1) {
+            throw new TypeError(`Failed to construct '${new.target.name}': 1 argument required, but only 0 present.`);
+        }
 
-        that.type = String(type);
-        that.bubbles = !!eventInitDict?.bubbles;
-        that.cancelable = !!eventInitDict?.cancelable;
-        that.composed = !!eventInitDict?.composed;
+        this[state] = new EventState();
+        const s = this[state];
+
+        s.type = "" + type;
+        s.bubbles = !!eventInitDict?.bubbles;
+        s.cancelable = !!eventInitDict?.cancelable;
+        s.composed = !!eventInitDict?.composed;
 
         Object.defineProperty(this, "isTrusted", {
             enumerable: true,
@@ -43,7 +48,7 @@ export class EventP implements Event {
 
     get srcElement() { return this[state].target; }
     get cancelBubble() { return this[state].cancelBubble; }
-    set cancelBubble(value) { this[state].cancelBubble = value; }
+    set cancelBubble(value) { this[state].cancelBubble = !!value; }
 
     get defaultPrevented() { return this[state].defaultPrevented; }
     get returnValue() { return this[state].returnValue; }
@@ -55,31 +60,31 @@ export class EventP implements Event {
     composedPath() {
         let path = !!this.target ? [this.target] : [];
         if (!!this.currentTarget && this.currentTarget !== this.target) path.push(this.currentTarget);
-
         return path;
     }
 
-    initEvent(type: string, bubbles?: boolean, cancelable?: boolean){
-        const that = this[state];
-        if (that[_dispatched]) return;
-
-        that.type = String(type);
-        that.bubbles = !!bubbles;
-        that.cancelable = !!cancelable;
+    initEvent(...args: [string, boolean?, boolean?]){
+        const [type, bubbles, cancelable] = args;
+        checkArgs(args, "Event", "initEvent", 1);
+        const s = this[state];
+        if (s[_dispatched]) return;
+        s.type = "" + type;
+        s.bubbles = !!bubbles;
+        s.cancelable = !!cancelable;
     }
 
     preventDefault() {
-        const that = this[state];
+        const s = this[state];
 
-        if (that[_passive]) {
+        if (s[_passive]) {
             console.warn(`Ignoring 'preventDefault()' call on event of type '${this.type}' from a listener registered as 'passive'.`);
             return;
         }
 
         if (this.cancelable) {
-            that[_preventDefaultCalled] = true;
-            that.defaultPrevented = true;
-            that.returnValue = false;
+            s[_preventDefaultCalled] = true;
+            s.defaultPrevented = true;
+            s.returnValue = false;
         }
     }
 
@@ -92,8 +97,8 @@ export class EventP implements Event {
         this.cancelBubble = true;
     }
 
-    toString() { return "[object Event]"; }
-    get isPolyfill() { return { symbol: polyfill, hierarchy: ["Event"] }; }
+    /** @internal */ toString() { return "[object Event]"; }
+    /** @internal */ get isPolyfill() { return { symbol: polyfill, hierarchy: ["Event"] }; }
 }
 
 const properties = {
@@ -106,7 +111,7 @@ const properties = {
 Object.defineProperties(EventP, properties);
 Object.defineProperties(EventP.prototype, properties);
 
-dfStringTag(EventP, "Event");
+Class_setStringTag(EventP, "Event");
 
 /** @internal */ const _timeStamp = (new Date()).getTime();
 /** @internal */ const _isTrusted = Symbol();
