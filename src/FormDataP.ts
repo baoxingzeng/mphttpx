@@ -1,18 +1,20 @@
 import { BlobP } from "./BlobP";
 import { FileP } from "./FileP";
-import { TextEncoder } from "./TextEncoderP";
-import { g, polyfill, isObjectType, isPolyfillType, dfStringTag } from "./isPolyfill";
+import { g, polyfill, Class_setStringTag, checkArgs, isObjectType, isPolyfillType } from "./isPolyfill";
 
-/** @internal */ const state = Symbol(/* "FormDataState" */);
+/** @internal */
+const state = Symbol(/* "FormDataState" */);
 
 export class FormDataP implements FormData {
     constructor(form?: HTMLFormElement, submitter?: HTMLElement | null) {
-        if (form !== void 0) {
-            throw new TypeError("Failed to construct 'FormData': parameter 1 is not of type	'HTMLFormElement'.");
-        }
-
-        if (!!submitter) {
-            throw new TypeError("Failed to construct 'FormData': parameter 2 is not of type 'HTMLElement'.");
+        if (submitter === undefined) {
+            if (form !== undefined) {
+                console.warn("TypeError: FormData constructor: parameter 1 is not implemented.")
+            }
+        } else {
+            if (submitter !== null) {
+                console.warn("TypeError: FormData constructor: parameter 1 and parameter 2 are not implemented.");
+            }
         }
 
         this[state] = new FormDataState();
@@ -21,83 +23,104 @@ export class FormDataP implements FormData {
     /** @internal */
     [state]: FormDataState;
 
-    append(name: string, value: string | Blob, filename?: string) {
+    append(...args: [string, string | Blob, string?]) {
+        const [name, value, filename] = args;
+        checkArgs(args, "FormData", "append", 2);
         this[state][_formData].push(normalizeArgs(name, value, filename));
     }
 
-    delete(name: string) {
+    delete(...args: [string]) {
+        const [name] = args;
+        checkArgs(args, "FormData", "delete", 1);
+        let _name = "" + name;
+        let index = -1;
+        let array = this[state][_formData];
         let result: [string, FormDataEntryValue][] = [];
-        name = String(name);
-
-        each(this[state][_formData], entry => {
-            entry[0] !== name && result.push(entry);
-        });
-
-        this[state][_formData] = result;
+        for (let i = 0; i < array.length; ++i) {
+            let item = array[i]!;
+            if (item[0] === _name) { index = i; continue; }
+            result.push(item);
+        }
+        if (index > -1) { this[state][_formData] = result; }
     }
 
-    get(name: string): FormDataEntryValue | null {
-        let entries = this[state][_formData];
-        name = String(name);
-
-        for (let i = 0; i < entries.length; ++i) {
-            if (entries[i]![0] === name) {
-                return entries[i]![1];
-            }
+    get(...args: [string]): FormDataEntryValue | null {
+        const [name] = args;
+        checkArgs(args, "FormData", "get", 1);
+        let _name = "" + name;
+        let array = this[state][_formData];
+        for (let i = 0; i < array.length; ++i) {
+            let item = array[i]!;
+            if (item[0] === _name) { return item[1]; }
         }
-
         return null;
     }
 
-    getAll(name: string): FormDataEntryValue[] {
+    getAll(...args: [string]): FormDataEntryValue[] {
+        const [name] = args;
+        checkArgs(args, "FormData", "getAll", 1);
+        let _name = "" + name;
+        let array = this[state][_formData];
         let result: FormDataEntryValue[] = [];
-        name = String(name);
-
-        each(this[state][_formData], data => {
-            data[0] === name && result.push(data[1]);
-        });
-
+        for (let i = 0; i < array.length; ++i) {
+            let item = array[i]!;
+            if (item[0] === _name) { result.push(item[1]); }
+        }
         return result;
     }
 
-    has(name: string): boolean {
-        name = String(name);
-
-        for (let i = 0; i < this[state][_formData].length; ++i) {
-            if (this[state][_formData][i]![0] === name) {
-                return true;
-            }
+    has(...args: [string]): boolean {
+        const [name] = args;
+        checkArgs(args, "FormData", "has", 1);
+        let _name = "" + name;
+        let array = this[state][_formData];
+        for (let i = 0; i < array.length; ++i) {
+            let item = array[i]!;
+            if (item[0] === _name) { return true; }
         }
-
         return false;
     }
 
-    set(name: string, value: string | Blob, filename?: string) {
-        name = String(name);
+    set(...args: [string, string | Blob, string?]) {
+        const [name, value, filename] = args;
+        checkArgs(args, "FormData", "set", 2);
+        let _name = "" + name;
+        let _args = normalizeArgs(name, value, filename);
+        let index = -1;
+        let array = this[state][_formData];
         let result: [string, FormDataEntryValue][] = [];
-        let args = normalizeArgs(name, value, filename);
-        let replace = true;
-
-        each(this[state][_formData], data => {
-            data[0] === name
-                ? replace && (replace = !result.push(args))
-                : result.push(data);
-        })
-
-        replace && result.push(args);
-
+        for (let i = 0; i < array.length; ++i) {
+            let item = array[i]!;
+            if (item[0] === _name) {
+                if (index === -1) {
+                    index = i;
+                    result.push(_args);
+                }
+                continue;
+            }
+            result.push(item);
+        }
+        if (index === -1) {
+            result.push(_args);
+        }
         this[state][_formData] = result;
     }
 
-    forEach(callbackfn: (value: FormDataEntryValue, key: string, parent: FormData) => void, thisArg?: any): void {
-        for (let i = 0; i < this[state][_formData].length; ++i) {
-            let pair = this[state][_formData][i]!
-            callbackfn.call(thisArg, pair[1], pair[0], thisArg);
+    forEach(...args: [(value: FormDataEntryValue, key: string, parent: FormData) => void, any?]): void {
+        const [callbackfn, thisArg] = args;
+        checkArgs(args, "FormData", "forEach", 1);
+        if (typeof callbackfn !== "function") {
+            throw new TypeError("Failed to execute 'forEach' on 'FormData': parameter 1 is not of type 'Function'.");
+        }
+        let array = this[state][_formData];
+        for (let i = 0; i < array.length; ++i) {
+            let item = array[i]!;
+            callbackfn.call(thisArg, item[1], item[0], thisArg);
         }
     }
 
     entries() {
-        return this[state][_formData].values();
+        return this[state][_formData].map(x => [x[0], x[1]] as [string, FormDataEntryValue]).values();
     }
 
     keys() {
@@ -112,11 +135,11 @@ export class FormDataP implements FormData {
         return this.entries();
     }
 
-    toString() { return "[object FormData]"; }
-    get isPolyfill() { return { symbol: polyfill, hierarchy: ["FormData"] }; }
+    /** @internal */ toString() { return "[object FormData]"; }
+    /** @internal */ get isPolyfill() { return { symbol: polyfill, hierarchy: ["FormData"] }; }
 }
 
-dfStringTag(FormDataP, "FormData");
+Class_setStringTag(FormDataP, "FormData");
 
 /** @internal */
 const _formData = Symbol();
@@ -151,117 +174,80 @@ export function FormData_toBlob(formData: FormData): Blob {
 function normalizeArgs(name: string, value: string | Blob, filename?: string): [string, FormDataEntryValue] {
     if (isPolyfillType<Blob>("Blob", value)) {
         filename = filename !== undefined
-            ? String(filename + "")
+            ? ("" + filename)
             : typeof (value as File).name === "string"
                 ? (value as File).name
                 : "blob";
-
         if ((value as File).name !== filename || isObjectType<Blob>("Blob", value)) {
             value = new FileP([value], filename);
         }
-
-        return [String(name), value as File];
+        return ["" + name, value as File];
     }
-
-    return [String(name), String(value)];
+    return ["" + name, "" + value];
 }
 
+// normalize line feeds for textarea
+// https://html.spec.whatwg.org/multipage/form-elements.html#textarea-line-break-normalisation-transformation
 function normalizeLinefeeds(value: string) {
     return value.replace(/\r?\n|\r/g, "\r\n");
-}
-
-function each<T>(arr: ArrayLike<T>, cb: (elm: T) => void) {
-    for (let i = 0; i < arr.length; ++i) {
-        cb(arr[i]!);
-    }
 }
 
 function escape(str: string) {
     return str.replace(/\n/g, '%0A').replace(/\r/g, '%0D').replace(/"/g, '%22');
 }
 
-/**
- * Parses multipart/form-data binary data, supporting restoration of text fields and files
- * @param body - Text in multipart/form-data format (including boundaries and data)
- * @returns Parsed FormData object (text fields as strings, files as File objects)
- * @internal
- */
-export function createFormDataFromBody(body: string, errMsg = "Failed to fetch"): FormData {
-    const formData = new FormDataP();
-    if (typeof body !== "string" || body.trim() === "") {
-        return formData;
+/** @internal */
+export function createFormDataFromBinaryText(text: string, boundary?: string): FormData {
+    const throwParseError = () => {
+        throw new TypeError("Could not parse content as FormData.");
     }
 
-    // 1. Extract boundary string (from the first line, removing leading "--")
-    const firstLineEnd = body.indexOf("\r\n");
-    if (firstLineEnd === -1) {
-        // Invalid multipart format: Missing line break in header
-        throw new TypeError(errMsg);
-    }
-    const boundary = body.substring(2, firstLineEnd).trim();
-    if (!boundary) {
-        // Invalid multipart format: Empty boundary
-        throw new TypeError("Invalid MIME type");
+    if (typeof text !== "string" || text.trim() === "") {
+        throwParseError();
     }
 
-    // 2. Split data into individual parts (excluding empty content and trailing "--")
-    const parts = body.split(`--${boundary}`).filter(part => {
-        const trimmed = part.trim();
+    let firstLineEnd = text.indexOf("\r\n");
+    if (firstLineEnd === -1) { throwParseError(); }
+
+    let _boundary = text.substring(2, firstLineEnd).trim();
+    if (!_boundary) { throwParseError(); }
+
+    if (boundary !== undefined && boundary !== _boundary) {
+        throwParseError();
+    }
+
+    let parts = text.split(`--${_boundary}`).filter(part => {
+        let trimmed = part.trim();
         return trimmed !== "" && trimmed !== "--";
     });
 
     if (parts.length === 0) {
-        // Invalid multipart format: No parts found
-        throw new TypeError(errMsg);
+        throwParseError();
     }
 
-    // 3. Parse each part
+    let formData = new FormDataP();
+
     parts.forEach(part => {
-        // Split header and content (separator between header and content is "\r\n\r\n")
-        const separatorIndex = part.indexOf("\r\n\r\n");
-        if (separatorIndex === -1) {
-            // Invalid part format: Missing header-content separator
-            throw new TypeError(errMsg);
-        }
+        let separatorIndex = part.indexOf("\r\n\r\n");
+        if (separatorIndex === -1) { throwParseError(); }
 
-        // Extract header (Content-Disposition and Content-Type)
-        const headerRaw = part.substring(0, separatorIndex).trim();
-        const contentRaw = part.substring(separatorIndex + 4); // Skip "\r\n\r\n"
+        let headerRaw = part.substring(0, separatorIndex).trim();
 
-        // Parse header information
-        const nameMatch = headerRaw.match(/name="([^"]+)"/); // Field name
-        const filenameMatch = headerRaw.match(/filename="([^"]*)"/); // Filename (optional, only for file fields)
-        const contentTypeMatch = headerRaw.match(/Content-Type: ([^\r\n]+)/); // MIME type (optional)
+        let nameMatch = headerRaw.match(/name="([^"]*)"/);
+        if (!nameMatch || nameMatch.length < 2) { throwParseError(); }
 
-        if (!nameMatch || !nameMatch[1]) {
-            // Invalid part format: Missing field name
-            throw new TypeError(errMsg);
-        }
-        const fieldName = nameMatch[1];
-        const isFile = !!filenameMatch; // Whether it's a file field
-        const mimeType = contentTypeMatch ? (contentTypeMatch[1] || "").trim() : "application/octet-stream";
+        let fieldName = nameMatch![1]!;
+        let filenameMatch = headerRaw.match(/filename="([^"]*)"/);
+        let contentRaw = part.substring(separatorIndex + 4);
 
-        // 4. Process content (text or binary)
-        if (isFile) {
-            // File field: Use TextEncoder to handle raw binary data
-            try {
-                // Remove line breaks from content (simulating browser behavior)
-                const content = contentRaw.replace(/\r\n/g, "");
-                // Convert string to Uint8Array using TextEncoder
-                const encoder = new TextEncoder();
-                const uint8Array = encoder.encode(content);
-                // Create File object (default filename is unknown-file)
-                const filename = filenameMatch[1] || "unknown-file";
-                const file = new FileP([uint8Array], filename, { type: mimeType });
-                formData.append(fieldName, file, filename);
-            } catch (e) {
-                // `Failed to process file field "${fieldName}": ${(e as Error).message}`
-                throw new TypeError(errMsg);
-            }
+        if (!filenameMatch) {
+            formData.append(fieldName, contentRaw.replace(/^[\r\n]+|[\r\n]+$/g, ""));
         } else {
-            // Text field: Directly take content (remove leading/trailing line breaks to match browser behavior)
-            const value = contentRaw.replace(/^[\r\n]+|[\r\n]+$/g, "");
-            formData.append(fieldName, value);
+            let filename = filenameMatch[1] || "";
+            let contentTypeMatch = headerRaw.match(/Content-Type: ([^\r\n]+)/);
+            let mimeType = contentTypeMatch ? (contentTypeMatch[1] || "").trim() : "text/plain";
+            let content = contentRaw.replace(/\r\n/g, "");
+            formData.append(fieldName, new FileP([content], filename, { type: mimeType }));
         }
     });
 
