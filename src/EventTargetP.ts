@@ -1,5 +1,7 @@
-import { g, polyfill, dfStringTag } from "./isPolyfill";
-import { EventP, eventState, Event_setTrusted, type Event_EtFields, Event_getEtField, Event_setEtField } from "./EventP";
+import { type Event_EtFields } from "./EventP";
+import { Event_getEtField, Event_setEtField } from "./EventP";
+import { EventP, eventState, Event_setTrusted } from "./EventP";
+import { g, polyfill, Class_setStringTag, checkArgs } from "./isPolyfill";
 
 const passive: Event_EtFields["Passive"] = 0;
 const dispatched: Event_EtFields["Dispatched"] = 1;
@@ -12,18 +14,25 @@ const stopImmediatePropagationCalled: Event_EtFields["StopImmediatePropagationCa
 export class EventTargetP implements EventTarget {
     constructor() {
         this[state] = new EventTargetState(this);
+        this[state].name = new.target.name;
     }
 
     /** @internal */
     [state]: EventTargetState;
 
-    addEventListener(type: string, callback: EventListenerOrEventListenerObject | null, options?: AddEventListenerOptions | boolean) {
-        const that = this[state];
+    addEventListener(...args: [string, EventListenerOrEventListenerObject | null, (AddEventListenerOptions | boolean)?]) {
+        const [type, callback, options] = args;
+        checkArgs(args, this[state].name, "addEventListener", 2);
+        if (typeof callback !== "function" && typeof callback !== "object" && typeof callback !== "undefined") {
+            throw new TypeError(`Failed to execute 'addEventListener' on '${this[state].name}': parameter 2 is not of type 'Object'.`);
+        }
+
+        const s = this[state];
         const executor = new Executor(type, callback);
         executor.options.capture = typeof options === "boolean" ? options : !!options?.capture;
 
-        if (!that[_executors].some(x => x.equals(executor))) {
-            if (typeof options === "object") {
+        if (!s[_executors].some(x => x.equals(executor))) {
+            if (options && typeof options === "object") {
                 const { once, passive, signal } = options;
 
                 executor.options.once = !!once;
@@ -35,43 +44,46 @@ export class EventTargetP implements EventTarget {
                 }
             }
 
-            that[_executors].push(executor);
+            s[_executors].push(executor);
 
             const f = (v: Executor) => !!v.options.capture ? 0 : 1;
-            that[_executors] = that[_executors].sort((a, b) => f(a) - f(b));
+            s[_executors] = s[_executors].sort((a, b) => f(a) - f(b));
         }
     }
 
-    dispatchEvent(event: Event): boolean {
-        if (typeof event !== "object") {
-            throw new TypeError("EventTarget.dispatchEvent: Argument 1 is not an object.");
-        }
-
+    dispatchEvent(...args: [Event]): boolean {
+        const [event] = args;
+        checkArgs(args, this[state].name, "dispatchEvent", 1);
         if (!(event instanceof EventP)) {
-            throw new TypeError("EventTarget.dispatchEvent: Argument 1 does not implement interface Event.");
+            throw new TypeError(`${this[state].name}.dispatchEvent: Argument 1 does not implement interface Event.`);
         }
 
         Event_setTrusted(event, false);
         event[eventState].target = this;
-
         return EventTarget_fire(this, event);
     }
 
-    removeEventListener(type: string, callback: EventListenerOrEventListenerObject | null, options?: EventListenerOptions | boolean) {
-        const that = this[state];
+    removeEventListener(...args: [string, EventListenerOrEventListenerObject | null, (EventListenerOptions | boolean)?]) {
+        const [type, callback, options] = args;
+        checkArgs(args, this[state].name, "removeEventListener", 2);
+        if (typeof callback !== "function" && typeof callback !== "object" && typeof callback !== "undefined") {
+            throw new TypeError(`Failed to execute 'removeEventListener' on '${this[state].name}': parameter 2 is not of type 'Object'.`);
+        }
+
+        const s = this[state];
         const executor = new Executor(type, callback);
         executor.options.capture = typeof options === "boolean" ? options : !!options?.capture;
 
-        if (that[_executors].some(x => x.equals(executor))) {
-            that[_executors] = that[_executors].filter(x => !x.equals(executor));
+        if (s[_executors].some(x => x.equals(executor))) {
+            s[_executors] = s[_executors].filter(x => !x.equals(executor));
         }
     }
 
-    toString() { return "[object EventTarget]"; }
-    get isPolyfill() { return { symbol: polyfill, hierarchy: ["EventTarget"] }; }
+    /** @internal */ toString() { return "[object EventTarget]"; }
+    /** @internal */ get isPolyfill() { return { symbol: polyfill, hierarchy: ["EventTarget"] }; }
 }
 
-dfStringTag(EventTargetP, "EventTarget");
+Class_setStringTag(EventTargetP, "EventTarget");
 
 /** @internal */
 const _executors = Symbol();
@@ -83,6 +95,7 @@ export class EventTargetState {
     }
 
     target: EventTarget;
+    name = "EventTarget";
     [_executors] = [] as Executor[];
 }
 
@@ -148,7 +161,7 @@ function reply(target: EventTarget, signal: AbortSignal, executor: Executor) {
 /** @internal */
 class Executor {
     constructor(type: string, callback: EventListenerOrEventListenerObject | null) {
-        this.type = String(type);
+        this.type = "" + type;
         this.callback = extract(callback);
     }
 
