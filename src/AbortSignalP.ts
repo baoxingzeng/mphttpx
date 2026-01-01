@@ -1,5 +1,5 @@
 import { createInnerEvent } from "./EventP";
-import { g, polyfill, dfStringTag, MPException } from "./isPolyfill";
+import { g, polyfill, Class_setStringTag, checkArgs, MPException } from "./isPolyfill";
 import { EventTargetP, EventTargetState, eventTargetState, EventTarget_fire, attachFn, executeFn } from "./EventTargetP";
 
 /** @internal */
@@ -9,29 +9,34 @@ export class AbortSignalP extends EventTargetP implements AbortSignal {
     static abort(reason?: any) {
         let signal = createAbortSignal();
         AbortSignal_abort(signal, reason, false);
-
         return signal;
     }
 
-    static any(signals: AbortSignal[]) {
+    static any(...args: [AbortSignal[]]) {
+        const [signals] = args;
+        checkArgs(args, "AbortSignal", "any", 1);
+        if (!(Array.isArray(signals) || (signals && typeof signals === "object" && Symbol.iterator in signals))) {
+            throw new TypeError("Failed to execute 'any' on 'AbortSignal': The provided value cannot be converted to a sequence.");
+        }
+
+        let _signals = Array.isArray(signals) ? signals : Array.from<AbortSignal>(signals as never);
+
         let signal = createAbortSignal();
-        let abortedSignal = signals.find(x => x.aborted);
+        let abortedSignal = _signals.find(x => x.aborted);
 
         if (abortedSignal) {
             AbortSignal_abort(signal, (abortedSignal as AbortSignalP).reason, false);
         } else {
-            let _signals = Array.from(signals);
             function abortFn(this: AbortSignal, ev: Event) {
                 for (let i = 0; i < _signals.length; ++i) {
                     let sig = _signals[i]!;
                     sig.removeEventListener("abort", abortFn);
                 }
-
                 AbortSignal_abort(signal, (this as AbortSignalP).reason, true, ev.isTrusted);
             }
 
             for (let i = 0; i < _signals.length; ++i) {
-                let sig = _signals[1]!;
+                let sig = _signals[i]!;
                 sig.addEventListener("abort", abortFn);
             }
         }
@@ -39,13 +44,13 @@ export class AbortSignalP extends EventTargetP implements AbortSignal {
         return signal;
     }
 
-    static timeout(milliseconds: number) {
+    static timeout(...args: [number]) {
+        const [milliseconds] = args;
+        checkArgs(args, "AbortSignal", "timeout", 1);
         let signal = createAbortSignal();
-
         setTimeout(() => {
             AbortSignal_abort(signal, new MPException("signal timed out", "TimeoutError"));
         }, milliseconds);
-
         return signal;
     }
 
@@ -74,11 +79,11 @@ export class AbortSignalP extends EventTargetP implements AbortSignal {
         attachFn(this, "abort", value, this[state][_handlers].onabort);
     }
 
-    toString() { return "[object AbortSignal]"; }
-    get isPolyfill() { return { symbol: polyfill, hierarchy: ["AbortSignal", "EventTarget"] }; }
+    /** @internal */ toString() { return "[object AbortSignal]"; }
+    /** @internal */ get isPolyfill() { return { symbol: polyfill, hierarchy: ["AbortSignal", "EventTarget"] }; }
 }
 
-dfStringTag(AbortSignalP, "AbortSignal");
+Class_setStringTag(AbortSignalP, "AbortSignal");
 
 /** @internal */
 const _handlers = Symbol();
