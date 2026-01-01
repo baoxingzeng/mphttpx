@@ -7,9 +7,9 @@ export { FileReader, FileReaderP } from "./FileReaderP";
 
 export { URLSearchParams, URLSearchParamsP } from "./URLSearchParamsP";
 export { FormData, FormDataP } from "./FormDataP";
+export { Headers, HeadersP } from "./HeadersP";
 
 export { fetch, fetchP } from "./fetchP";
-export { Headers, HeadersP } from "./HeadersP";
 export { Request, RequestP } from "./RequestP";
 export { Response, ResponseP } from "./ResponseP";
 
