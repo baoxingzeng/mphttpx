@@ -29,12 +29,12 @@ export class BlobP implements Blob {
         }
 
         this[state] = new BlobState(concat(chunks));
-        const that = this[state];
+        const s = this[state];
 
-        that.size = that[_buffer].length;
+        s.size = s[_buffer].length;
 
         let rawType = "" + (options?.type || "");
-        that.type = /[^\u0020-\u007E]/.test(rawType) ? "" : rawType.toLowerCase();
+        s.type = /[^\u0020-\u007E]/.test(rawType) ? "" : rawType.toLowerCase();
     }
 
     /** @internal */
