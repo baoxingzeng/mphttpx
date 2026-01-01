@@ -1,7 +1,7 @@
+import { BodyImpl, bodyState, Body_init, Body_toPayload } from "./BodyImpl";
 import { HeadersP } from "./HeadersP";
 import { AbortControllerP } from "./AbortControllerP";
-import { g, polyfill, isPolyfillType, dfStringTag } from "./isPolyfill";
-import { BodyImpl, Body_init, Body_setName, Body_setBodyUsed, Body_toPayload } from "./BodyImpl";
+import { g, polyfill, Class_setStringTag, isPolyfillType } from "./isPolyfill";
 
 /** @internal */ const state = Symbol(/* "RequestState" */);
 /** @internal */ export { state as requestState };
@@ -9,59 +9,60 @@ import { BodyImpl, Body_init, Body_setName, Body_setBodyUsed, Body_toPayload } f
 export class RequestP extends BodyImpl implements Request {
     constructor(input: RequestInfo | URL, init?: RequestInit) {
         super();
-        Body_setName(this, "Request");
+        this[bodyState].name = "Request";
 
         this[state] = new RequestState();
-        const that = this[state];
+        const s = this[state];
 
-        let options = init ?? {};
-        let body = options.body;
+        let _init = init ?? {};
+        if (typeof _init !== "object") {
+            throw new TypeError("Failed to construct 'Request': The provided value is not of type 'RequestInit'.");
+        }
+
+        let body = _init.body;
 
         if (isPolyfillType<Request>("Request", input)) {
             if (input.bodyUsed) {
                 throw new TypeError("Failed to construct 'Request': Cannot construct a Request with a Request object that has already been used.");
             }
-            that.cache = input.cache;
-            that.credentials = input.credentials;
-            if (!options.headers) { that.headers = new HeadersP(input.headers); }
-            that.method = input.method;
-            that.mode = input.mode;
-            let inputSignal = (input as RequestP)[state].signal; if (inputSignal) { that.signal = inputSignal; }
-            that.url = input.url;
+            s.cache = input.cache;
+            s.credentials = input.credentials;
+            if (!_init.headers) { s.headers = new HeadersP(input.headers); }
+            s.method = input.method;
+            s.mode = input.mode;
+            let inputSignal = (input as RequestP)[state].signal; if (inputSignal) { s.signal = inputSignal; }
+            s.url = input.url;
 
             let payload = Body_toPayload(input);
-            if (!body && payload !== null) {
-                body = payload;
-                Body_setBodyUsed(input, true);
-            }
+            if (!body && payload !== "") { body = payload; (input as RequestP)[bodyState].bodyUsed = true; }
         } else {
-            that.url = String(input);
+            s.url = "" + input;
         }
 
-        if (options.cache) { that.cache = options.cache; }
-        if (options.credentials) { that.credentials = options.credentials; }
-        if (options.headers) { that.headers = new HeadersP(options.headers); }
-        if (options.method) { that.method = normalizeMethod(options.method); }
-        if (options.mode) { that.mode = options.mode; }
-        if (options.signal) { that.signal = options.signal; }
+        if (_init.cache) { s.cache = _init.cache; }
+        if (_init.credentials) { s.credentials = _init.credentials; }
+        if (_init.headers) { s.headers = new HeadersP(_init.headers); }
+        if (_init.method) { s.method = normalizeMethod(_init.method); }
+        if (_init.mode) { s.mode = _init.mode; }
+        if (_init.signal) { s.signal = _init.signal; }
 
         if ((this.method === "GET" || this.method === "HEAD") && body) {
             throw new TypeError("Failed to construct 'Request': Request with GET/HEAD method cannot have body.");
         }
 
-        Body_init(this, body, this.headers);
+        Body_init(this, body);
 
         if (this.method === "GET" || this.method === "HEAD") {
-            if (options.cache === "no-store" || options.cache === "no-cache") {
+            if (_init.cache === "no-store" || _init.cache === "no-cache") {
                 // Search for a '_' parameter in the query string
                 let reParamSearch = /([?&])_=[^&]*/;
                 if (reParamSearch.test(this.url)) {
                     // If it already exists then set the value with the current time
-                    that.url = this.url.replace(reParamSearch, "$1_=" + (new Date()).getTime());
+                    s.url = this.url.replace(reParamSearch, "$1_=" + (new Date()).getTime());
                 } else {
                     // Otherwise add a new '_' parameter to the end with the current time
                     let reQueryString = /\?/;
-                    that.url += (reQueryString.test(this.url) ? "&" : "?") + "_=" + (new Date()).getTime();
+                    s.url += (reQueryString.test(this.url) ? "&" : "?") + "_=" + (new Date()).getTime();
                 }
             }
         }
@@ -75,9 +76,9 @@ export class RequestP extends BodyImpl implements Request {
     get destination() { return this[state].destination; }
 
     get headers() {
-        const that = this[state];
-        if (!that.headers) { that.headers = new HeadersP(); }
-        return that.headers!;
+        const s = this[state];
+        if (!s.headers) { s.headers = new HeadersP(); }
+        return s.headers!;
     }
 
     get integrity() { return this[state].integrity; }
@@ -89,22 +90,25 @@ export class RequestP extends BodyImpl implements Request {
     get referrerPolicy() { return this[state].referrerPolicy; }
 
     get signal() {
-        const that = this[state];
-        if (!that.signal) { that.signal = (new AbortControllerP()).signal; }
-        return that.signal!;
+        const s = this[state];
+        if (!s.signal) { s.signal = (new AbortControllerP()).signal; }
+        return s.signal!;
     }
 
     get url() { return this[state].url; }
 
     clone(): Request {
+        if (this.bodyUsed) {
+            throw new TypeError("Failed to execute 'clone' on 'Request': Request body is already used");
+        }
         return new RequestP(this, { body: Body_toPayload(this) ?? null });
     }
 
-    toString() { return "[object Request]"; }
-    get isPolyfill() { return { symbol: polyfill, hierarchy: ["Request", "Body"] }; }
+    /** @internal */ toString() { return "[object Request]"; }
+    /** @internal */ get isPolyfill() { return { symbol: polyfill, hierarchy: ["Request", "Body"] }; }
 }
 
-dfStringTag(RequestP, "Request");
+Class_setStringTag(RequestP, "Request");
 
 /** @internal */
 class RequestState {

@@ -1,6 +1,6 @@
+import { BodyImpl, bodyState, Body_init, Body_toPayload } from "./BodyImpl";
 import { HeadersP } from "./HeadersP";
-import { g, polyfill, dfStringTag } from "./isPolyfill";
-import { BodyImpl, Body_init, Body_setName, Body_toPayload } from "./BodyImpl";
+import { g, polyfill, Class_setStringTag, checkArgs } from "./isPolyfill";
 
 /** @internal */ const state = Symbol(/* "ResponseState" */);
 /** @internal */ export { state as responseState };
@@ -8,33 +8,37 @@ import { BodyImpl, Body_init, Body_setName, Body_toPayload } from "./BodyImpl";
 export class ResponseP extends BodyImpl implements Response {
     constructor(body?: BodyInit | null, init?: ResponseInit) {
         super();
-        Body_setName(this, "Response");
+        this[bodyState].name = "Response";
 
         this[state] = new ResponseState();
-        const that = this[state];
+        const s = this[state];
 
-        let options = init ?? {};
-        let status = options.status === undefined ? 200 : options.status;
+        let _init = init ?? {};
+        if (typeof _init !== "object") {
+            throw new TypeError("Failed to construct 'Response': The provided value is not of type 'ResponseInit'.");
+        }
+
+        let status = _init.status === undefined ? 200 : _init.status;
 
         if (status < 200 || status > 500) {
             throw new RangeError(`Failed to construct 'Response': The status provided (${+status}) is outside the range [200, 599].`);
         }
 
-        if (options.headers) { that.headers = new HeadersP(options.headers); }
-        that.ok = status >= 200 && status < 300;
-        that.status = status;
-        that.statusText = options.statusText === undefined ? "" : "" + options.statusText;
+        if (_init.headers) { s.headers = new HeadersP(_init.headers); }
+        s.ok = status >= 200 && status < 300;
+        s.status = status;
+        s.statusText = _init.statusText === undefined ? "" : "" + _init.statusText;
         
-        Body_init(this, body, this.headers);
+        Body_init(this, body);
     }
 
     /** @internal */
     [state]: ResponseState;
 
     get headers() {
-        const that = this[state];
-        if (!that.headers) { that.headers = new HeadersP(); }
-        return that.headers!;
+        const s = this[state];
+        if (!s.headers) { s.headers = new HeadersP(); }
+        return s.headers!;
     }
     
     get ok() { return this[state].ok; }
@@ -46,20 +50,20 @@ export class ResponseP extends BodyImpl implements Response {
 
     clone(): Response {
         if (this.bodyUsed) {
-            throw new TypeError("Failed to execute 'clone' on 'Response': Response body is already used.");
+            throw new TypeError("Failed to execute 'clone' on 'Response': Response body is already used");
         }
-
         let response = new ResponseP(Body_toPayload(this), {
             headers: new HeadersP(this.headers),
             status: this.status,
             statusText: this.statusText,
         });
-
         response[state].url = this.url;
         return response;
     }
     
-    static json(data: any, init?: ResponseInit): Response {
+    static json(...args: [any, ResponseInit?]): Response {
+        const [data, init] = args;
+        checkArgs(args, "Response", "json", 1);
         let response = new ResponseP(typeof data === "string" ? data : JSON.stringify(data), init);
         response.headers.set("Content-Type", "application/json");
         return response;
@@ -73,19 +77,20 @@ export class ResponseP extends BodyImpl implements Response {
         return response;
     }
 
-    static redirect(url: string | URL, status = 301): Response {
+    static redirect(...args: [string | URL, number?]): Response {
+        const [url, status = 301] = args;
+        checkArgs(args, "Response", "redirect", 1);
         if ([301, 302, 303, 307, 308].indexOf(status) === -1) {
             throw new RangeError("Failed to execute 'redirect' on 'Response': Invalid status code");
         }
-
-        return new ResponseP(null, { status, headers: { location: String(url) } });
+        return new ResponseP(null, { status, headers: { location: "" + url } });
     }
 
-    toString() { return "[object Response]"; }
-    get isPolyfill() { return { symbol: polyfill, hierarchy: ["Response", "Body"] }; }
+    /** @internal */ toString() { return "[object Response]"; }
+    /** @internal */ get isPolyfill() { return { symbol: polyfill, hierarchy: ["Response", "Body"] }; }
 }
 
-dfStringTag(ResponseP, "Response");
+Class_setStringTag(ResponseP, "Response");
 
 /** @internal */
 class ResponseState {

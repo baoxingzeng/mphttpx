@@ -1,13 +1,11 @@
-import { TextEncoder } from "./TextEncoderP";
-import { TextDecoder } from "./TextDecoderP";
-import { BlobP, Blob_toUint8Array } from "./BlobP";
-import { FormData_toBlob, createFormDataFromBody } from "./FormDataP";
-import { polyfill, isObjectType, isPolyfillType, dfStringTag } from "./isPolyfill";
+import { BlobP, Blob_toUint8Array, encode, decode } from "./BlobP";
+import { FormData_toBlob, createFormDataFromBinaryText } from "./FormDataP";
+import { polyfill, Class_setStringTag, isObjectType, isPolyfillType } from "./isPolyfill";
 
-/** @internal */
-const state = Symbol(/* "BodyState" */);
+/** @internal */ const state = Symbol(/* "BodyState" */);
+/** @internal */ export { state as bodyState };
 
-export class BodyImpl implements Body {
+export abstract class BodyImpl implements Body {
     constructor() {
         if (new.target === BodyImpl) {
             throw new TypeError("Failed to construct 'Body': Illegal constructor");
@@ -21,10 +19,13 @@ export class BodyImpl implements Body {
 
     get body(): Body["body"] {
         if (!this[state][_body]) { return null; }
-        throw new ReferenceError("ReadableStream is not defined");
+        throw new TypeError(`Failed to access 'body' on '${this[state].name}': property not implemented.`);
     }
 
     get bodyUsed() { return this[state].bodyUsed; };
+
+    /** @internal */
+    abstract get headers(): Headers;
 
     arrayBuffer(): Promise<ArrayBuffer> {
         const kind = "arrayBuffer";
@@ -56,44 +57,29 @@ export class BodyImpl implements Body {
         return consumed(this, kind) || read(this, kind) as Promise<string>;
     }
 
-    toString() { return "[object Body]"; }
-    get isPolyfill() { return { symbol: polyfill, hierarchy: ["Body"] }; }
+    /** @internal */ toString() { return "[object Body]"; }
+    /** @internal */ get isPolyfill() { return { symbol: polyfill, hierarchy: ["Body"] }; }
 }
 
-dfStringTag(BodyImpl, "Body");
+Class_setStringTag(BodyImpl, "Body");
 
-/** @internal */ const _name = Symbol();
-/** @internal */ const _body = Symbol();
+/** @internal */
+const _body = Symbol();
 
 /** @internal */
 class BodyState {
+    name = "Body";
     bodyUsed = false;
-
-    [_name] = "Body";
     [_body]: string | ArrayBuffer = "";
 }
 
 /** @internal */
-export function Body_init(body: Body, payload?: ConstructorParameters<typeof Response>[0], headers?: Headers) {
+export function Body_init(body: Body, payload?: ConstructorParameters<typeof Response>[0]) {
+    const b = body as BodyImpl;
     if (isObjectType<ReadableStream>("ReadableStream", payload)) {
-        throw new ReferenceError("ReadableStream is not defined");
+        throw new TypeError(`${b[state].name} constructor: ReadableStream is not implemented.`);
     }
-
-    (body as BodyImpl)[state][_body] = convert(payload, type => {
-        if (headers && !headers.get("Content-Type")) {
-            headers.set("Content-Type", type);
-        }
-    });
-}
-
-/** @internal */
-export function Body_setName(body: Body, name: string) {
-    (body as BodyImpl)[state][_name] = name;
-}
-
-/** @internal */
-export function Body_setBodyUsed(body: Body, bodyUsed: boolean) {
-    (body as BodyImpl)[state].bodyUsed = bodyUsed;
+    b[state][_body] = convert(payload, true, type => { if (!b.headers.has("Content-Type")) { b.headers.set("Content-Type", type); } });
 }
 
 /** @internal */
@@ -103,11 +89,8 @@ export function Body_toPayload(body: Body) {
 
 function read(body: Body, kind: "arrayBuffer" | "blob" | "bytes" | "formData" | "json" | "text") {
     return new Promise((resolve, reject) => {
-        try {
-            resolve(readSync(body, kind));
-        } catch (e) {
-            reject(e);
-        }
+        try { resolve(readSync(body, kind)); }
+        catch (e) { reject(e); }
     });
 }
 
@@ -131,12 +114,24 @@ function readSync(
     }
 
     else if (kind === "formData") {
+        const extractBoundary = (contentType: string | null) => {
+            if (!contentType) { return; }
+            if (!/multipart\/form-data/i.test(contentType)) { return; }
+
+            let boundaryMatch = contentType.match(/boundary\s*=\s*([^;]+)/i);
+            if (boundaryMatch && boundaryMatch[1]) {
+                let boundary = boundaryMatch[1].trim();
+                return boundary.replace(/^["']|["']$/g, "");
+            }
+        }
+
         let text = convertBack("text", payload) as string;
-        return createFormDataFromBody(text);
+        let boundary = extractBoundary((body as BodyImpl).headers.get("Content-Type")) || "";
+        return createFormDataFromBinaryText(text, boundary);
     }
 
     else if (kind === "json") {
-        return convertBack("json", payload) as object;
+        return convertBack("json", payload) as any;
     }
 
     else {
@@ -148,24 +143,15 @@ function consumed(body: Body, kind: string) {
     const s = (body as BodyImpl)[state];
     if (!s[_body]) return;
     if (s.bodyUsed) {
-        return Promise.reject(new TypeError(`TypeError: Failed to execute '${kind}' on '${s[_name]}': body stream already read`));
+        return Promise.reject(new TypeError(`TypeError: Failed to execute '${kind}' on '${s.name}': body stream already read`));
     }
     s.bodyUsed = true;
-}
-
-const encode = (str: string) => {
-    const encoder = new TextEncoder();
-    return encoder.encode(str).buffer;
-}
-
-const decode = (buf: ArrayBuffer) => {
-    let decoder = new TextDecoder();
-    return decoder.decode(buf);
 }
 
 /** @internal */
 export function convert(
     body?: Parameters<XMLHttpRequest["send"]>[0],
+    cloneArrayBuffer = true,
     setContentType?: (str: string) => void,
     setContentLength?: (num: () => number) => void,
 ): string | ArrayBuffer {
@@ -188,7 +174,7 @@ export function convert(
     }
 
     else if (body instanceof ArrayBuffer) {
-        result = body.slice(0);
+        result = cloneArrayBuffer ? body.slice(0) : body;
     }
 
     else if (ArrayBuffer.isView(body)) {
@@ -217,11 +203,19 @@ export function convert(
     }
 
     else {
-        result = String(body);
+        result = "" + body;
     }
 
     if (setContentLength) {
-        setContentLength(() => (typeof result === "string" ? encode(result) : result).byteLength);
+        let calculated = false;
+        let contentLength = 0;
+        setContentLength(() => {
+            if (!calculated) {
+                calculated = true;
+                contentLength = (typeof result === "string" ? encode(result).buffer : result).byteLength;
+            }
+            return contentLength;
+        });
     }
 
     return result;
@@ -243,7 +237,7 @@ export function convertBack(
     }
 
     else if (type === "arraybuffer") {
-        return temp instanceof ArrayBuffer ? temp.slice(0) : encode(temp);
+        return temp instanceof ArrayBuffer ? temp.slice(0) : encode(temp).buffer;
     }
 
     else if (type === "blob") {
