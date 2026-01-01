@@ -1,6 +1,3 @@
-/** @internal */
-export const polyfill = "MPHTTPX";
-
 /* eslint-disable no-prototype-builtins */
 /** @internal */ export const g: typeof globalThis =
     (typeof globalThis !== "undefined" && globalThis) ||
@@ -10,7 +7,10 @@ export const polyfill = "MPHTTPX";
     {};
 
 /** @internal */
-export function dfStringTag(targetFunc: Function, stringTag: string) {
+export const polyfill = "MPHTTPX";
+
+/** @internal */
+export function Class_setStringTag(targetFunc: Function, stringTag: string) {
     Object.defineProperty(targetFunc.prototype, Symbol.toStringTag, {
         configurable: true,
         value: stringTag,
@@ -18,12 +18,19 @@ export function dfStringTag(targetFunc: Function, stringTag: string) {
 }
 
 /** @internal */
+export function checkArgs(args: any[], className: string, funcName: string, required: number) {
+    if (args.length < required) {
+        throw new TypeError(`Failed to execute '${funcName}' on '${className}': ${required} argument${required > 1 ? "s" : ""} required, but only ${args.length} present.`);
+    }
+}
+
+/** @internal */
 export class MPException extends Error {
     constructor(message?: string, name?: string) {
-        super();
-        this.message = message ?? this.message;
-        this.name = name ?? this.name;
+        super(message);
+        if (name) { this.name = name; }
     }
+    name = "Error";
 }
 
 /** @internal */
