@@ -1,8 +1,6 @@
-import { g, polyfill, Class_setStringTag, checkArgs } from "./isPolyfill";
+import { g, polyfill, Class_setStringTag, checkArgsLength } from "./isPolyfill";
 
-/********************************************************/
-/*                 TextEncoder polyfill                 */
-/********************************************************/
+/** @type {typeof globalThis.TextEncoder} */
 export class TextEncoderP implements TextEncoder {
     get encoding() { return "utf-8"; }
 
@@ -13,7 +11,7 @@ export class TextEncoderP implements TextEncoder {
 
     encodeInto(...args: Parameters<TextEncoder["encodeInto"]>): TextEncoderEncodeIntoResult {
         const [source, destination] = args;
-        checkArgs(args, "TextEncoder", "encodeInto", 2);
+        checkArgsLength(args, 2, "TextEncoder", "encodeInto");
 
         let _source = "" + source;
         if (!(destination instanceof Uint8Array)) {

@@ -2,6 +2,7 @@ import { polyfill, Class_setStringTag } from "./isPolyfill";
 import { EventTargetState, eventTargetState } from "./EventTargetP";
 import { XMLHttpRequestEventTargetP, XMLHttpRequestEventTargetState, xhrEventTargetState } from "./XMLHttpRequestEventTargetP";
 
+/** @type {typeof globalThis.XMLHttpRequestUpload} */
 export class XMLHttpRequestUploadP extends XMLHttpRequestEventTargetP implements XMLHttpRequestUpload {
     /** @internal */
     constructor() {

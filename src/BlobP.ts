@@ -5,13 +5,11 @@ import { g, polyfill, Class_setStringTag, isPolyfillType } from "./isPolyfill";
 /** @internal */
 const state = Symbol(/* "BlobState" */);
 
-/********************************************************/
-/*                      Blob Class                      */
-/********************************************************/
+/** @type {typeof globalThis.Blob} */
 export class BlobP implements Blob {
     constructor(blobParts: BlobPart[] = [], options?: BlobPropertyBag) {
         if (!(Array.isArray(blobParts) || (blobParts && typeof blobParts === "object" && Symbol.iterator in blobParts))) {
-            throw new TypeError(`First argument to ${new.target.name} constructor must be an Array.`);
+            throw new TypeError("Failed to construct 'Blob/File': The provided value cannot be converted to a sequence.");
         }
 
         let _blobParts = Array.isArray(blobParts) ? blobParts : Array.from<BlobPart>(blobParts as never);
@@ -19,11 +17,16 @@ export class BlobP implements Blob {
 
         for (let i = 0; i < _blobParts.length; ++i) {
             let chunk = _blobParts[i]!;
+
             if (isPolyfillType<Blob>("Blob", chunk)) {
                 chunks.push((chunk as BlobP)[state][_buffer]);
-            } else if (chunk instanceof ArrayBuffer || ArrayBuffer.isView(chunk)) {
+            }
+
+            else if (chunk instanceof ArrayBuffer || ArrayBuffer.isView(chunk)) {
                 chunks.push(BufferSource_toUint8Array(chunk));
-            } else {
+            }
+
+            else {
                 chunks.push(encode("" + chunk));
             }
         }

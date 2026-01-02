@@ -18,9 +18,9 @@ export function Class_setStringTag(targetFunc: Function, stringTag: string) {
 }
 
 /** @internal */
-export function checkArgs(args: any[], className: string, funcName: string, required: number) {
+export function checkArgsLength(args: any[], required: number, className: string, funcName?: string) {
     if (args.length < required) {
-        throw new TypeError(`Failed to execute '${funcName}' on '${className}': ${required} argument${required > 1 ? "s" : ""} required, but only ${args.length} present.`);
+        throw new TypeError(`Failed to ${funcName ? ("execute '" + funcName + "' on") : "construct"} '${className}': ${required} argument${required > 1 ? "s" : ""} required, but only ${args.length} present.`);
     }
 }
 

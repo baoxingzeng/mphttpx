@@ -3,14 +3,12 @@ import { g, polyfill, Class_setStringTag } from "./isPolyfill";
 /** @internal */
 const state = Symbol(/* "TextDecoderState" */);
 
-/********************************************************/
-/*                 TextDecoder polyfill                 */
-/********************************************************/
+/** @type {typeof globalThis.TextDecoder} */
 export class TextDecoderP implements TextDecoder {
     constructor(label = "utf-8", { fatal = false, ignoreBOM = false } = {}) {
         let _label = "" + label;
         if (["utf-8", "utf8", "unicode-1-1-utf-8"].indexOf(_label.toLowerCase()) === -1) {
-            throw new RangeError(`TextDecoder constructor: The given encoding '${_label}' is not implemented.`);
+            throw new RangeError(`Failed to construct 'TextDecoder': encoding ('${_label}') not implemented.`);
         }
 
         this[state] = new TextDecoderState();

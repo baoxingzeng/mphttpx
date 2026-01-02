@@ -1,7 +1,7 @@
 import { type Event_EtFields } from "./EventP";
 import { Event_getEtField, Event_setEtField } from "./EventP";
 import { EventP, eventState, Event_setTrusted } from "./EventP";
-import { g, polyfill, Class_setStringTag, checkArgs } from "./isPolyfill";
+import { g, polyfill, Class_setStringTag, checkArgsLength } from "./isPolyfill";
 
 const passive: Event_EtFields["Passive"] = 0;
 const dispatched: Event_EtFields["Dispatched"] = 1;
@@ -11,6 +11,7 @@ const stopImmediatePropagationCalled: Event_EtFields["StopImmediatePropagationCa
 /** @internal */ const state = Symbol(/* "EventTargetState" */);
 /** @internal */ export { state as eventTargetState };
 
+/** @type {typeof globalThis.EventTarget} */
 export class EventTargetP implements EventTarget {
     constructor() {
         this[state] = new EventTargetState(this);
@@ -22,7 +23,7 @@ export class EventTargetP implements EventTarget {
 
     addEventListener(...args: [string, EventListenerOrEventListenerObject | null, (AddEventListenerOptions | boolean)?]) {
         const [type, callback, options] = args;
-        checkArgs(args, this[state].name, "addEventListener", 2);
+        checkArgsLength(args, 2, this[state].name, "addEventListener");
         if (typeof callback !== "function" && typeof callback !== "object" && typeof callback !== "undefined") {
             throw new TypeError(`Failed to execute 'addEventListener' on '${this[state].name}': parameter 2 is not of type 'Object'.`);
         }
@@ -53,9 +54,9 @@ export class EventTargetP implements EventTarget {
 
     dispatchEvent(...args: [Event]): boolean {
         const [event] = args;
-        checkArgs(args, this[state].name, "dispatchEvent", 1);
+        checkArgsLength(args, 1, this[state].name, "dispatchEvent");
         if (!(event instanceof EventP)) {
-            throw new TypeError(`${this[state].name}.dispatchEvent: Argument 1 does not implement interface Event.`);
+            throw new TypeError(`Failed to execute 'dispatchEvent' on '${this[state].name}': parameter 1 is not of type 'Event'.`);
         }
 
         Event_setTrusted(event, false);
@@ -65,7 +66,7 @@ export class EventTargetP implements EventTarget {
 
     removeEventListener(...args: [string, EventListenerOrEventListenerObject | null, (EventListenerOptions | boolean)?]) {
         const [type, callback, options] = args;
-        checkArgs(args, this[state].name, "removeEventListener", 2);
+        checkArgsLength(args, 2, this[state].name, "removeEventListener");
         if (typeof callback !== "function" && typeof callback !== "object" && typeof callback !== "undefined") {
             throw new TypeError(`Failed to execute 'removeEventListener' on '${this[state].name}': parameter 2 is not of type 'Object'.`);
         }

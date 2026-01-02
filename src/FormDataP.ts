@@ -1,19 +1,20 @@
 import { BlobP } from "./BlobP";
 import { FileP } from "./FileP";
-import { g, polyfill, Class_setStringTag, checkArgs, isObjectType, isPolyfillType } from "./isPolyfill";
+import { g, polyfill, Class_setStringTag, checkArgsLength, isObjectType, isPolyfillType } from "./isPolyfill";
 
-/** @internal */
-const state = Symbol(/* "FormDataState" */);
+/** @internal */ const state = Symbol(/* "FormDataState" */);
+const checkArgsFn = (args: any[], required: number, funcName: string) => { checkArgsLength(args, required, "FormData", funcName); }
 
+/** @type {typeof globalThis.FormData} */
 export class FormDataP implements FormData {
     constructor(form?: HTMLFormElement, submitter?: HTMLElement | null) {
         if (submitter === undefined) {
             if (form !== undefined) {
-                console.warn("TypeError: FormData constructor: parameter 1 is not implemented.")
+                console.error("TypeError: Failed to construct 'FormData': parameter 1 not implemented.")
             }
         } else {
             if (submitter !== null) {
-                console.warn("TypeError: FormData constructor: parameter 1 and parameter 2 are not implemented.");
+                console.error("TypeError: Failed to construct 'FormData': parameter 1 and parameter 2 not implemented.");
             }
         }
 
@@ -25,13 +26,13 @@ export class FormDataP implements FormData {
 
     append(...args: [string, string | Blob, string?]) {
         const [name, value, filename] = args;
-        checkArgs(args, "FormData", "append", 2);
+        checkArgsFn(args, 2, "append");
         this[state][_formData].push(normalizeArgs(name, value, filename));
     }
 
     delete(...args: [string]) {
         const [name] = args;
-        checkArgs(args, "FormData", "delete", 1);
+        checkArgsFn(args, 1, "delete");
         let _name = "" + name;
         let index = -1;
         let array = this[state][_formData];
@@ -46,7 +47,7 @@ export class FormDataP implements FormData {
 
     get(...args: [string]): FormDataEntryValue | null {
         const [name] = args;
-        checkArgs(args, "FormData", "get", 1);
+        checkArgsFn(args, 1, "get");
         let _name = "" + name;
         let array = this[state][_formData];
         for (let i = 0; i < array.length; ++i) {
@@ -58,7 +59,7 @@ export class FormDataP implements FormData {
 
     getAll(...args: [string]): FormDataEntryValue[] {
         const [name] = args;
-        checkArgs(args, "FormData", "getAll", 1);
+        checkArgsFn(args, 1, "getAll");
         let _name = "" + name;
         let array = this[state][_formData];
         let result: FormDataEntryValue[] = [];
@@ -71,7 +72,7 @@ export class FormDataP implements FormData {
 
     has(...args: [string]): boolean {
         const [name] = args;
-        checkArgs(args, "FormData", "has", 1);
+        checkArgsFn(args, 1, "has");
         let _name = "" + name;
         let array = this[state][_formData];
         for (let i = 0; i < array.length; ++i) {
@@ -83,7 +84,7 @@ export class FormDataP implements FormData {
 
     set(...args: [string, string | Blob, string?]) {
         const [name, value, filename] = args;
-        checkArgs(args, "FormData", "set", 2);
+        checkArgsFn(args, 2, "set");
         let _name = "" + name;
         let _args = normalizeArgs(name, value, filename);
         let index = -1;
@@ -108,7 +109,7 @@ export class FormDataP implements FormData {
 
     forEach(...args: [(value: FormDataEntryValue, key: string, parent: FormData) => void, any?]): void {
         const [callbackfn, thisArg] = args;
-        checkArgs(args, "FormData", "forEach", 1);
+        checkArgsFn(args, 1, "forEach");
         if (typeof callbackfn !== "function") {
             throw new TypeError("Failed to execute 'forEach' on 'FormData': parameter 1 is not of type 'Function'.");
         }

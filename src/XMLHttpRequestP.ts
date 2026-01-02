@@ -16,7 +16,7 @@ import type {
     IAliRequestFailCallbackResult
 } from "./request";
 import { request } from "./request";
-import { polyfill, Class_setStringTag, checkArgs, MPException } from "./isPolyfill";
+import { polyfill, Class_setStringTag, checkArgsLength, MPException } from "./isPolyfill";
 
 const mp = { request: request };
 export const setRequest = (request: TRequestFunc) => { mp.request = request; }
@@ -24,6 +24,7 @@ export const setRequest = (request: TRequestFunc) => { mp.request = request; }
 /** @internal */
 const state = Symbol(/* "XMLHttpRequestState" */);
 
+/** @type {typeof globalThis.XMLHttpRequest} */
 export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHttpRequest {
     declare static readonly UNSENT: 0;
     declare static readonly OPENED: 1;
@@ -84,14 +85,14 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
 
     getResponseHeader(...args: [string]): string | null {
         const [name] = args;
-        checkArgs(args, "XMLHttpRequest", "getResponseHeader", 1);
+        checkArgsLength(args, 1, "XMLHttpRequest", "getResponseHeader");
         if (!this[state][_responseHeaders]) return null;
         return this[state][_responseHeaders]!.get(name);
     }
 
     open(...args: [method: string, url: string | URL, async?: boolean, username?: string | null, password?: string | null]): void {
         const [method, url, async = true, username = null, password = null] = args;
-        checkArgs(args, "XMLHttpRequest", "open", 2);
+        checkArgsLength(args, 2, "XMLHttpRequest", "open");
         if (!async) {
             console.warn("Synchronous XMLHttpRequest is not supported because of its detrimental effects to the end user's experience.");
         }
@@ -118,9 +119,9 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
 
     overrideMimeType(...args: [string]): void {
         const [mime] = args;
-        checkArgs(args, "XMLHttpRequest", "overrideMimeType", 1);
+        checkArgsLength(args, 1, "XMLHttpRequest", "overrideMimeType");
         if (this[state][_inAfterOpenBeforeSend]) {
-            console.warn(`XMLHttpRequest.overrideMimeType('${mime}') is not implemented: The method will have no effect on response parsing.`);
+            console.error(`TypeError: Failed to execute 'overrideMimeType' on 'XMLHttpRequest': mimeType ('${mime}') not implemented.`);
         }
     }
 
@@ -190,7 +191,7 @@ export class XMLHttpRequestP extends XMLHttpRequestEventTargetP implements XMLHt
 
     setRequestHeader(...args: [string, string]): void {
         const [name, value] = args;
-        checkArgs(args, "XMLHttpRequest", "setRequestHeader", 2);
+        checkArgsLength(args, 2, "XMLHttpRequest", "setRequestHeader");
 
         const s = this[state];
         if (!s[_inAfterOpenBeforeSend] || s.readyState !== XMLHttpRequestP.OPENED) {

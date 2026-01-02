@@ -4,6 +4,7 @@ import { EventTargetP, attachFn, executeFn } from "./EventTargetP";
 /** @internal */ const state = Symbol(/* "XMLHttpRequestEventTargetState" */);
 /** @internal */ export { state as xhrEventTargetState };
 
+/** @type {typeof globalThis.XMLHttpRequestEventTarget} */
 export class XMLHttpRequestEventTargetP extends EventTargetP implements XMLHttpRequestEventTarget {
     /** @internal */
     constructor() {

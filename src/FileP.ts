@@ -1,18 +1,19 @@
 import { BlobP } from "./BlobP";
-import { g, polyfill, Class_setStringTag } from "./isPolyfill";
+import { g, polyfill, Class_setStringTag, checkArgsLength } from "./isPolyfill";
 
 /** @internal */
 const state = Symbol(/* "FileState" */);
 
-/********************************************************/
-/*                      File Class                      */
-/********************************************************/
+/** @type {typeof globalThis.File} */
 export class FileP extends BlobP implements File {
-    constructor(fileBits: BlobPart[], fileName: string, options?: FilePropertyBag) {
+    constructor(...args: [BlobPart[], string, FilePropertyBag?]) {
+        const [fileBits, fileName, options] = args;
+        checkArgsLength(args, 2, "File");
+
         super(fileBits, options);
         this[state] = new FileState();
 
-        this[state].lastModified = +(options?.lastModified ? new Date(options.lastModified) : new Date());
+        this[state].lastModified = +(options?.lastModified ? new Date(options.lastModified) : new Date()) || 0;
         this[state].name = "" + fileName;
     }
 

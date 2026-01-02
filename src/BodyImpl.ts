@@ -24,9 +24,7 @@ export abstract class BodyImpl implements Body {
     }
 
     get bodyUsed() { return this[state].bodyUsed; };
-
-    /** @internal */
-    abstract get headers(): Headers;
+    /** @internal */ abstract get headers(): Headers;
 
     arrayBuffer(): Promise<ArrayBuffer> {
         const kind = "arrayBuffer";
@@ -78,7 +76,7 @@ class BodyState {
 export function Body_init(body: Body, payload?: ConstructorParameters<typeof Response>[0]) {
     const b = body as BodyImpl;
     if (isObjectType<ReadableStream>("ReadableStream", payload)) {
-        throw new TypeError(`${b[state].name} constructor: ReadableStream is not implemented.`);
+        throw new TypeError(`Failed to construct '${b[state].name}': ReadableStream not implemented.`);
     }
     b[state][_body] = convert(payload, true, type => { if (!b.headers.has("Content-Type")) { b.headers.set("Content-Type", type); } });
 }
@@ -144,7 +142,7 @@ function consumed(body: Body, kind: string) {
     const s = (body as BodyImpl)[state];
     if (!s[_body]) return;
     if (s.bodyUsed) {
-        return Promise.reject(new TypeError(`TypeError: Failed to execute '${kind}' on '${s.name}': body stream already read`));
+        return Promise.reject(new TypeError(`Failed to execute '${kind}' on '${s.name}': body stream already read`));
     }
     s.bodyUsed = true;
 }
@@ -160,18 +158,12 @@ export function convert(
 
     if (typeof body === "string") {
         result = body;
-
-        if (setContentType) {
-            setContentType("text/plain;charset=UTF-8");
-        }
+        if (setContentType) { setContentType("text/plain;charset=UTF-8"); }
     }
 
     else if (isObjectType<URLSearchParams>("URLSearchParams", body)) {
         result = body.toString();
-
-        if (setContentType) {
-            setContentType("application/x-www-form-urlencoded;charset=UTF-8");
-        }
+        if (setContentType) { setContentType("application/x-www-form-urlencoded;charset=UTF-8"); }
     }
 
     else if (body instanceof ArrayBuffer) {
@@ -184,19 +176,13 @@ export function convert(
 
     else if (isPolyfillType<Blob>("Blob", body)) {
         result = Blob_toUint8Array(body).buffer.slice(0);
-
-        if (setContentType && body.type) {
-            setContentType(body.type);
-        }
+        if (setContentType && body.type) { setContentType(body.type); }
     }
 
     else if (isPolyfillType<FormData>("FormData", body)) {
         let blob = FormData_toBlob(body);
         result = Blob_toUint8Array(blob).buffer;
-
-        if (setContentType) {
-            setContentType(blob.type);
-        }
+        if (setContentType) { setContentType(blob.type); }
     }
 
     else if (!body) {
@@ -208,12 +194,10 @@ export function convert(
     }
 
     if (setContentLength) {
-        let calculated = false;
-        let contentLength = 0;
+        let calculated = false, contentLength = 0;
         setContentLength(() => {
             if (!calculated) {
-                calculated = true;
-                contentLength = (typeof result === "string" ? encode(result).buffer : result).byteLength;
+                calculated = true; contentLength = (typeof result === "string" ? encode(result).buffer : result).byteLength;
             }
             return contentLength;
         });

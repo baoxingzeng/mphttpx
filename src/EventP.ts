@@ -1,8 +1,9 @@
-import { g, polyfill, Class_setStringTag, checkArgs } from "./isPolyfill";
+import { g, polyfill, Class_setStringTag, checkArgsLength } from "./isPolyfill";
 
 /** @internal */ const state = Symbol(/* "EventState" */);
 /** @internal */ export { state as eventState };
 
+/** @type {typeof globalThis.Event} */
 export class EventP implements Event {
     declare static readonly NONE: 0;
     declare static readonly CAPTURING_PHASE: 1;
@@ -11,9 +12,7 @@ export class EventP implements Event {
 
     constructor(...args: [string, EventInit?]) {
         const [type, eventInitDict] = args;
-        if (args.length < 1) {
-            throw new TypeError(`Failed to construct '${new.target.name}': 1 argument required, but only 0 present.`);
-        }
+        checkArgsLength(args, 1, new.target.name);
 
         this[state] = new EventState();
         const s = this[state];
@@ -65,7 +64,7 @@ export class EventP implements Event {
 
     initEvent(...args: [string, boolean?, boolean?]){
         const [type, bubbles, cancelable] = args;
-        checkArgs(args, "Event", "initEvent", 1);
+        checkArgsLength(args, 1, "Event", "initEvent");
         const s = this[state];
         if (s[_dispatched]) return;
         s.type = "" + type;

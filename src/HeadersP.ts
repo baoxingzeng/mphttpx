@@ -1,8 +1,9 @@
-import { g, polyfill, Class_setStringTag, checkArgs, isObjectType } from "./isPolyfill";
+import { g, polyfill, Class_setStringTag, checkArgsLength, isObjectType } from "./isPolyfill";
 
-/** @internal */
-const state = Symbol(/* "HeadersState" */);
+/** @internal */ const state = Symbol(/* "HeadersState" */);
+const checkArgsFn = (args: any[], required: number, funcName: string) => { checkArgsLength(args, required, "Headers", funcName); }
 
+/** @type {typeof globalThis.Headers} */
 export class HeadersP implements Headers {
     constructor(init?: HeadersInit) {
         this[state] = new HeadersState();
@@ -45,7 +46,7 @@ export class HeadersP implements Headers {
 
     append(...args: [string, string]): void {
         const [name, value] = args;
-        checkArgs(args, "Headers", "append", 2);
+        checkArgsFn(args, 2, "append");
         let _name = normalizeName(name, throwsFn(this[state][_initialized] ? "append" : ""));
         let _value = normalizeValue(value);
         let index = -1;
@@ -63,7 +64,7 @@ export class HeadersP implements Headers {
 
     delete(...args: [string]): void {
         const [name] = args;
-        checkArgs(args, "Headers", "delete", 1);
+        checkArgsFn(args, 1, "delete");
         let _name = normalizeName(name, throwsFn("delete"));
         let index = -1;
         let array = this[state][_headersArray];
@@ -78,7 +79,7 @@ export class HeadersP implements Headers {
 
     get(...args: [string]): string | null {
         const [name] = args;
-        checkArgs(args, "Headers", "get", 1);
+        checkArgsFn(args, 1, "get");
         let _name = normalizeName(name, throwsFn("get"));
         let array = this[state][_headersArray];
         for (let i = 0; i < array.length; ++i) {
@@ -95,7 +96,7 @@ export class HeadersP implements Headers {
 
     has(...args: [string]): boolean {
         const [name] = args;
-        checkArgs(args, "Headers", "has", 1);
+        checkArgsFn(args, 1, "has");
         let _name = normalizeName(name, throwsFn("has"));
         let array = this[state][_headersArray];
         for (let i = 0; i < array.length; ++i) {
@@ -107,7 +108,7 @@ export class HeadersP implements Headers {
 
     set(...args: [string, string]): void {
         const [name, value] = args;
-        checkArgs(args, "Headers", "set", 2);
+        checkArgsFn(args, 2, "set");
         let _name = normalizeName(name, throwsFn("set"));
         let _value = normalizeValue(value);
         let index = -1;
@@ -125,7 +126,7 @@ export class HeadersP implements Headers {
 
     forEach(...args: [(value: string, key: string, parent: Headers) => void, any?]): void {
         const [callbackfn, thisArg] = args;
-        checkArgs(args, "Headers", "forEach", 1);
+        checkArgsFn(args, 1, "forEach");
         if (typeof callbackfn !== "function") {
             throw new TypeError("Failed to execute 'forEach' on 'Headers': parameter 1 is not of type 'Function'.");
         }

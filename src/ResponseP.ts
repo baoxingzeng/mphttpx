@@ -1,10 +1,11 @@
 import { BodyImpl, bodyState, Body_init, Body_toPayload } from "./BodyImpl";
 import { HeadersP } from "./HeadersP";
-import { g, polyfill, Class_setStringTag, checkArgs } from "./isPolyfill";
+import { g, polyfill, Class_setStringTag, checkArgsLength } from "./isPolyfill";
 
 /** @internal */ const state = Symbol(/* "ResponseState" */);
 /** @internal */ export { state as responseState };
 
+/** @type {typeof globalThis.Response} */
 export class ResponseP extends BodyImpl implements Response {
     constructor(body?: BodyInit | null, init?: ResponseInit) {
         super();
@@ -63,7 +64,7 @@ export class ResponseP extends BodyImpl implements Response {
     
     static json(...args: [any, ResponseInit?]): Response {
         const [data, init] = args;
-        checkArgs(args, "Response", "json", 1);
+        checkArgsLength(args, 1, "Response", "json");
         let response = new ResponseP(typeof data === "string" ? data : JSON.stringify(data), init);
         response.headers.set("Content-Type", "application/json");
         return response;
@@ -79,7 +80,7 @@ export class ResponseP extends BodyImpl implements Response {
 
     static redirect(...args: [string | URL, number?]): Response {
         const [url, status = 301] = args;
-        checkArgs(args, "Response", "redirect", 1);
+        checkArgsLength(args, 1, "Response", "redirect");
         if ([301, 302, 303, 307, 308].indexOf(status) === -1) {
             throw new RangeError("Failed to execute 'redirect' on 'Response': Invalid status code");
         }
@@ -87,7 +88,7 @@ export class ResponseP extends BodyImpl implements Response {
     }
 
     /** @internal */ toString() { return "[object Response]"; }
-    /** @internal */ get isPolyfill() { return { symbol: polyfill, hierarchy: ["Response", "Body"] }; }
+    /** @internal */ get isPolyfill() { return { symbol: polyfill, hierarchy: ["Response"] }; }
 }
 
 Class_setStringTag(ResponseP, "Response");

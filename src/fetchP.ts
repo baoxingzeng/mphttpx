@@ -3,18 +3,19 @@ import { normalizeName, normalizeValue, parseHeaders } from "./HeadersP";
 import { Body_toPayload } from "./BodyImpl";
 import { RequestP, requestState } from "./RequestP";
 import { ResponseP, responseState } from "./ResponseP";
-import { g, checkArgs, MPException, isObjectType } from "./isPolyfill";
+import { g, checkArgsLength, MPException, isObjectType } from "./isPolyfill";
 
 const mp = { XMLHttpRequest: XMLHttpRequest };
 export const setXMLHttpRequest = (XHR: typeof globalThis["XMLHttpRequest"]) => { mp.XMLHttpRequest = XHR; }
 
+/** @type {typeof globalThis["fetch"]} */
 export function fetchP(...args: [RequestInfo | URL, RequestInit?]): Promise<Response> {
     if (new.target === fetchP) {
         throw new TypeError("fetch is not a constructor");
     }
 
     const [input, init] = args;
-    checkArgs(args, "Window", "fetch", 1);
+    checkArgsLength(args, 1, "Window", "fetch");
 
     return new Promise((resolve, reject) => {
         const request = new RequestP(input, init);

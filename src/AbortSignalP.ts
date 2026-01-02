@@ -1,10 +1,11 @@
 import { createInnerEvent } from "./EventP";
-import { g, polyfill, Class_setStringTag, checkArgs, MPException } from "./isPolyfill";
+import { g, polyfill, Class_setStringTag, checkArgsLength, MPException, isPolyfillType } from "./isPolyfill";
 import { EventTargetP, EventTargetState, eventTargetState, EventTarget_fire, attachFn, executeFn } from "./EventTargetP";
 
 /** @internal */
 const state = Symbol(/* "AbortSignalState" */);
 
+/** @type {typeof globalThis.AbortSignal} */
 export class AbortSignalP extends EventTargetP implements AbortSignal {
     static abort(reason?: any) {
         let signal = createAbortSignal();
@@ -14,12 +15,17 @@ export class AbortSignalP extends EventTargetP implements AbortSignal {
 
     static any(...args: [AbortSignal[]]) {
         const [signals] = args;
-        checkArgs(args, "AbortSignal", "any", 1);
+        checkArgsLength(args, 1,"AbortSignal", "any");
         if (!(Array.isArray(signals) || (signals && typeof signals === "object" && Symbol.iterator in signals))) {
             throw new TypeError("Failed to execute 'any' on 'AbortSignal': The provided value cannot be converted to a sequence.");
         }
 
         let _signals = Array.isArray(signals) ? signals : Array.from<AbortSignal>(signals as never);
+        _signals.forEach(sig => {
+            if (!isPolyfillType<EventTarget>("EventTarget", sig)) {
+                throw new TypeError("Failed to execute 'any' on 'AbortSignal': Failed to convert value to 'AbortSignal'.");
+            }
+        });
 
         let signal = createAbortSignal();
         let abortedSignal = _signals.find(x => x.aborted);
@@ -46,7 +52,11 @@ export class AbortSignalP extends EventTargetP implements AbortSignal {
 
     static timeout(...args: [number]) {
         const [milliseconds] = args;
-        checkArgs(args, "AbortSignal", "timeout", 1);
+        checkArgsLength(args, 1, "AbortSignal", "timeout");
+        if (!(milliseconds >= 0)) {
+            throw new TypeError("Failed to execute 'timeout' on 'AbortSignal': Value is outside the 'unsigned long long' value range.");
+        }
+
         let signal = createAbortSignal();
         setTimeout(() => {
             AbortSignal_abort(signal, new MPException("signal timed out", "TimeoutError"));

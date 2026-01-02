@@ -1,12 +1,13 @@
 import { type Event_EtFields } from "./EventP";
 import { EventP, Event_getEtField } from "./EventP";
-import { g, polyfill, Class_setStringTag, checkArgs } from "./isPolyfill";
+import { g, polyfill, Class_setStringTag, checkArgsLength } from "./isPolyfill";
 
 const dispatched: Event_EtFields["Dispatched"] = 1;
 
 /** @internal */
 const state = Symbol(/* "CustomEventState" */);
 
+/** @type {typeof globalThis.CustomEvent} */
 export class CustomEventP<T> extends EventP implements CustomEvent {
     constructor(type: string, eventInitDict?: CustomEventInit<T>) {
         super(type, eventInitDict);
@@ -21,7 +22,7 @@ export class CustomEventP<T> extends EventP implements CustomEvent {
 
     initCustomEvent(...args: [string, boolean?, boolean?, T?]): void {
         const [type, bubbles, cancelable, detail] = args;
-        checkArgs(args, "CustomEvent", "initCustomEvent", 1);
+        checkArgsLength(args, 1, "CustomEvent", "initCustomEvent");
         if (Event_getEtField(this, dispatched)) return;
 
         this.initEvent(type, bubbles, cancelable);

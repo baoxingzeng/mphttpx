@@ -1,8 +1,9 @@
-import { g, polyfill, Class_setStringTag, checkArgs, isObjectType } from "./isPolyfill";
+import { g, polyfill, Class_setStringTag, checkArgsLength, isObjectType } from "./isPolyfill";
 
-/** @internal */
-const state = Symbol(/* "URLSearchParamsState" */);
+/** @internal */ const state = Symbol(/* "URLSearchParamsState" */);
+const checkArgsFn = (args: any[], required: number, funcName: string) => { checkArgsLength(args, required, "URLSearchParams", funcName); }
 
+/** @type {typeof globalThis.URLSearchParams} */
 export class URLSearchParamsP implements URLSearchParams {
     constructor(init?: string[][] | Record<string, string> | string | URLSearchParams) {
         this[state] = new URLSearchParamsState();
@@ -60,13 +61,13 @@ export class URLSearchParamsP implements URLSearchParams {
 
     append(...args: [string, string]): void {
         const [name, value] = args;
-        checkArgs(args, "", "append", 2);
+        checkArgsFn(args, 2, "append");
         this[state][_urlspArray].push(["" + name, normalizeValue(value)]);
     }
 
     delete(...args: [string, string?]): void {
         const [name, value] = args;
-        checkArgs(args, "URLSearchParams", "delete", 1);
+        checkArgsFn(args, 1, "delete");
         let _name = "" + name;
         let index = -1;
         let array = this[state][_urlspArray];
@@ -87,7 +88,7 @@ export class URLSearchParamsP implements URLSearchParams {
 
     get(...args: [string]): string | null {
         const [name] = args;
-        checkArgs(args, "URLSearchParams", "get", 1);
+        checkArgsFn(args, 1, "get");
         let _name = "" + name;
         let array = this[state][_urlspArray];
         for (let i = 0; i <array.length; ++i) {
@@ -99,7 +100,7 @@ export class URLSearchParamsP implements URLSearchParams {
 
     getAll(...args: [string]): string[] {
         const [name] = args;
-        checkArgs(args, "URLSearchParams", "getAll", 1);
+        checkArgsFn(args, 1, "getAll");
         let _name = "" + name;
         let array = this[state][_urlspArray];
         let result: string[] = [];
@@ -112,7 +113,7 @@ export class URLSearchParamsP implements URLSearchParams {
 
     has(...args: [string, string?]): boolean {
         const [name, value] = args;
-        checkArgs(args, "URLSearchParams", "has", 1);
+        checkArgsFn(args, 1, "has");
         let _name = "" + name;
         let array = this[state][_urlspArray];
         for (let i = 0; i < array.length; ++i) {
@@ -132,7 +133,7 @@ export class URLSearchParamsP implements URLSearchParams {
 
     set(...args: [string, string]): void {
         const [name, value] = args;
-        checkArgs(args, "URLSearchParams", "set", 2);
+        checkArgsFn(args, 2, "set");
         let _name = "" + name;
         let _value = normalizeValue(value);
         let index = -1;
@@ -161,7 +162,7 @@ export class URLSearchParamsP implements URLSearchParams {
 
     forEach(...args: [(value: string, key: string, parent: URLSearchParams) => void, any?]): void {
         const [callbackfn, thisArg] = args;
-        checkArgs(args, "URLSearchParams", "forEach", 1);
+        checkArgsFn(args, 1, "forEach");
         if (typeof callbackfn !== "function") {
             throw new TypeError("Failed to execute 'forEach' on 'URLSearchParams': parameter 1 is not of type 'Function'.");
         }

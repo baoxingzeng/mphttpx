@@ -1,14 +1,12 @@
 import { EventTargetP, attachFn, executeFn } from "./EventTargetP";
 import { emitProcessEvent } from "./ProgressEventP";
 import { Blob_toUint8Array, Uint8Array_toBase64, decode } from "./BlobP";
-import { g, polyfill, Class_setStringTag, checkArgs, MPException, isPolyfillType } from "./isPolyfill";
+import { g, polyfill, Class_setStringTag, checkArgsLength, MPException, isPolyfillType } from "./isPolyfill";
 
 /** @internal */
 const state = Symbol(/* "FileReaderState" */);
 
-/********************************************************/
-/*                   FileReader Class                   */
-/********************************************************/
+/** @type {typeof globalThis.FileReader} */
 export class FileReaderP extends EventTargetP implements FileReader {
     declare static readonly EMPTY: 0;
     declare static readonly LOADING: 1;
@@ -71,7 +69,7 @@ export class FileReaderP extends EventTargetP implements FileReader {
             if (encoding !== undefined) {
                 let _encoding = "" + encoding;
                 if (["utf-8", "utf8", "unicode-1-1-utf-8"].indexOf(_encoding.toLowerCase()) === -1) {
-                    console.warn(`RangeError: FileReader.readAsText: The encoding provided ('${_encoding}') is not implemented.`);
+                    console.error(`TypeError: Failed to execute 'readAsText' on 'FileReader': encoding ('${_encoding}') not implemented.`);
                 }
             }
             this[state].result = decode(Blob_toUint8Array(blob));
@@ -137,7 +135,7 @@ class FileReaderState {
 
 function read(reader: FileReader, kind: string, args: [Blob, string?], setResult: (blob: Blob) => void) {
     const [blob] = args;
-    checkArgs(args, "FileReader", kind, 1);
+    checkArgsLength(args, 1, "FileReader", kind);
     if (!isPolyfillType<Blob>("Blob", blob)) {
         throw new TypeError("Failed to execute '" + kind + "' on 'FileReader': parameter 1 is not of type 'Blob'.");
     }
