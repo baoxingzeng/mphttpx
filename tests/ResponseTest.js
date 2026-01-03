@@ -1,16 +1,20 @@
 import { suite } from "uvu";
 import * as assert from "uvu/assert";
-import { ui_rec } from "./utils";
-import { BlobP as Blob } from "../../../../src/BlobP";
-import { FormDataP as FormData } from "../../../../src/FormDataP";
-import { HeadersP as Headers } from "../../../../src/HeadersP";
-import { RequestP as Request } from "../../../../src/RequestP";
-import { ResponseP as Response } from "../../../../src/ResponseP";
+import { ui_rec } from "./utils.js";
+import { BlobP as Blob } from "../dist/index.esm.js";
+import { FormDataP as FormData } from "../dist/index.esm.js";
+import { HeadersP as Headers } from "../dist/index.esm.js";
+import { RequestP as Request } from "../dist/index.esm.js";
+import { ResponseP as Response } from "../dist/index.esm.js";
 
 const _name = "Response";
 const _test = suite(_name);
 
-const test = (n: string, t: Parameters<typeof _test>[1]) => {
+/**
+ * @param {string} n 
+ * @param {Parameters<typeof _test>[1]} t 
+ */
+const test = (n, t) => {
     return _test(...ui_rec(_name, n, t));
 }
 
@@ -91,7 +95,7 @@ test("clone clone instance", async () => {
     assert.equal(await clonedRes.text(), "clone test");
     assert.equal(clonedRes.headers.get("x-clone"), "true");
     await res.text();
-    assert.throws(() => res.clone(), (err: unknown) => err instanceof TypeError);
+    assert.throws(() => res.clone(), (err) => err instanceof TypeError);
 });
 
 test("Request → Response linkage: simulate Request Response process", async () => {

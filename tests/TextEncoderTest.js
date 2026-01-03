@@ -1,16 +1,24 @@
 import { suite } from "uvu";
 import * as assert from "uvu/assert";
-import { ui_rec } from "./utils";
-import { TextEncoderP as TextEncoder } from "../../../../src/TextEncoderP";
+import { ui_rec } from "./utils.js";
+import { TextEncoderP as TextEncoder } from "../dist/index.esm.js";
 
 const _name = "TextEncoder";
 const _test = suite(_name);
 
-const test = (n: string, t: Parameters<typeof _test>[1]) => {
+/**
+ * @param {string} n 
+ * @param {Parameters<typeof _test>[1]} t 
+ */
+const test = (n, t) => {
     return _test(...ui_rec(_name, n, t));
 }
 
-const compare = (actual: Uint8Array, expected: Uint8Array) => {
+/**
+ * @param {Uint8Array} actual 
+ * @param {Uint8Array} expected 
+ */
+const compare = (actual, expected) => {
     assert.equal(actual.length, expected.length);
     for (let i = 0; i < actual.length; ++i) {
         assert.equal(actual[i], expected[i]);

@@ -5,7 +5,6 @@ import { EventTargetP, EventTargetState, eventTargetState, EventTarget_fire, att
 /** @internal */
 const state = Symbol(/* "AbortSignalState" */);
 
-/** @type {typeof globalThis.AbortSignal} */
 export class AbortSignalP extends EventTargetP implements AbortSignal {
     static abort(reason?: any) {
         let signal = createAbortSignal();

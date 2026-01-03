@@ -8,7 +8,6 @@ import { g, checkArgsLength, MPException, isObjectType } from "./isPolyfill";
 const mp = { XMLHttpRequest: XMLHttpRequest };
 export const setXMLHttpRequest = (XHR: typeof globalThis["XMLHttpRequest"]) => { mp.XMLHttpRequest = XHR; }
 
-/** @type {typeof globalThis["fetch"]} */
 export function fetchP(...args: [RequestInfo | URL, RequestInit?]): Promise<Response> {
     if (new.target === fetchP) {
         throw new TypeError("fetch is not a constructor");
@@ -109,7 +108,8 @@ export function fetchP(...args: [RequestInfo | URL, RequestInit?]): Promise<Resp
             }
         }
 
-        xhr.send(Body_toPayload(request) as XMLHttpRequestBodyInit);
+        let body = Body_toPayload(request);
+        xhr.send(body !== "" ? body : void 0);
     });
 }
 

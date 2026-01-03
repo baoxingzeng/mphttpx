@@ -1,10 +1,14 @@
-const fs = require("fs");
-const express = require("express");
-const cors = require("cors");
-const { formidable } = require("formidable");
+import fs from "fs";
+import express from "express";
+import cors from "cors";
+import { formidable } from "formidable";
 
 const app = express();
 app.use(cors());
+
+app.get("/ping", (req, res) => {
+    res.send("pong");
+});
 
 app.get("/api/user", (req, res) => {
     const { id } = req.query;
@@ -58,4 +62,4 @@ const server = app.listen(PORT, () => {
     console.log(`Mock server started: http://localhost:${PORT}`);
 });
 
-module.exports = server;
+export default server;

@@ -1,21 +1,27 @@
 import { suite } from "uvu";
 import * as assert from "uvu/assert";
-import { ui_rec } from "./utils";
-// import { Blob } from "../../../../src/BlobP";
-// import { File } from "../../../../src/FileP";
-// import { FormData } from "../../../../src/FormDataP";
-import { BlobP as Blob } from "../../../../src/BlobP";
-import { FileP as File } from "../../../../src/FileP";
-import { FormDataP as FormData } from "../../../../src/FormDataP";
+import { ui_rec } from "./utils.js";
+import { BlobP as Blob } from "../dist/index.esm.js";
+import { FileP as File } from "../dist/index.esm.js";
+import { FormDataP as FormData } from "../dist/index.esm.js";
 
 const _name = "FormData";
 const _test = suite(_name);
 
-const test = (n: string, t: Parameters<typeof _test>[1]) => {
+/**
+ * @param {string} n 
+ * @param {Parameters<typeof _test>[1]} t 
+ */
+const test = (n, t) => {
     return _test(...ui_rec(_name, n, t));
 }
 
-const compare = (formData: globalThis.FormData, expectedEntries: [string, FormDataEntryValue][]) => {
+/**
+ * 
+ * @param {globalThis.FormData} formData 
+ * @param {[string, FormDataEntryValue][]} expectedEntries 
+ */
+const compare = (formData, expectedEntries) => {
     let actual = Array.from(formData.entries());
     assert.equal(JSON.stringify(actual), JSON.stringify(expectedEntries));
 }
@@ -31,7 +37,7 @@ test("FormData basic initialization + core operations (append/set/get/getAll/has
     let blob = new Blob(["blob content"], { type: "application/octet-stream" });
     formData.append("avatar", file);
     formData.append("file", blob, "custom-blob.txt");
-    compare(formData, [["username", "zhangsan"], ["age", "20"], ["hobby", "coding"], ["hobby", "gaming"], ["avatar", file], ["file", blob as File]]);
+    compare(formData, [["username", "zhangsan"], ["age", "20"], ["hobby", "coding"], ["hobby", "gaming"], ["avatar", file], ["file", blob]]);
     assert.equal(formData.get("username"), "zhangsan");
     assert.equal(formData.get("hobby"), "coding");
     assert.equal(formData.get("avatar"), file);
@@ -44,10 +50,10 @@ test("FormData basic initialization + core operations (append/set/get/getAll/has
     assert.equal(formData.has("nonexist"), false);
     formData.set("hobby", "reading");
     formData.set("newkey", "newval");
-    compare(formData, [["username", "zhangsan"], ["age", "20"], ["hobby", "reading"], ["avatar", file], ["file", blob as File], ["newkey", "newval"]]);
+    compare(formData, [["username", "zhangsan"], ["age", "20"], ["hobby", "reading"], ["avatar", file], ["file", blob], ["newkey", "newval"]]);
     formData.delete("newkey");
     formData.delete("avatar");
-    compare(formData, [["username", "zhangsan"], ["age", "20"], ["hobby", "reading"], ["file", blob as File]]);
+    compare(formData, [["username", "zhangsan"], ["age", "20"], ["hobby", "reading"], ["file", blob]]);
     formData.delete("nonexist");
 });
 
@@ -66,7 +72,7 @@ test("FormData traversal methods (keys/values/entries/forEach)", () => {
         JSON.stringify(Array.from(formData.entries()).map(([k, v]) => [k, v instanceof File ? "File" : v])),
         JSON.stringify([["a", "1"], ["b", "2"], ["a", "3"], ["file", "File"]])
     );
-    let log: string[] = [];
+    let log = [];
     formData.forEach((v, k) => {
         log.push(`${k}=${v instanceof File ? "File" : v}`);
     });
@@ -77,10 +83,10 @@ test("append/set special scenarios (File/Blob filename, null value, type convers
     let formData = new FormData();
     let blob = new Blob(["test"], { type: "text/plain" });
     formData.append("blob", blob, "my-blob.txt");
-    let blobValue = formData.get("blob") as File;
+    let blobValue = formData.get("blob");
     assert.equal(blobValue.name, "my-blob.txt");
     formData.append("blob2", blob);
-    let blobValue2 = formData.get("blob2") as File;
+    let blobValue2 = formData.get("blob2");
     assert.equal(blobValue2.name, "blob");
     // @ts-ignore
     formData.append("num", 123);

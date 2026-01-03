@@ -3,7 +3,6 @@ import { g, polyfill, Class_setStringTag } from "./isPolyfill";
 /** @internal */
 const state = Symbol(/* "TextDecoderState" */);
 
-/** @type {typeof globalThis.TextDecoder} */
 export class TextDecoderP implements TextDecoder {
     constructor(label = "utf-8", { fatal = false, ignoreBOM = false } = {}) {
         let _label = "" + label;

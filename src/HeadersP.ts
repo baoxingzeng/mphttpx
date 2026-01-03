@@ -3,7 +3,6 @@ import { g, polyfill, Class_setStringTag, checkArgsLength, isObjectType } from "
 /** @internal */ const state = Symbol(/* "HeadersState" */);
 const checkArgsFn = (args: any[], required: number, funcName: string) => { checkArgsLength(args, required, "Headers", funcName); }
 
-/** @type {typeof globalThis.Headers} */
 export class HeadersP implements Headers {
     constructor(init?: HeadersInit) {
         this[state] = new HeadersState();

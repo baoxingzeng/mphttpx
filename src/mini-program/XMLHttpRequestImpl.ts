@@ -24,7 +24,6 @@ export const setRequest = (request: TRequestFunc) => { mp.request = request; }
 /** @internal */
 const state = Symbol(/* "XMLHttpRequestState" */);
 
-/** @type {typeof globalThis.XMLHttpRequest} */
 export class XMLHttpRequestImpl extends XMLHttpRequestEventTargetP implements XMLHttpRequest {
     declare static readonly UNSENT: 0;
     declare static readonly OPENED: 1;
@@ -151,7 +150,7 @@ export class XMLHttpRequestImpl extends XMLHttpRequestEventTargetP implements XM
             url: s[_requestURL],
             method: s[_method] as NonNullable<IRequestOptions["method"]>,
             header: headers(),
-            data,
+            data: data !== "" ? data : void 0,
             dataType: s.responseType === "json" ? "json" : normalizeDataType(s.responseType),
             responseType: normalizeDataType(s.responseType),
             withCredentials: s.withCredentials,

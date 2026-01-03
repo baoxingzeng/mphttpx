@@ -4,7 +4,6 @@ import { g, polyfill, Class_setStringTag, checkArgsLength } from "./isPolyfill";
 /** @internal */
 const state = Symbol(/* "FileState" */);
 
-/** @type {typeof globalThis.File} */
 export class FileP extends BlobP implements File {
     constructor(...args: [BlobPart[], string, FilePropertyBag?]) {
         const [fileBits, fileName, options] = args;

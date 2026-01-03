@@ -1,17 +1,25 @@
 import { suite } from "uvu";
 import * as assert from "uvu/assert";
-import { ui_rec } from "./utils";
-// import { URLSearchParams } from "../../../../src/URLSearchParamsP";
-import { URLSearchParamsP as URLSearchParams } from "../../../../src/URLSearchParamsP";
+import { ui_rec } from "./utils.js";
+import { URLSearchParamsP as URLSearchParams } from "../dist/index.esm.js";
 
 const _name = "URLSearchParams";
 const _test = suite(_name);
 
-const test = (n: string, t: Parameters<typeof _test>[1]) => {
+/**
+ * @param {string} n 
+ * @param {Parameters<typeof _test>[1]} t 
+ */
+const test = (n, t) => {
     return _test(...ui_rec(_name, n, t));
 }
 
-const compare = (params: URLSearchParams, expectedEntries: [string, string][]) => {
+/**
+ * 
+ * @param {URLSearchParams} params 
+ * @param {[string, string][]} expectedEntries 
+ */
+const compare = (params, expectedEntries) => {
   let actual = Array.from(params.entries()).sort((a, b) => a[0].localeCompare(b[0]) || a[1].localeCompare(b[1]));
   let expected = [...expectedEntries].sort((a, b) => a[0].localeCompare(b[0]) || a[1].localeCompare(b[1]));
   assert.equal(JSON.stringify(actual), JSON.stringify(expected));
@@ -60,7 +68,7 @@ test("URLSearchParams iteration methods (keys/values/entries/forEach)", () => {
     assert.equal(JSON.stringify(Array.from(params.keys())), JSON.stringify(["a", "b", "a"]));
     assert.equal(JSON.stringify(Array.from(params.values())), JSON.stringify(["1", "2", "3"]));
     assert.equal(JSON.stringify(Array.from(params.entries())), JSON.stringify([["a", "1"], ["b", "2"], ["a", "3"]]));
-    let log: string[] = [];
+    let log = [];
     params.forEach((v, k) => log.push(`${k}=${v}`));
     assert.equal(log.join(","), "a=1,b=2,a=3");
 });

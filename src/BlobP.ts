@@ -5,7 +5,6 @@ import { g, polyfill, Class_setStringTag, isPolyfillType } from "./isPolyfill";
 /** @internal */
 const state = Symbol(/* "BlobState" */);
 
-/** @type {typeof globalThis.Blob} */
 export class BlobP implements Blob {
     constructor(blobParts: BlobPart[] = [], options?: BlobPropertyBag) {
         if (!(Array.isArray(blobParts) || (blobParts && typeof blobParts === "object" && Symbol.iterator in blobParts))) {

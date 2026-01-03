@@ -6,7 +6,6 @@ import { g, polyfill, Class_setStringTag, checkArgsLength, MPException, isPolyfi
 /** @internal */
 const state = Symbol(/* "FileReaderState" */);
 
-/** @type {typeof globalThis.FileReader} */
 export class FileReaderP extends EventTargetP implements FileReader {
     declare static readonly EMPTY: 0;
     declare static readonly LOADING: 1;

@@ -1,12 +1,16 @@
 import { suite } from "uvu";
 import * as assert from "uvu/assert";
-import { ui_rec } from "./utils";
-import { TextDecoderP as TextDecoder } from "../../../../src/TextDecoderP";
+import { ui_rec } from "./utils.js";
+import { TextDecoderP as TextDecoder } from "../dist/index.esm.js";
 
 const _name = "TextDecoder";
 const _test = suite(_name);
 
-const test = (n: string, t: Parameters<typeof _test>[1]) => {
+/**
+ * @param {string} n 
+ * @param {Parameters<typeof _test>[1]} t 
+ */
+const test = (n, t) => {
     return _test(...ui_rec(_name, n, t));
 }
 

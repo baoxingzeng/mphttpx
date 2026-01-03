@@ -5,7 +5,6 @@ import { g, polyfill, Class_setStringTag, checkArgsLength } from "./isPolyfill";
 /** @internal */ const state = Symbol(/* "ResponseState" */);
 /** @internal */ export { state as responseState };
 
-/** @type {typeof globalThis.Response} */
 export class ResponseP extends BodyImpl implements Response {
     constructor(body?: BodyInit | null, init?: ResponseInit) {
         super();

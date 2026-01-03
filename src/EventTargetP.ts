@@ -11,7 +11,6 @@ const stopImmediatePropagationCalled: Event_EtFields["StopImmediatePropagationCa
 /** @internal */ const state = Symbol(/* "EventTargetState" */);
 /** @internal */ export { state as eventTargetState };
 
-/** @type {typeof globalThis.EventTarget} */
 export class EventTargetP implements EventTarget {
     constructor() {
         this[state] = new EventTargetState(this);

@@ -1,13 +1,17 @@
 import { suite } from "uvu";
 import * as assert from "uvu/assert";
-import { ui_rec } from "./utils";
-import { AbortControllerP as AbortController } from "../../../../src/AbortControllerP";
-import { AbortSignalP as AbortSignal } from "../../../../src/AbortSignalP";
+import { ui_rec } from "./utils.js";
+import { AbortControllerP as AbortController } from "../dist/index.esm.js";
+import { AbortSignalP as AbortSignal } from "../dist/index.esm.js";
 
 const _name = "AbortController";
 const _test = suite(_name);
 
-const test = (n: string, t: Parameters<typeof _test>[1]) => {
+/**
+ * @param {string} n 
+ * @param {Parameters<typeof _test>[1]} t 
+ */
+const test = (n, t) => {
     return _test(...ui_rec(_name, n, t));
 }
 

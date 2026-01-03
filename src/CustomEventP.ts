@@ -7,7 +7,6 @@ const dispatched: Event_EtFields["Dispatched"] = 1;
 /** @internal */
 const state = Symbol(/* "CustomEventState" */);
 
-/** @type {typeof globalThis.CustomEvent} */
 export class CustomEventP<T> extends EventP implements CustomEvent {
     constructor(type: string, eventInitDict?: CustomEventInit<T>) {
         super(type, eventInitDict);

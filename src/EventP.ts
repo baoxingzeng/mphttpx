@@ -3,7 +3,6 @@ import { g, polyfill, Class_setStringTag, checkArgsLength } from "./isPolyfill";
 /** @internal */ const state = Symbol(/* "EventState" */);
 /** @internal */ export { state as eventState };
 
-/** @type {typeof globalThis.Event} */
 export class EventP implements Event {
     declare static readonly NONE: 0;
     declare static readonly CAPTURING_PHASE: 1;

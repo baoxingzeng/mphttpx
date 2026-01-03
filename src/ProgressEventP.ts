@@ -5,7 +5,6 @@ import { EventP, eventState, Event_setTrusted } from "./EventP";
 /** @internal */
 const state = Symbol(/* "ProgressEventState" */);
 
-/** @type {typeof globalThis.ProgressEvent} */
 export class ProgressEventP extends EventP implements ProgressEvent {
     constructor(type: string, eventInitDict?: ProgressEventInit) {
         super(type, eventInitDict);

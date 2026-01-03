@@ -1,15 +1,19 @@
 import { suite } from "uvu";
 import * as assert from "uvu/assert";
-import { ui_rec } from "./utils";
-import { BlobP as Blob } from "../../../../src/BlobP";
-import { FormDataP as FormData } from "../../../../src/FormDataP";
-import { AbortControllerP as AbortController } from "../../../../src/AbortControllerP";
-import { fetchP as fetch } from "../../../../src/fetchP";
+import { ui_rec } from "./utils.js";
+import { BlobP as Blob } from "../dist/index.esm.js";
+import { FormDataP as FormData } from "../dist/index.esm.js";
+import { AbortControllerP as AbortController } from "../dist/index.esm.js";
+import { fetchP as fetch } from "../dist/index.esm.js";
 
-let _name = "fetch";
-let _test = suite(_name);
+const _name = "fetch";
+const _test = suite(_name);
 
-let test = (n: string, t: Parameters<typeof _test>[1]) => {
+/**
+ * @param {string} n 
+ * @param {Parameters<typeof _test>[1]} t 
+ */
+const test = (n, t) => {
     return _test(...ui_rec(_name, n, t));
 }
 
@@ -86,4 +90,4 @@ test("fetch custom request header", async () => {
     assert.equal(data.contentType, "application/json");
 });
 
-_test.run();
+export default _test;

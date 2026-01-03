@@ -18,7 +18,8 @@
 <script lang="ts">
 import Vue from 'vue';
 import "../../mphttpx";
-import { Notify } from  "../../mphttpx/utils";
+// @ts-ignore
+import { Notify, config } from  "../../../../utils";
 
 export default Vue.extend({
     data() {
@@ -28,7 +29,20 @@ export default Vue.extend({
     },
 
     mounted() {
-        Notify.subscribe(v => { this.data = v; });
+        Notify.subscribe((v: [string, [boolean, string][]][]) => { this.data = v; });
+
+        uni.request({
+            url: "http://localhost:3000/ping",
+            timeout: 3000,
+            fail() {
+                setTimeout(
+                    () => {
+                        console.warn("MPHTTPX: before testing fetch, start the mock server first and don't verify valid domain names.");
+                    },
+                    config.timeout + 1000
+                );
+            },
+        });
     },
 });
 </script>

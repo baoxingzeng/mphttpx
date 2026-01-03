@@ -1,6 +1,5 @@
 import { g, polyfill, Class_setStringTag, checkArgsLength } from "./isPolyfill";
 
-/** @type {typeof globalThis.TextEncoder} */
 export class TextEncoderP implements TextEncoder {
     get encoding() { return "utf-8"; }
 

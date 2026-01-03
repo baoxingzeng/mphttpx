@@ -1,18 +1,27 @@
 import { suite } from "uvu";
 import * as assert from "uvu/assert";
-import { ui_rec } from "./utils";
-import { TextEncoder } from "../../../../src/TextEncoderP";
-// import { Blob } from "../../../../src/BlobP";
-import { BlobP as Blob } from "../../../../src/BlobP";
+import { ui_rec } from "./utils.js";
+import { TextEncoderP as TextEncoder } from "../dist/index.esm.js";
+import { BlobP as Blob } from "../dist/index.esm.js";
 
 const _name = "Blob";
 const _test = suite(_name);
 
-const test = (n: string, t: Parameters<typeof _test>[1]) => {
+/**
+ * @param {string} n 
+ * @param {Parameters<typeof _test>[1]} t 
+ */
+const test = (n, t) => {
     return _test(...ui_rec(_name, n, t));
 }
 
-const compare = (blob: globalThis.Blob, expectedType: string, expectedSize: number) => {
+/**
+ * 
+ * @param {globalThis.Blob} blob 
+ * @param {string} expectedType 
+ * @param {number} expectedSize 
+ */
+const compare = (blob, expectedType, expectedSize) => {
     assert.equal(blob.type, expectedType);
     assert.equal(blob.size, expectedSize);
 }

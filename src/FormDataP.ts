@@ -5,7 +5,6 @@ import { g, polyfill, Class_setStringTag, checkArgsLength, isObjectType, isPolyf
 /** @internal */ const state = Symbol(/* "FormDataState" */);
 const checkArgsFn = (args: any[], required: number, funcName: string) => { checkArgsLength(args, required, "FormData", funcName); }
 
-/** @type {typeof globalThis.FormData} */
 export class FormDataP implements FormData {
     constructor(form?: HTMLFormElement, submitter?: HTMLElement | null) {
         if (submitter === undefined) {

@@ -35,7 +35,7 @@ export interface IRequestOptions {
     /**
      * 请求的参数
      */
-    data?: string | object | ArrayBuffer;
+    data: string | object | ArrayBuffer | undefined;
 
     /**
      * 设置请求的 header，header 中不能设置 Referer。content-type 默认为 application/json

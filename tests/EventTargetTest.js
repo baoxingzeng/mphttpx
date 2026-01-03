@@ -1,13 +1,17 @@
 import { suite } from "uvu";
 import * as assert from "uvu/assert";
-import { ui_rec } from "./utils";
-import { EventTargetP as EventTarget } from "../../../../src/EventTargetP";
-import { EventP as Event } from "../../../../src/EventP";
+import { ui_rec } from "./utils.js";
+import { EventTargetP as EventTarget } from "../dist/index.esm.js";
+import { EventP as Event } from "../dist/index.esm.js";
 
 const _name = "EventTarget";
 const _test = suite(_name);
 
-const test = (n: string, t: Parameters<typeof _test>[1]) => {
+/**
+ * @param {string} n 
+ * @param {Parameters<typeof _test>[1]} t 
+ */
+const test = (n, t) => {
     return _test(...ui_rec(_name, n, t));
 }
 
@@ -42,7 +46,7 @@ test("Event.preventDefault & defaultPrevented", () => {
 test("EventTarget addEventListener/removeEventListener", () => {
     let target = new EventTarget();
     let clickCount = 0;
-    let clickHandler = (e: Event) => {
+    let clickHandler = (e) => {
         clickCount++;
         assert.equal(e.type, "click");
         assert.equal(e.target, target);
@@ -63,7 +67,7 @@ test("EventTarget addEventListener/removeEventListener", () => {
 
 test("EventTarget support binding multiple processors to the same event", () => {
     let target = new EventTarget();
-    let log: string[] = [];
+    let log = [];
     let handler1 = () => log.push("handler1");
     let handler2 = () => log.push("handler2");
     target.addEventListener("custom", handler1);
@@ -96,7 +100,7 @@ test("EventTarget bind one-time listening (optional: supports {once: true})", ()
 
 test("EventTarget instance inheritance (simulating business class inheritance EventTarget)", () => {
     class CustomClass extends EventTarget {
-        constructor(name: string) {
+        constructor(name) {
             super();
             this.name = name;
         }
@@ -107,7 +111,7 @@ test("EventTarget instance inheritance (simulating business class inheritance Ev
     customInstance.addEventListener("custom", (e) => {
         triggered = true;
         assert.equal(e.target, customInstance);
-        assert.equal((e.target as CustomClass).name, "test");
+        assert.equal((e.target).name, "test");
     });
     customInstance.dispatchEvent(new Event("custom"));
     assert.equal(triggered, true);

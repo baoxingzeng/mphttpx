@@ -1,17 +1,21 @@
 import { suite } from "uvu";
 import * as assert from "uvu/assert";
-import { ui_rec } from "./utils";
-import { BlobP as Blob } from "../../../../src/BlobP";
-import { FileP as File } from "../../../../src/FileP";
-import { URLSearchParamsP as URLSearchParams } from "../../../../src/URLSearchParamsP";
-import { FormDataP as FormData } from "../../../../src/FormDataP";
-import { HeadersP as Headers } from "../../../../src/HeadersP";
-import { RequestP as Request } from "../../../../src/RequestP";
+import { ui_rec } from "./utils.js";
+import { BlobP as Blob } from "../dist/index.esm.js";
+import { FileP as File } from "../dist/index.esm.js";
+import { URLSearchParamsP as URLSearchParams } from "../dist/index.esm.js";
+import { FormDataP as FormData } from "../dist/index.esm.js";
+import { HeadersP as Headers } from "../dist/index.esm.js";
+import { RequestP as Request } from "../dist/index.esm.js";
 
 const _name = "Request";
 const _test = suite(_name);
 
-const test = (n: string, t: Parameters<typeof _test>[1]) => {
+/**
+ * @param {string} n 
+ * @param {Parameters<typeof _test>[1]} t 
+ */
+const test = (n, t) => {
     return _test(...ui_rec(_name, n, t));
 }
 
@@ -90,11 +94,11 @@ test("Request body handling (various types of body)", async () => {
     assert.equal(new Uint8Array(abResult)[0], 72);
     assert.throws(
         () => new Request("https://test.com/get", { method: "GET", body: "test" }),
-        (err: unknown) => err instanceof TypeError,
+        (err) => err instanceof TypeError,
     );
     assert.throws(
         () => new Request("https://test.com/head", { method: "HEAD", body: "test" }),
-        (err: unknown) => err instanceof TypeError,
+        (err) => err instanceof TypeError,
     );
 });
 
@@ -110,7 +114,7 @@ test("clone clone instance", async () => {
     assert.equal(await clonedReq.text(), "clone test");
     assert.equal(clonedReq.headers.get("x-clone"), "true");
     await req.text();
-    assert.throws(() => req.clone(), (err: unknown) => err instanceof TypeError);
+    assert.throws(() => req.clone(), (err) => err instanceof TypeError);
 });
 
 _test.run();

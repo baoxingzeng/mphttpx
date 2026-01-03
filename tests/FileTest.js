@@ -1,17 +1,26 @@
 import { suite } from "uvu";
 import * as assert from "uvu/assert";
-import { ui_rec } from "./utils";
-// import { File } from "../../../../src/FileP";
-import { FileP as File } from "../../../../src/FileP";
+import { ui_rec } from "./utils.js";
+import { FileP as File } from "../dist/index.esm.js";
 
 const _name = "File";
 const _test = suite(_name);
 
-const test = (n: string, t: Parameters<typeof _test>[1]) => {
+/**
+ * @param {string} n 
+ * @param {Parameters<typeof _test>[1]} t 
+ */
+const test = (n, t) => {
     return _test(...ui_rec(_name, n, t));
 }
 
-const compare = (file: globalThis.File, expectedName: string, expectedLastModified: number) => {
+/**
+ * 
+ * @param {globalThis.File} file 
+ * @param {string} expectedName 
+ * @param {number} expectedLastModified 
+ */
+const compare = (file, expectedName, expectedLastModified) => {
     assert.equal(file.name, expectedName);
     assert.equal(file.lastModified, expectedLastModified);
 }

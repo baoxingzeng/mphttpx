@@ -1,17 +1,25 @@
 import { suite } from "uvu";
 import * as assert from "uvu/assert";
-import { ui_rec } from "./utils";
-// import { Headers } from "../../../../src/HeadersP";
-import { HeadersP as Headers } from "../../../../src/HeadersP";
+import { ui_rec } from "./utils.js";
+import { HeadersP as Headers } from "../dist/index.esm.js";
 
 const _name = "Headers";
 const _test = suite(_name);
 
-const test = (n: string, t: Parameters<typeof _test>[1]) => {
+/**
+ * @param {string} n 
+ * @param {Parameters<typeof _test>[1]} t 
+ */
+const test = (n, t) => {
     return _test(...ui_rec(_name, n, t));
 }
 
-const compare = (headers: globalThis.Headers, expectedEntries: [string, string][]) => {
+/**
+ * 
+ * @param {globalThis.Headers} headers 
+ * @param {[string, string][]} expectedEntries 
+ */
+const compare = (headers, expectedEntries) => {
     let actual = Array.from(headers.entries()).map(([k, v]) => [k.toLowerCase(), v]);
     let expected = expectedEntries.map(([k, v]) => [k.toLowerCase(), v]);
     assert.equal(JSON.stringify(actual.sort()), JSON.stringify(expected.sort()));
@@ -104,7 +112,7 @@ test("Headers traversal methods: keys/values/entries/forEach (keys in lowercase)
         JSON.stringify(Array.from(headers.entries()).map(([k, v]) => [k, v]).sort()),
         JSON.stringify([["accept", "text/plain"], ["content-type", "application/json"], ["x-custom", "test"]]),
     );
-    let log: string[] = [];
+    let log = [];
     headers.forEach((v, k) => log.push(`${k}=${v}`));
     assert.equal(
         log.sort().join(","),
@@ -114,10 +122,10 @@ test("Headers traversal methods: keys/values/entries/forEach (keys in lowercase)
 
 test("Headers edge scenes: invalid keys/ null values", () => {
     let headers = new Headers();
-    assert.throws(() => headers.append("", "empty-key"), (err: unknown) => err instanceof TypeError);
-    assert.throws(() => headers.set("", "empty-key"), (err: unknown) => err instanceof TypeError);
-    assert.throws(() => headers.append("invalid key", "val"), (err: unknown) => err instanceof TypeError);
-    assert.throws(() => headers.set("key\nwith\nnewline", "val"), (err: unknown) => err instanceof TypeError);
+    assert.throws(() => headers.append("", "empty-key"), (err) => err instanceof TypeError);
+    assert.throws(() => headers.set("", "empty-key"), (err) => err instanceof TypeError);
+    assert.throws(() => headers.append("invalid key", "val"), (err) => err instanceof TypeError);
+    assert.throws(() => headers.set("key\nwith\nnewline", "val"), (err) => err instanceof TypeError);
     headers.append("Empty-Value", "");
     assert.equal(headers.get("Empty-Value"), "");
     assert.equal(headers.has("Empty-Value"), true);

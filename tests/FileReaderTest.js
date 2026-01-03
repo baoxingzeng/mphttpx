@@ -1,17 +1,18 @@
 import { suite } from "uvu";
 import * as assert from "uvu/assert";
-import { ui_rec } from "./utils";
-// import { Blob } from "../../../../src/BlobP";
-// import { File } from "../../../../src/FileP";
-// import { FileReader } from "../../../../src/FileReaderP";
-import { BlobP as Blob } from "../../../../src/BlobP";
-import { FileP as File } from "../../../../src/FileP";
-import { FileReaderP as FileReader } from "../../../../src/FileReaderP";
+import { ui_rec } from "./utils.js";
+import { BlobP as Blob } from "../dist/index.esm.js";
+import { FileP as File } from "../dist/index.esm.js";
+import { FileReaderP as FileReader } from "../dist/index.esm.js";
 
 const _name = "FileReader";
 const _test = suite(_name);
 
-const test = (n: string, t: Parameters<typeof _test>[1]) => {
+/**
+ * @param {string} n 
+ * @param {Parameters<typeof _test>[1]} t 
+ */
+const test = (n, t) => {
     return _test(...ui_rec(_name, n, t));
 }
 
@@ -63,7 +64,7 @@ test("readAsArrayBuffer read binary content", async () => {
     reader.readAsArrayBuffer(binFile);
     await loadPromise;
     assert.equal(reader.readyState, FileReader.DONE);
-    let resultAb = reader.result as ArrayBuffer;
+    let resultAb = reader.result;
     assert.instance(resultAb, ArrayBuffer);
     let resultU8 = new Uint8Array(resultAb);
     assert.equal(resultU8.length, 5);
@@ -77,7 +78,7 @@ test("readAsDataURL read as DataURL", async () => {
     let loadPromise1 = new Promise(resolve => { reader1.addEventListener("load", evt => { resolve(evt); }, { once: true }); });
     reader1.readAsDataURL(textFile);
     await loadPromise1;
-    let dataUrl1 = reader1.result as string;
+    let dataUrl1 = reader1.result;
     assert.type(dataUrl1, "string");
     assert.ok(dataUrl1.startsWith("data:text/plain;base64,"));
     assert.equal(dataUrl1.split(",")[1], "SGVsbG8=");
@@ -86,7 +87,7 @@ test("readAsDataURL read as DataURL", async () => {
     let loadPromise2 = new Promise(resolve => { reader2.addEventListener("load", evt => { resolve(evt); }, { once: true }); });
     reader2.readAsDataURL(binBlob);
     await loadPromise2;
-    let dataUrl2 = reader2.result as string;
+    let dataUrl2 = reader2.result;
     assert.ok(dataUrl2.startsWith("data:application/octet-stream;base64,"));
     assert.equal(dataUrl2.split(",")[1], "AAEC");
 });
@@ -106,7 +107,7 @@ test("abort interrupt file reading", async () => {
 test("FileReader event triggering sequence", async () => {
     let file = new File(["test"], "event.txt");
     let reader = new FileReader();
-    let events: string[] = [];
+    let events = [];
     ["loadstart", "load", "loadend"].forEach(event => {
         reader.addEventListener(event, () => events.push(event));
     });

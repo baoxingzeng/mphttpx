@@ -3,7 +3,6 @@ import { g, polyfill, Class_setStringTag, checkArgsLength, isObjectType } from "
 /** @internal */ const state = Symbol(/* "URLSearchParamsState" */);
 const checkArgsFn = (args: any[], required: number, funcName: string) => { checkArgsLength(args, required, "URLSearchParams", funcName); }
 
-/** @type {typeof globalThis.URLSearchParams} */
 export class URLSearchParamsP implements URLSearchParams {
     constructor(init?: string[][] | Record<string, string> | string | URLSearchParams) {
         this[state] = new URLSearchParamsState();

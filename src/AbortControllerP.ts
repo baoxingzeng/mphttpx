@@ -4,7 +4,6 @@ import { createAbortSignal, AbortSignal_abort } from "./AbortSignalP";
 /** @internal */
 const state = Symbol(/* "AbortControllerState" */);
 
-/** @type {typeof globalThis.AbortController} */
 export class AbortControllerP implements AbortController {
     constructor() {
         this[state] = new AbortControllerState();

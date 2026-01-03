@@ -6,7 +6,6 @@ import { g, polyfill, Class_setStringTag, checkArgsLength, isPolyfillType } from
 /** @internal */ const state = Symbol(/* "RequestState" */);
 /** @internal */ export { state as requestState };
 
-/** @type {typeof globalThis.Request} */
 export class RequestP extends BodyImpl implements Request {
     constructor(...args: [RequestInfo | URL, RequestInit?]) {
         const [input, init] = args;
