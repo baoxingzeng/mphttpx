@@ -24,4 +24,4 @@ export { ProgressEvent, ProgressEventP } from "./ProgressEventP";
 export { XMLHttpRequest, XMLHttpRequestP } from "./XMLHttpRequestP";
 
 export { setXMLHttpRequest } from "./fetchP";
-export { setRequest } from "./XMLHttpRequestP";
+export { setRequest } from "./mini-program/XMLHttpRequestImpl";

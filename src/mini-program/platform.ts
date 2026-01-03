@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { g } from "./isPolyfill";
+import { g } from "../isPolyfill";
 import type { TRequestFunc } from "./request";
 
 /** @internal */
