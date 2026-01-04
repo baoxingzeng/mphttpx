@@ -1,7 +1,7 @@
 # MPHTTPX
 
 The `mphttpx` library aims to provide a more ES6-styled [Blob.js][0], 
-along with a `fetch` polyfill that works seamlessly with the Blob-polyfill. 
+along with a [fetch][1] polyfill that works seamlessly with the Blob-polyfill. 
 This allows web code to be reused in other environments (such as mini-programs).
 
 ## Table of Contents
@@ -13,35 +13,48 @@ This allows web code to be reused in other environments (such as mini-programs).
   - [Mini-Program Support](#mini-program-support)
   - [Usage](#usage)
     - [TextEncoder](#textencoder)
+      - [Example](#example)
       - [Compatibility](#compatibility)
     - [TextDecoder](#textdecoder)
+      - [Example](#example-1)
       - [Compatibility](#compatibility-1)
     - [Blob](#blob)
+      - [Example](#example-2)
       - [Compatibility](#compatibility-2)
     - [File](#file)
+      - [Example](#example-3)
       - [Compatibility](#compatibility-3)
     - [FileReader](#filereader)
+      - [Example](#example-4)
       - [Compatibility](#compatibility-4)
-    - [FormData](#formdata)
-      - [Compatibility](#compatibility-5)
     - [URLSearchParams](#urlsearchparams)
+      - [Example](#example-5)
+      - [Compatibility](#compatibility-5)
+    - [FormData](#formdata)
+      - [Example](#example-6)
       - [Compatibility](#compatibility-6)
     - [fetch](#fetch)
+      - [Example](#example-7)
       - [Compatibility](#compatibility-7)
     - [Request](#request)
+      - [Example](#example-8)
       - [Compatibility](#compatibility-8)
     - [Response](#response)
+      - [Example](#example-9)
       - [Compatibility](#compatibility-9)
     - [Headers](#headers)
+      - [Example](#example-10)
       - [Compatibility](#compatibility-10)
     - [AbortController](#abortcontroller)
+      - [Example](#example-11)
       - [Compatibility](#compatibility-11)
-    - [AbortSignal](#abortsignal)
-      - [Compatibility](#compatibility-12)
     - [EventTarget](#eventtarget)
-      - [Compatibility](#compatibility-13)
+      - [Example](#example-12)
+      - [Compatibility](#compatibility-12)
     - [XMLHttpRequest (mini-programs)](#xmlhttprequest-mini-programs)
-      - [Compatibility](#compatibility-14)
+      - [Example](#example-13)
+      - [Compatibility](#compatibility-13)
+  - [Auto Import](#auto-import)
   - [UniApp \& Taro](#uniapp--taro)
   - [Node.js](#nodejs)
   - [License](#license)
@@ -53,14 +66,13 @@ This allows web code to be reused in other environments (such as mini-programs).
 - **Blob** 
 - **File** 
 - **FileReader** 
-- **FormData** 
 - **URLSearchParams** 
+- **FormData** 
 - **fetch** 
 - **Headers** 
 - **Request** 
 - **Response** 
 - **AbortController** 
-- **AbortSignal** 
 - **EventTarget**
 - **XMLHttpRequest (mini-programs)**
 
@@ -81,21 +93,39 @@ the relevant implementations imported from the mphttpx library will directly ret
 
 ## Usage
 
+Note: Every module in mphttpx has a corresponding version with the same name ending in the letter P. 
+The difference between them is that the versions ending in P are polyfill implementations.
+
+For example:
+
+```javascript
+// mphttpx does not modify globalThis in any way.
+import { TextEncoder } from "mphttpx";  // returns the global object first; falls back to the polyfill if unavailable.
+import { TextEncoderP } from "mphttpx"; // returns the polyfill directly.
+```
+
 ### TextEncoder
+
+#### Example
 
 ```javascript
 import { TextEncoder } from "mphttpx";
 
 const encoder = new TextEncoder();
-const view = encoder.encode("€");
-console.log(view); // Uint8Array(3) [226, 130, 172]
+const encoded = encoder.encode("€");
+
+console.log(encoded); // Uint8Array(3) [226, 130, 172]
 ```
 
 #### Compatibility
 
+Properties
+
 | Property  | Available  | Description  |
 | --------- | ---------  | -------------|
 | encoding  | ✔ | utf-8 |
+
+Methods
 
 | Method  | Available  | Description  |
 | ------- | ---------  | -------------|
@@ -104,22 +134,28 @@ console.log(view); // Uint8Array(3) [226, 130, 172]
 
 ### TextDecoder
 
+#### Example
+
 ```javascript
 import { TextDecoder } from "mphttpx";
 
 const utf8decoder = new TextDecoder(); // default 'utf-8'
 const encodedText = new Uint8Array([240, 160, 174, 183]);
 
-console.log(utf8decoder.decode(encodedText));
+console.log(utf8decoder.decode(encodedText)); // 𠮷
 ```
 
 #### Compatibility
 
+Properties
+
 | Property  | Available  | Description  |
 | --------- | ---------  | -------------|
-| encoding  | ✔ | utf-8 |
+| encoding  | ✔ | only utf-8 |
 | fatal     | ✔ | 
 | ignoreBOM | ✔ | 
+
+Methods
 
 | Method  | Available  | Description  |
 | ------- | ---------  | -------------|
@@ -129,35 +165,67 @@ console.log(utf8decoder.decode(encodedText));
 
 ### Blob
 
+#### Example
+
 Creating a blob
 
 ```javascript
-import { Blob } from "mphttpx";
+import { Blob, fetch } from "mphttpx";
 
 const obj = { hello: "world" };
 const blob = new Blob([JSON.stringify(obj, null, 2)], {
     type: "application/json",
+});
+
+const another_blob = new Blob(["Hello, World!"], {
+    type: "text/plain"
+});
+
+fetch("https://www.test.com/blob", {
+    method: "POST",
+    body: another_blob,
 });
 ```
 
 Extracting data from a blob
 
 ```javascript
-import { Blob, FileReader } from "mphttpx";
+import { Blob, FileReader, fetch } from "mphttpx";
+
+const blob = new Blob([JSON.stringify({ foo: "bar" })], {
+    type: "application/json",
+});
 
 const reader = new FileReader();
 reader.addEventListener("loadend", () => {
   // reader.result contains the contents of blob as a typed array
 });
 reader.readAsArrayBuffer(blob);
+
+fetch("https://www.test.com/blob", {
+    method: "POST",
+    body: blob,
+})
+    .then(r => r.blob())
+    .then(r => {
+        const reader2 = new FileReader();
+        reader2.onload = () => {
+            // reader2.result
+        }
+        reader2.readAsDataURL(r);   // base64
+    });
 ```
 
 #### Compatibility
+
+Properties
 
 | Property  | Available  | Description  |
 | --------- | ---------  | -------------|
 | size | ✔ | 
 | type | ✔ | 
+
+Methods
 
 | Method  | Available  | Description  |
 | ------- | ---------  | -------------|
@@ -172,6 +240,8 @@ reader.readAsArrayBuffer(blob);
 
 ### File
 
+#### Example
+
 ```javascript
 import { File } from "mphttpx";
 
@@ -182,6 +252,8 @@ const file = new File(["foo"], "foo.txt", {
 
 #### Compatibility
 
+Properties
+
 | Property  | Available  | Description  |
 | --------- | ---------  | -------------|
 | lastModified       | ✔ | 
@@ -190,8 +262,14 @@ const file = new File(["foo"], "foo.txt", {
 
 ### FileReader
 
+#### Example
+
 ```javascript
 import { File, FileReader } from "mphttpx";
+
+const file = new File([JSON.stringify({ foo: "bar" })], "test.json", {
+    type: "application/json",
+});
 
 // Read the file
 const reader = new FileReader();
@@ -203,11 +281,15 @@ reader.readAsText(file);
 
 #### Compatibility
 
+Properties
+
 | Property  | Available  | Description  |
 | --------- | ---------  | -------------|
 | error      | ✔ | 
 | readyState | ✔ | 
 | result     | ✔ | 
+
+Methods
 
 | Method  | Available  | Description  |
 | ------- | ---------  | -------------|
@@ -215,43 +297,14 @@ reader.readAsText(file);
 | readAsArrayBuffer()  | ✔ | 
 | readAsBinaryString() | ✔ | 
 | readAsDataURL()      | ✔ | 
-| readAsText()         | ✔ | 
-
-### FormData
-
-```javascript
-import { FormData } from "mphttpx";
-
-const formData = new FormData();
-formData.append("username", "Chris");
-```
-
-#### Compatibility
-
-| Constructor | Available  | Description  |
-| ----------- | ---------  | -------------|
-| new FormData()                | ✔ | 
-| new FormData(form)            | ✖ | 
-| new FormData(form, submitter) | ✖ | 
-
-| Method  | Available  | Description  |
-| ------- | ---------  | -------------|
-| append(name, value)           | ✔ | 
-| append(name, value, filename) | ✔ | 
-| delete(name)                  | ✔ | 
-| entries()                     | ✔ | 
-| get(name)                     | ✔ | 
-| getAll(name)                  | ✔ | 
-| has(name)                     | ✔ | 
-| keys()                        | ✔ | 
-| set(name, value)              | ✔ | 
-| set(name, value, filename)    | ✔ | 
-| values()                      | ✔ | 
+| readAsText()         | ✔ | only utf-8 | 
 
 ### URLSearchParams
 
+#### Example
+
 ```javascript
-import { URLSearchParams } from "mphttpx";
+import { URLSearchParams, fetch } from "mphttpx";
 
 const paramsString = "q=URLUtils.searchParams&topic=api";
 const searchParams = new URLSearchParams(paramsString);
@@ -272,6 +325,15 @@ console.log(searchParams.set("topic", "More webdev"));
 console.log(searchParams.toString()); // "q=URLUtils.searchParams&topic=More+webdev"
 console.log(searchParams.delete("topic"));
 console.log(searchParams.toString()); // "q=URLUtils.searchParams"
+
+// GET
+fetch("https://www.test.com/get" + `?${searchParams.toString()}`);
+
+// POST
+fetch("https://www.test.com/post", {
+    method: "POST",
+    body: searchParams,
+});
 ```
 
 Search parameters can also be an object.
@@ -289,9 +351,13 @@ console.log(searchParams.get("foo")); // "bar"
 
 #### Compatibility
 
+Properties
+
 | Property  | Available  | Description  |
 | --------- | ---------  | -------------|
 | size | ✔ | 
+
+Methods
 
 | Method  | Available  | Description  |
 | ------- | ---------  | -------------|
@@ -311,7 +377,56 @@ console.log(searchParams.get("foo")); // "bar"
 | toString()                 | ✔ | 
 | values()                   | ✔ | 
 
+### FormData
+
+#### Example
+
+```javascript
+import { FormData, fetch } from "mphttpx";
+
+const formData = new FormData();
+formData.append("username", "Chris");
+
+const file = new File(["Hello, World!"], "file.txt", {
+    type: "text/plain",
+});
+formData.append("file", file);
+
+fetch("https://www.test.com/formdata", {
+    method: "POST",
+    body: formData,
+});
+```
+
+#### Compatibility
+
+Constructors
+
+| Constructor | Available  | Description  |
+| ----------- | ---------  | -------------|
+| new FormData()                | ✔ | 
+| new FormData(form)            | ✖ | 
+| new FormData(form, submitter) | ✖ | 
+
+Methods
+
+| Method  | Available  | Description  |
+| ------- | ---------  | -------------|
+| append(name, value)           | ✔ | 
+| append(name, value, filename) | ✔ | 
+| delete(name)                  | ✔ | 
+| entries()                     | ✔ | 
+| get(name)                     | ✔ | 
+| getAll(name)                  | ✔ | 
+| has(name)                     | ✔ | 
+| keys()                        | ✔ | 
+| set(name, value)              | ✔ | 
+| set(name, value, filename)    | ✔ | 
+| values()                      | ✔ | 
+
 ### fetch
+
+#### Example
 
 ```javascript
 import { fetch } from "mphttpx";
@@ -367,6 +482,13 @@ fetch("https://example.com/profile/avatar", {
     });
 ```
 
+Note: The fetch method of mphttpx is implemented based on XMLHttpRequest, and this underlying implementation is replaceable.
+
+```javascript
+import { setXMLHttpRequest } from "mphttpx";
+setXMLHttpRequest(another_XMLHttpRequest);  // custom XMLHttpRequest implementation
+```
+
 | Syntax  | Available  | Description  |
 | ------- | ---------  | -------------|
 | fetch(resource)          | ✔ | 
@@ -377,6 +499,8 @@ fetch("https://example.com/profile/avatar", {
 Refer to Request below.
 
 ### Request
+
+#### Example
 
 ```javascript
 import { fetch, Request } from "mphttpx";
@@ -426,6 +550,8 @@ fetch(request)
 
 #### Compatibility
 
+Properties
+
 | Property  | Available  | Description  |
 | --------- | ---------  | -------------|
 | body           | ✖ | 
@@ -444,6 +570,8 @@ fetch(request)
 | signal         | ✔ | 
 | url            | ✔ | 
 
+Methods
+
 | Method  | Available  | Description  |
 | ------- | ---------  | -------------|
 | arrayBuffer() | ✔ | 
@@ -456,6 +584,8 @@ fetch(request)
 
 ### Response
 
+#### Example
+
 ```javascript
 import { Response, Blob, fetch } from "mphttpx";
 
@@ -465,6 +595,8 @@ const myResponse = new Response(myBlob, myOptions);
 ```
 
 #### Compatibility
+
+Properties
 
 | Property  | Available  | Description  |
 | --------- | ---------  | -------------|
@@ -478,6 +610,8 @@ const myResponse = new Response(myBlob, myOptions);
 | type       | ✖ | 
 | url        | ✔ | 
 
+Methods
+
 | Method  | Available  | Description  |
 | ------- | ---------  | -------------|
 | arrayBuffer() | ✔ | 
@@ -490,13 +624,19 @@ const myResponse = new Response(myBlob, myOptions);
 
 ### Headers
 
+#### Example
+
 ```javascript
-import { Headers } from "mphttpx";
+import { Headers, fetch } from "mphttpx";
 
 const myHeaders = new Headers();
 
 myHeaders.append("Content-Type", "text/plain");
 myHeaders.get("Content-Type"); // should return 'text/plain'
+
+fetch("https://www.test.com/headers", {
+    headers: myHeaders,
+});
 ```
 
 The same can be achieved by passing an array of arrays or an object literal to the constructor:
@@ -516,6 +656,8 @@ myHeaders.get("Content-Type"); // should return 'text/plain'
 
 #### Compatibility
 
+Methods
+
 | Method  | Available  | Description  |
 | ------- | ---------  | -------------|
 | append(name, value)          | ✔ | 
@@ -532,24 +674,17 @@ myHeaders.get("Content-Type"); // should return 'text/plain'
 
 ### AbortController
 
+#### Example
+
 ```javascript
-import { AbortController } from "mphttpx";
+import { AbortController, fetch } from "mphttpx";
 
 const controller = new AbortController();
+
+fetch("https://www.test.com/abort", {
+    signal: controller.signal,
+});
 ```
-
-#### Compatibility
-
-| Property  | Available  | Description  |
-| --------- | ---------  | -------------|
-| signal | ✔ | 
-
-| Method  | Available  | Description  |
-| ------- | ---------  | -------------|
-| abort()       | ✔ | 
-| abort(reason) | ✔ | 
-
-### AbortSignal
 
 ```javascript
 import { AbortController, AbortSignal, Request, fetch } from "mphttpx";
@@ -570,16 +705,35 @@ async function get() {
 
 #### Compatibility
 
+AbortController Properties
+
+| Property  | Available  | Description  |
+| --------- | ---------  | -------------|
+| signal | ✔ | 
+
+AbortController Methods
+
+| Method  | Available  | Description  |
+| ------- | ---------  | -------------|
+| abort()       | ✔ | 
+| abort(reason) | ✔ | 
+
+AbortSignal Properties
+
 | Property  | Available  | Description  |
 | --------- | ---------  | -------------|
 | aborted | ✔ | 
 | reason  | ✔ | 
+
+AbortSignal Methods
 
 | Method  | Available  | Description  |
 | ------- | ---------  | -------------|
 | throwIfAborted() | ✔ | 
 
 ### EventTarget
+
+#### Example
 
 ```javascript
 import { EventTarget, Event, CustomEvent } from "mphttpx";
@@ -607,6 +761,8 @@ target.dispatchEvent(catFound);
 
 #### Compatibility
 
+Methods
+
 | Method  | Available  | Description  |
 | ------- | ---------  | -------------|
 | addEventListener(type, listener)                | ✔ | 
@@ -618,6 +774,8 @@ target.dispatchEvent(catFound);
 | removeEventListener(type, listener, useCapture) | ✔ | 
 
 ### XMLHttpRequest (mini-programs)
+
+#### Example
 
 GET
 
@@ -657,6 +815,8 @@ xhr.send(JSON.stringify({ foo: "bar", lorem: "ipsum" }));
 
 #### Compatibility
 
+Properties
+
 | Property  | Available  | Description  |
 | -------- | ---------  | -------------|
 | readyState      | ✔ | 2, 3: simulated |
@@ -671,6 +831,8 @@ xhr.send(JSON.stringify({ foo: "bar", lorem: "ipsum" }));
 | upload          | ✔ | simulated |
 | withCredentials | ✖ | 
 
+Methods
+
 | Method  | Available  | Description  |
 | ------- | ---------  | -------------|
 | abort()                                  | ✔ | 
@@ -684,6 +846,56 @@ xhr.send(JSON.stringify({ foo: "bar", lorem: "ipsum" }));
 | send()                                   | ✔ | 
 | send(body)                               | ✔ | 
 | setRequestHeader(header, value)          | ✔ | 
+
+## Auto Import
+
+See [unplugin-auto-import][2] for more details.
+
+```javascript
+// for reference only
+AutoImport({
+    // other configs
+
+    imports: [
+        // other imports
+
+        {
+            "mphttpx": [
+                "TextEncoder",
+                "TextDecoder",
+
+                "Blob",
+                "File",
+                "FileReader",
+
+                "URLSearchParams",
+                "FormData",
+
+                "fetch",
+                "Headers",
+                "Request",
+                "Response",
+
+                "AbortController",
+                "AbortSignal",
+
+                "EventTarget",
+                "Event",
+                "CustomEvent",
+
+                "XMLHttpRequest",   // mini-programs
+            ],
+        },
+
+        // other imports
+    ],
+
+    // other configs
+});
+```
+
+Note for UniApp developers: If your project is a UniApp mini-program created via HBuilderX using the legacy Vue2 template, 
+try installing an older version of the unplugin-auto-import plugin that supports CMD, such as version 0.16.7.
 
 ## UniApp & Taro
 
@@ -714,3 +926,5 @@ setXMLHttpRequest(XMLHttpRequest);
 MIT
 
 [0]: https://github.com/eligrey/Blob.js
+[1]: https://github.com/github/fetch
+[2]: https://www.npmjs.com/package/unplugin-auto-import

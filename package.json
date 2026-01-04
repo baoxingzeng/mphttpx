@@ -1,6 +1,6 @@
 {
   "name": "mphttpx",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "type": "module",
   "main": "dist/index.cjs.js",
   "module": "dist/index.esm.js",
@@ -23,7 +23,15 @@
   "homepage": "https://github.com/baoxingzeng/mphttpx",
   "keywords": [
     "mini-program",
-    "polyfill"
+    "polyfill",
+    "wechat",
+    "weixin",
+    "TextEncoder",
+    "TextDecoder",
+    "Blob",
+    "FormData",
+    "fetch",
+    "XMLHttpRequest"
   ],
   "devDependencies": {
     "@rollup/plugin-terser": "^0.4.4",
