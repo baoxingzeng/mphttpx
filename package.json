@@ -1,6 +1,6 @@
 {
   "name": "mphttpx",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "type": "module",
   "main": "dist/index.cjs.js",
   "module": "dist/index.esm.js",
@@ -24,8 +24,8 @@
   "keywords": [
     "mini-program",
     "polyfill",
-    "wechat",
-    "weixin",
+    "WeChat",
+    "Weixin",
     "TextEncoder",
     "TextDecoder",
     "Blob",

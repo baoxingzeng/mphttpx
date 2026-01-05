@@ -43,6 +43,11 @@ export interface IRequestOptions {
     header?: object;
 
     /**
+     * 支付宝：设置请求的 HTTP 头对象，默认 {'content-type':'application/json'}，该对象里面的 key 和 value 必须是 String 类型
+     */
+    headers?: object;
+
+    /**
      * 超时时间，单位为毫秒。默认值为 60000
      */
     timeout?: number;
@@ -209,6 +214,16 @@ export interface IRequestSuccessCallbackBaseResult {
      * 开发者服务器返回的 HTTP Response Header
      */
     header: object;
+
+    /**
+     * 支付宝：目标服务器返回的 HTTP 状态码
+     */
+    status?: number;
+
+    /**
+     * 支付宝：目标服务器返回的 HTTP 响应头
+     */
+    headers?: object;
 }
 
 export interface IRequestSuccessCallbackResult extends IGeneralCallbackResult, IRequestSuccessCallbackBaseResult {

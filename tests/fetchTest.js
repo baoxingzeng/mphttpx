@@ -1,6 +1,6 @@
 import { suite } from "uvu";
 import * as assert from "uvu/assert";
-import { ui_rec } from "./utils.js";
+import { ui_rec, config } from "./utils.js";
 import { BlobP as Blob } from "../dist/index.esm.js";
 import { FormDataP as FormData } from "../dist/index.esm.js";
 import { AbortControllerP as AbortController } from "../dist/index.esm.js";
@@ -18,7 +18,7 @@ const test = (n, t) => {
 }
 
 test("fetch basic GET request", async () => {
-    let response = await fetch("http://localhost:3000/api/user?id=88");
+    let response = await fetch(config.api_prefix + "/api/user?id=88");
     assert.equal(response.ok, true);
     assert.equal(response.status, 200);
     assert.equal(response.headers.get("content-type"), "application/json; charset=utf-8");
@@ -35,7 +35,7 @@ test("fetch POST request (FormData upload)", async () => {
     let fileContent = "This is the content of the test file.";
     let blob = new Blob([fileContent], { type: "text/plain" });
     formData.append("file", blob, "test-file.txt");
-    let response = await fetch("http://localhost:3000/api/upload", {
+    let response = await fetch(config.api_prefix + "/api/upload", {
         method: "POST",
         body: formData,
         headers: {
@@ -55,7 +55,7 @@ test("fetch POST request (FormData upload)", async () => {
 test("fetch abort request (AbortController)", async () => {
     let controller = new AbortController();
     let signal = controller.signal;
-    let fetchPromise = fetch("http://localhost:3000/api/timeout", { signal });
+    let fetchPromise = fetch(config.api_prefix + "/api/timeout", { signal });
     controller.abort();
     let abortError = null;
     try {
@@ -69,7 +69,7 @@ test("fetch abort request (AbortController)", async () => {
 });
 
 test("fetch dealing with 404 error response", async () => {
-    let response = await fetch("http://localhost:3000/api/not-found");
+    let response = await fetch(config.api_prefix + "/api/not-found");
     assert.equal(response.ok, false);
     assert.equal(response.status, 404);
     let data = await response.json();
@@ -78,7 +78,7 @@ test("fetch dealing with 404 error response", async () => {
 });
 
 test("fetch custom request header", async () => {
-    let response = await fetch("http://localhost:3000/api/header-test", {
+    let response = await fetch(config.api_prefix + "/api/header-test", {
         headers: {
             "X-Token": "123456789",
             "Content-Type": "application/json"

@@ -16,6 +16,7 @@
 export const config = {
     log: false,
     timeout: 10 * 1000,
+    api_prefix: "http://localhost:3000",
 };
 
 /**

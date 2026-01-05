@@ -159,6 +159,9 @@ export class XMLHttpRequestImpl extends XMLHttpRequestEventTargetP implements XM
             complete: requestComplete.bind(this),
         };
 
+        // Alipay Mini Program
+        options.headers = options.header!;
+
         s[_requestTask] = mp.request(options);
         emitProcessEvent(this, "loadstart");
 
@@ -277,12 +280,12 @@ function normalizeDataType(responseType: XMLHttpRequestResponseType) {
     return (responseType === "blob" || responseType === "arraybuffer") ? "arraybuffer" : "text";
 }
 
-function requestSuccess(this: XMLHttpRequest, { statusCode, header, data }: IRequestSuccessCallbackBaseResult) {
+function requestSuccess(this: XMLHttpRequest, res: IRequestSuccessCallbackBaseResult) {
     const s = (this as XMLHttpRequestImpl)[state];
 
     s.responseURL = s[_requestURL];
-    s.status = statusCode;
-    s[_responseHeaders] = new HeadersP(header as Record<string, string>);
+    s.status = "statusCode" in res ? res.statusCode : "status" in res ? (res as IRequestSuccessCallbackBaseResult).status! : 200;
+    s[_responseHeaders] = new HeadersP(("header" in res ? res.header : "headers" in res ? (res as IRequestSuccessCallbackBaseResult).headers : undefined) as Record<string, string>);
 
     let lengthStr = s[_responseHeaders]!.get("Content-Length");
     s[_responseContentLength] = () => { return lengthStr ? parseInt(lengthStr) : 0; }
@@ -296,7 +299,7 @@ function requestSuccess(this: XMLHttpRequest, { statusCode, header, data }: IReq
                 let l = s[_responseContentLength];
 
                 try {
-                    s.response = convertBack(s.responseType, data);
+                    s.response = convertBack(s.responseType, res.data);
                     emitProcessEvent(this, "load", l, l);
                 } catch (e) {
                     console.error(e);
@@ -308,7 +311,7 @@ function requestSuccess(this: XMLHttpRequest, { statusCode, header, data }: IReq
 }
 
 function requestFail(this: XMLHttpRequest, err: IRequestFailCallbackResult | IAliRequestFailCallbackResult) {
-    // Alipay Mini Programs
+    // Alipay Mini Program
     // error: 14 --- JSON parse data error
     // error: 19 --- http status error
     // At this point, the error data object will contain three pieces of information
@@ -316,8 +319,12 @@ function requestFail(this: XMLHttpRequest, err: IRequestFailCallbackResult | IAl
     // In the browser's XMLHttpRequest, these two errors (Error 14 and Error 19)
     // differ from those in Alipay Mini Programs and should instead return normally.
     // Therefore, this scenario is also handled here as a successful request response.
-    if ("status" in err) {
-        requestSuccess.call(this, { statusCode: err.status!, header: err.headers!, data: err.data! });
+    if (("header" in err && "statusCode" in err) || ("headers" in err && "status" in err)) {
+        requestSuccess.call(this, {
+            statusCode: "statusCode" in err ? err.statusCode as number : err.status || 0,
+            header: "header" in err ? err.header as object : err.headers || {},
+            data: "data" in err ? err.data : "",
+        });
         return;
     }
 
@@ -347,6 +354,13 @@ function requestComplete(this: XMLHttpRequest) {
     });
 }
 
+// Alipay Mini Program
+function safeAbort(task: IRequestTask) {
+    if ("abort" in task && typeof task.abort === "function") {
+        task.abort();
+    }
+}
+
 function clearRequest(xhr: XMLHttpRequest, delay = true) {
     const s = (xhr as XMLHttpRequestImpl)[state];
     const timerFn = delay ? setTimeout : (f: () => void) => { f(); };
@@ -358,7 +372,7 @@ function clearRequest(xhr: XMLHttpRequest, delay = true) {
         timerFn(() => {
             const requestTask = s[_requestTask];
 
-            if (requestTask) { requestTask.abort(); }
+            if (requestTask) { safeAbort(requestTask); }
             if (delay) { emitProcessEvent(xhr, "abort"); }
             if (delay && !requestTask) { emitProcessEvent(xhr, "loadend"); }
         });
@@ -377,7 +391,7 @@ function checkRequestTimeout(xhr: XMLHttpRequest) {
     if (s.timeout) {
         s[_timeoutId] = setTimeout(() => {
             if (!s.status && s.readyState !== XMLHttpRequestImpl.DONE) {
-                if (s[_requestTask]) s[_requestTask]!.abort();
+                if (s[_requestTask]) safeAbort(s[_requestTask]!);
                 setReadyStateAndNotify(xhr, XMLHttpRequestImpl.DONE);
                 emitProcessEvent(xhr, "timeout");
             }
