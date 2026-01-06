@@ -1,7 +1,7 @@
 import { type Event_EtFields } from "./EventP";
 import { Event_getEtField, Event_setEtField } from "./EventP";
 import { EventP, eventState, Event_setTrusted } from "./EventP";
-import { g, polyfill, Class_setStringTag, checkArgsLength } from "./isPolyfill";
+import { g, polyfill, Class_setStringTag, checkArgsLength, isPolyfillType } from "./isPolyfill";
 
 const passive: Event_EtFields["Passive"] = 0;
 const dispatched: Event_EtFields["Dispatched"] = 1;
@@ -38,7 +38,7 @@ export class EventTargetP implements EventTarget {
                 executor.options.once = !!once;
                 executor.options.passive = !!passive;
 
-                if (signal) {
+                if (signal && isPolyfillType<EventTarget>("EventTarget", signal)) {
                     executor.options.signal = signal;
                     reply(this, signal, executor);
                 }
@@ -151,11 +151,7 @@ function reply(target: EventTarget, signal: AbortSignal, executor: Executor) {
         signal.removeEventListener("abort", onAbort);
     }
 
-    try {
-        signal.addEventListener("abort", onAbort);
-    } catch (e) {
-        console.warn(e);
-    }
+    signal.addEventListener("abort", onAbort);
 }
 
 /** @internal */
@@ -187,7 +183,7 @@ function extract(cb: EventListenerOrEventListenerObject | null): EventListener |
 }
 
 function isEventListenerObject(cb: EventListenerObject | null): cb is EventListenerObject {
-    return !!cb && "handleEvent" in cb && typeof cb.handleEvent === "function";
+    return !!cb && typeof cb === "object" && "handleEvent" in cb && typeof cb.handleEvent === "function";
 }
 
 /** @internal */
