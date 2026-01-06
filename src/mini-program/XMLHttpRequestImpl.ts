@@ -78,8 +78,13 @@ export class XMLHttpRequestImpl extends XMLHttpRequestEventTargetP implements XM
     }
 
     getAllResponseHeaders(): string {
-        if (!this[state][_responseHeaders]) return "";
-        return Array.from(this[state][_responseHeaders]!.entries()).map(([k, v]) => `${k}: ${v}\r\n`).join("");
+        const headers = this[state][_responseHeaders];
+        if (!headers) return "";
+
+        let result: string[] = [];
+        headers.forEach((value, name) => { result.push(`${name}: ${value}\r\n`); });
+
+        return result.join("");
     }
 
     getResponseHeader(...args: [string]): string | null {
