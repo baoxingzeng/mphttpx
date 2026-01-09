@@ -462,7 +462,7 @@ fetch("https://example.com/profile", {
 Uploading files
 
 ```javascript
-import { fetch, File } from "mphttpx";
+import { fetch, File, FormData } from "mphttpx";
 
 const formData = new FormData();
 

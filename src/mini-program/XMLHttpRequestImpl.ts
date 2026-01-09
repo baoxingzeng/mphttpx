@@ -19,7 +19,7 @@ import { createXMLHttpRequestUpload } from "../XMLHttpRequestUploadP";
 import { XMLHttpRequestEventTargetP, XHR_properties, normalizeResponseType, statusTextMap } from "../XMLHttpRequestEventTargetP";
 
 const mp = { request: request };
-export const setRequest = (request: TRequestFunc) => { mp.request = request; }
+export const setRequest = (request: unknown) => { mp.request = request as TRequestFunc; }
 
 /** @internal */
 const state = Symbol(/* "XMLHttpRequestState" */);

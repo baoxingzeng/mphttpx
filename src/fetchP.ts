@@ -6,7 +6,7 @@ import { ResponseP, responseState } from "./ResponseP";
 import { g, checkArgsLength, MPException, isObjectType } from "./isPolyfill";
 
 const mp = { XMLHttpRequest: XMLHttpRequest };
-export const setXMLHttpRequest = (XHR: typeof globalThis["XMLHttpRequest"]) => { mp.XMLHttpRequest = XHR; }
+export const setXMLHttpRequest = (XHR: unknown) => { mp.XMLHttpRequest = XHR as typeof globalThis["XMLHttpRequest"]; }
 
 export function fetchP(...args: [RequestInfo | URL, RequestInit?]): Promise<Response> {
     if (new.target === fetchP) {
