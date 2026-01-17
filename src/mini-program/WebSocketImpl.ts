@@ -41,6 +41,8 @@ export class WebSocketImpl extends EventTargetP implements WebSocket {
             onClose(this);
             onError(this);
             onMessage(this);
+        } else {
+            throw new Error(`MPHTTPX can't establish a connection to the server at ${"" + url}.`);
         }
     }
 
