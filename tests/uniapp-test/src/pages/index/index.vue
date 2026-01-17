@@ -32,7 +32,7 @@ export default Vue.extend({
         Notify.subscribe((v: [string, [boolean, string][]][]) => { this.data = v; });
 
         uni.request({
-            url: "http://localhost:3000/ping",
+            url: `${config.api_prefix}/ping`,
             timeout: 3000,
             fail() {
                 setTimeout(

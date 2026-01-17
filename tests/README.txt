@@ -10,6 +10,7 @@ Step 3:
 mini-program (uniapp-test)
     Step 4:
         node tests/mock-server.js
+        node tests/mock-server-ws.js # WebSocket
 
     Step 5:
         edit tests/utils.js    

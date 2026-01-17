@@ -22,6 +22,8 @@ export { CustomEvent, CustomEventP } from "./CustomEventP";
 export { ProgressEvent, ProgressEventP } from "./ProgressEventP";
 
 export { XMLHttpRequest, XMLHttpRequestP } from "./XMLHttpRequestP";
+export { WebSocket, WebSocketP } from "./WebSocketP";
 
 export { setXMLHttpRequest } from "./fetchP";
 export { setRequest } from "./mini-program/XMLHttpRequestImpl";
+export { setConnectSocket } from "./mini-program/WebSocketImpl";

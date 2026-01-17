@@ -1,11 +1,12 @@
 // @ts-nocheck
 import { g } from "../isPolyfill";
 import type { TRequestFunc } from "./request";
+import type { TConnectSocketFunc } from "./connectSocket";
 
 /** @internal */
 export const mp = (() => {
     let u = "undefined", r = "request", f = "function";
-    let mp: { request: TRequestFunc };
+    let mp: { request: TRequestFunc, connectSocket: TConnectSocketFunc };
 
     mp =
         (typeof wx !== u && typeof wx?.[r] === f && wx) ||        // 微信

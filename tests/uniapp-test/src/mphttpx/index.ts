@@ -17,4 +17,7 @@ import "../../../AbortControllerTest";
 import "../../../EventTargetTest";
 
 import fetch_suite from "../../../fetchTest";
+import WebSocket_suite from "../../../WebSocketTest";
+
 fetch_suite.run();
+WebSocket_suite.run();
