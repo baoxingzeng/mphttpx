@@ -19,7 +19,7 @@
   },
   "author": "Xingzeng",
   "license": "MIT",
-  "description": "A polyfill for China mini-program.",
+  "description": "A polyfill for mini-program.",
   "homepage": "https://github.com/baoxingzeng/mphttpx",
   "keywords": [
     "小程序",
