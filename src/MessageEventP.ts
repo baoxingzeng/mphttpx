@@ -11,12 +11,13 @@ export class MessageEventP<T> extends EventP implements MessageEvent {
     constructor(type: string, eventInitDict?: MessageEventInit<T>) {
         super(type, eventInitDict);
         this[state] = new MessageEventState();
+        const s = this[state];
 
-        this[state].data = eventInitDict?.data ?? null;
-        if (eventInitDict?.origin !== undefined) this[state].origin = "" + eventInitDict.origin;
-        if (eventInitDict?.lastEventId !== undefined) this[state].lastEventId = "" + eventInitDict.lastEventId;
-        if (eventInitDict?.source !== undefined) this[state].source = eventInitDict.source;
-        if (eventInitDict?.ports !== undefined) this[state].ports = eventInitDict.ports;
+        s.data = eventInitDict?.data ?? null;
+        if (eventInitDict?.origin !== undefined) s.origin = "" + eventInitDict.origin;
+        if (eventInitDict?.lastEventId !== undefined) s.lastEventId = "" + eventInitDict.lastEventId;
+        if (eventInitDict?.source !== undefined) s.source = eventInitDict.source;
+        if (eventInitDict?.ports !== undefined) s.ports = eventInitDict.ports;
     }
 
     /** @internal */
@@ -34,11 +35,13 @@ export class MessageEventP<T> extends EventP implements MessageEvent {
         if (Event_getEtField(this, dispatched)) return;
 
         this.initEvent(type, bubbles, cancelable);
-        this[state].data = data ?? null;
-        if (origin !== undefined) this[state].origin = "" + origin;
-        if (lastEventId !== undefined) this[state].lastEventId = "" + lastEventId;
-        if (source !== undefined) this[state].source = source;
-        if (ports !== undefined) this[state].ports = ports;
+        const s = this[state];
+
+        s.data = data ?? null;
+        if (origin !== undefined) s.origin = "" + origin;
+        if (lastEventId !== undefined) s.lastEventId = "" + lastEventId;
+        if (source !== undefined) s.source = source;
+        if (ports !== undefined) s.ports = ports;
     }
 
     /** @internal */ toString() { return "[object MessageEvent]"; }

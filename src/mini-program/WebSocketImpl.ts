@@ -185,9 +185,7 @@ function getHandlers(s: WebSocketState) {
 
 function onOpen(ws: WebSocket) {
     let _ws = ws as WebSocketImpl;
-    let task = _ws[state][_socketTask];
-
-    task.onOpen(res => {
+    _ws[state][_socketTask].onOpen(res => {
         if ("header" in res && res.header && typeof res.header === "object") {
             let headers = new HeadersP(res.header as Record<string, string>);
             _ws[state].protocol = headers.get("Sec-WebSocket-Protocol") || "";
@@ -200,9 +198,7 @@ function onOpen(ws: WebSocket) {
 
 function onClose(ws: WebSocket) {
     let _ws = ws as WebSocketImpl;
-    let task = _ws[state][_socketTask];
-
-    task.onClose(res => {
+     _ws[state][_socketTask].onClose(res => {
         _ws[state].readyState = WebSocketImpl.CLOSED;
 
         let event = new CloseEventP("close", {
@@ -218,9 +214,7 @@ function onClose(ws: WebSocket) {
 
 function onError(ws: WebSocket) {
     let _ws = ws as WebSocketImpl;
-    let task = _ws[state][_socketTask];
-
-    task.onError(res => {
+    _ws[state][_socketTask].onError(res => {
         console.error(res);
 
         _ws[state][_error] = res;
@@ -231,9 +225,7 @@ function onError(ws: WebSocket) {
 
 function onMessage(ws: WebSocket) {
     let _ws = ws as WebSocketImpl;
-    let task = _ws[state][_socketTask];
-
-    task.onMessage(res => {
+    _ws[state][_socketTask].onMessage(res => {
         let data = res.data;
         let _data: string | ArrayBuffer | Blob;
 

@@ -8,11 +8,12 @@ export class CloseEventP extends EventP implements CloseEvent {
     constructor(type: string, eventInitDict?: CloseEventInit) {
         super(type, eventInitDict);
         this[state] = new CloseEventState();
+        const s = this[state];
 
         let _code = Number(eventInitDict?.code ?? 0);
-        this[state].code = isNaN(_code) ? 0 : _code;
-        if (eventInitDict?.reason !== undefined) this[state].reason = "" + eventInitDict.reason;
-        this[state].wasClean = !!eventInitDict?.wasClean;
+        s.code = isNaN(_code) ? 0 : _code;
+        if (eventInitDict?.reason !== undefined) s.reason = "" + eventInitDict.reason;
+        s.wasClean = !!eventInitDict?.wasClean;
     }
 
     /** @internal */

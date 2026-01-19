@@ -54,6 +54,9 @@ This allows web code to be reused in other environments (such as mini-programs).
     - [XMLHttpRequest (mini-programs)](#xmlhttprequest-mini-programs)
       - [Example](#example-13)
       - [Compatibility](#compatibility-13)
+    - [WebSocket (mini-programs, since 1.1.0)](#websocket-mini-programs-since-110)
+      - [Example](#example-14)
+      - [Compatibility](#compatibility-14)
   - [Auto Import](#auto-import)
   - [UniApp \& Taro](#uniapp--taro)
   - [Node.js](#nodejs)
@@ -75,6 +78,7 @@ This allows web code to be reused in other environments (such as mini-programs).
 - **AbortController** 
 - **EventTarget**
 - **XMLHttpRequest (mini-programs)**
+- **WebSocket (mini-programs, since 1.1.0)**
 
 ## Installation
 
@@ -818,7 +822,7 @@ xhr.send(JSON.stringify({ foo: "bar", lorem: "ipsum" }));
 Properties
 
 | Property  | Available  | Description  |
-| -------- | ---------  | -------------|
+| --------- | ---------  | -------------|
 | readyState      | ✔ | 2, 3: simulated |
 | response        | ✔ | 
 | responseText    | ✔ | 
@@ -846,6 +850,54 @@ Methods
 | send()                                   | ✔ | 
 | send(body)                               | ✔ | 
 | setRequestHeader(header, value)          | ✔ | 
+
+### WebSocket (mini-programs, since 1.1.0)
+
+#### Example
+
+```javascript
+import { WebSocket } from "mphttpx";
+
+// Create WebSocket connection.
+const socket = new WebSocket("wss://example.com:8080");
+
+// Change binary type from "blob" to "arraybuffer"
+socket.binaryType = "arraybuffer";
+
+// Listen for messages
+socket.addEventListener("message", (event) => {
+    if (event.data instanceof ArrayBuffer) {
+        // binary frame
+        const view = new DataView(event.data);
+        console.log(view.getInt32(0));
+    } else {
+        // text frame
+        console.log(event.data);
+    }
+});
+```
+
+#### Compatibility
+
+Properties
+
+| Property  | Available  | Description  |
+| --------- | ---------  | -------------|
+| binaryType     | ✔ | 
+| bufferedAmount | ✖ | 
+| extensions     | ✖ | 
+| protocol       | ✔ | 
+| readyState     | ✔ | 
+| url            | ✔ | 
+
+Methods
+
+| Method  | Available  | Description  |
+| ------- | ---------  | -------------|
+| close()             | ✔ | 
+| close(code)         | ✔ | 
+| close(code, reason) | ✔ | 
+| send(data)          | ✔ | 
 
 ## Auto Import
 
@@ -884,6 +936,7 @@ AutoImport({
                 "CustomEvent",
 
                 "XMLHttpRequest",   // mini-programs
+                "WebSocket",        // mini-programs
             ],
         },
 
@@ -894,19 +947,23 @@ AutoImport({
 });
 ```
 
-Note for UniApp developers: If your project is a UniApp mini-program created via HBuilderX using the legacy Vue2 template, 
+Note for `UniApp` developers: If your project is a UniApp mini-program created via HBuilderX using the legacy Vue2 template, 
 try installing an older version of the unplugin-auto-import plugin that supports CMD, such as version 0.16.7.
 
 ## UniApp & Taro
 
 ```javascript
 import { setRequest } from "mphttpx";
+import { setConnectSocket } from "mphttpx";
 
 setRequest(uni.request);
 // setRequest(Taro.request);
+
+setConnectSocket(uni.connectSocket);
+// setConnectSocket(Taro.connectSocket);
 ```
 
-Note: When using in UniApp or Taro, if `fetch` or `XMLHttpRequest` fails to work, try explicitly setting the request function.
+Note: When using in UniApp or Taro, if `fetch`, `XMLHttpRequest` or `WebSocket` fails to work, try explicitly setting the request/connectSocket function.
 
 ## Node.js
 
