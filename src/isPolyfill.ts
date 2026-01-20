@@ -57,3 +57,8 @@ export function isPolyfillType<T>(name: string, value: unknown): value is T {
         && Array.isArray((value as THasHierarchy).isPolyfill.hierarchy)
         && (value as THierarchyIsArray).isPolyfill.hierarchy.indexOf(name) > -1;
 }
+
+/** @internal */
+export function isArrayBuffer(value: unknown): value is ArrayBuffer {
+    return (!!value && typeof value === "object" && ArrayBuffer.prototype.isPrototypeOf(value)) || isObjectType<ArrayBuffer>("ArrayBuffer", value);
+}

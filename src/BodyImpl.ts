@@ -1,6 +1,6 @@
 import { BlobP, Blob_toUint8Array, encode, decode } from "./BlobP";
 import { FormData_toBlob, createFormDataFromBinaryText } from "./FormDataP";
-import { polyfill, Class_setStringTag, isObjectType, isPolyfillType } from "./isPolyfill";
+import { polyfill, Class_setStringTag, isObjectType, isPolyfillType, isArrayBuffer } from "./isPolyfill";
 
 /** @internal */ const state = Symbol(/* "BodyState" */);
 /** @internal */ export { state as bodyState };
@@ -161,12 +161,12 @@ export function convert(
         if (setContentType) { setContentType("text/plain;charset=UTF-8"); }
     }
 
-    else if (isObjectType<URLSearchParams>("URLSearchParams", body)) {
+    else if (isObjectType<URLSearchParams>("URLSearchParams", body) || isPolyfillType<URLSearchParams>("URLSearchParams", body)) {
         result = body.toString();
         if (setContentType) { setContentType("application/x-www-form-urlencoded;charset=UTF-8"); }
     }
 
-    else if (body instanceof ArrayBuffer) {
+    else if (isArrayBuffer(body)) {
         result = cloneArrayBuffer ? body.slice(0) : body;
     }
 
@@ -211,7 +211,7 @@ export function convertBack(
     type: XMLHttpRequestResponseType,
     data?: string | object | ArrayBuffer,
 ): string | object | ArrayBuffer | Blob {
-    let temp = !!data ? (typeof data !== "string" && !(data instanceof ArrayBuffer) ? JSON.stringify(data) : data) : "";
+    let temp = !!data ? (typeof data !== "string" && !isArrayBuffer(data) ? JSON.stringify(data) : data) : "";
 
     if (!type || type === "text") {
         return typeof temp === "string" ? temp : decode(temp);
@@ -222,7 +222,7 @@ export function convertBack(
     }
 
     else if (type === "arraybuffer") {
-        return temp instanceof ArrayBuffer ? temp.slice(0) : encode(temp).buffer;
+        return isArrayBuffer(temp) ? temp.slice(0) : encode(temp).buffer;
     }
 
     else if (type === "blob") {

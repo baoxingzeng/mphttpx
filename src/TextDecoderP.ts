@@ -1,4 +1,4 @@
-import { g, polyfill, Class_setStringTag } from "./isPolyfill";
+import { g, polyfill, Class_setStringTag, isObjectType, isArrayBuffer } from "./isPolyfill";
 
 /** @internal */
 const state = Symbol(/* "TextDecoderState" */);
@@ -27,9 +27,9 @@ export class TextDecoderP implements TextDecoder {
         let bytes: Uint8Array;
 
         if (input !== undefined) {
-            if (input instanceof ArrayBuffer) {
+            if (isArrayBuffer(input)) {
                 bytes = new Uint8Array(input);
-            } else if (input instanceof Uint8Array) {
+            } else if (input instanceof Uint8Array || isObjectType<Uint8Array>("Uint8Array", input)) {
                 bytes = input;
             } else if (ArrayBuffer.isView(input)) {
                 bytes = new Uint8Array(input.buffer, input.byteOffset, input.byteLength);

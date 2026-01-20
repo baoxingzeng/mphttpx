@@ -1,6 +1,6 @@
 import { TextEncoderP } from "./TextEncoderP";
 import { TextDecoderP } from "./TextDecoderP";
-import { g, polyfill, Class_setStringTag, isPolyfillType } from "./isPolyfill";
+import { g, polyfill, Class_setStringTag, isPolyfillType, isArrayBuffer } from "./isPolyfill";
 
 /** @internal */
 const state = Symbol(/* "BlobState" */);
@@ -21,7 +21,7 @@ export class BlobP implements Blob {
                 chunks.push((chunk as BlobP)[state][_buffer]);
             }
 
-            else if (chunk instanceof ArrayBuffer || ArrayBuffer.isView(chunk)) {
+            else if (isArrayBuffer(chunk) || ArrayBuffer.isView(chunk)) {
                 chunks.push(BufferSource_toUint8Array(chunk));
             }
 
@@ -92,7 +92,7 @@ export function Blob_toUint8Array(blob: Blob) {
 }
 
 function BufferSource_toUint8Array(buf: BufferSource): InstanceType<typeof Uint8Array> {
-    return buf instanceof ArrayBuffer
+    return isArrayBuffer(buf)
         ? new Uint8Array(buf)
         : new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength);
 }

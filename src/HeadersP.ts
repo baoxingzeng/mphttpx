@@ -1,4 +1,4 @@
-import { g, polyfill, Class_setStringTag, checkArgsLength, isObjectType } from "./isPolyfill";
+import { g, polyfill, Class_setStringTag, checkArgsLength, isObjectType, isPolyfillType } from "./isPolyfill";
 
 /** @internal */ const state = Symbol(/* "HeadersState" */);
 const checkArgsFn = (args: any[], required: number, funcName: string) => { checkArgsLength(args, required, "Headers", funcName); }
@@ -8,7 +8,7 @@ export class HeadersP implements Headers {
         this[state] = new HeadersState();
 
         if (init !== undefined) {
-            if (isObjectType<Headers>("Headers", init)) {
+            if (isObjectType<Headers>("Headers", init) || isPolyfillType<Headers>("Headers", init)) {
                 init.forEach((value, name) => { this.append(name, value); }, this);
             }
 

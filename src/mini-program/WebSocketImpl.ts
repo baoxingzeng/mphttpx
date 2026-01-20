@@ -6,7 +6,7 @@ import { Event_setTrusted, createInnerEvent } from "../EventP";
 import { EventTargetP, EventTarget_fire, attachFn, executeFn } from "../EventTargetP";
 import { connectSocket } from "./connectSocket";
 import type { TConnectSocketFunc, IConnectSocketOption, ISocketTask } from "./connectSocket";
-import { polyfill, Class_setStringTag, checkArgsLength, MPException, isPolyfillType } from "../isPolyfill";
+import { polyfill, Class_setStringTag, checkArgsLength, MPException, isPolyfillType, isArrayBuffer } from "../isPolyfill";
 
 const mp = { connectSocket: connectSocket };
 export const setConnectSocket = (connectSocket: unknown) => { mp.connectSocket = connectSocket as TConnectSocketFunc; }
@@ -91,7 +91,7 @@ export class WebSocketImpl extends EventTargetP implements WebSocket {
 
         let _data: string | ArrayBuffer;
 
-        if (data instanceof ArrayBuffer) {
+        if (isArrayBuffer(data)) {
             _data = data;
         } else if (ArrayBuffer.isView(data)) {
             _data = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
@@ -240,7 +240,7 @@ function onMessage(ws: WebSocket) {
             _data = data;
         }
 
-        if (_data instanceof ArrayBuffer && _ws.binaryType === "blob") {
+        if (isArrayBuffer(_data) && _ws.binaryType === "blob") {
             _data = new BlobP([_data]);
         }
 

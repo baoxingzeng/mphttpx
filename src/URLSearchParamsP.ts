@@ -1,4 +1,4 @@
-import { g, polyfill, Class_setStringTag, checkArgsLength, isObjectType } from "./isPolyfill";
+import { g, polyfill, Class_setStringTag, checkArgsLength, isObjectType, isPolyfillType } from "./isPolyfill";
 
 /** @internal */ const state = Symbol(/* "URLSearchParamsState" */);
 const checkArgsFn = (args: any[], required: number, funcName: string) => { checkArgsLength(args, required, "URLSearchParams", funcName); }
@@ -8,7 +8,7 @@ export class URLSearchParamsP implements URLSearchParams {
         this[state] = new URLSearchParamsState();
 
         if (init !== undefined) {
-            if (isObjectType<URLSearchParams>("URLSearchParams", init)) {
+            if (isObjectType<URLSearchParams>("URLSearchParams", init) || isPolyfillType<URLSearchParams>("URLSearchParams", init)) {
                 init.forEach((value, name) => { this.append(name, value); }, this);
             }
 
