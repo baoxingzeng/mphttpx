@@ -13,7 +13,7 @@ export class TextEncoderP implements TextEncoder {
         checkArgsLength(args, 2, "TextEncoder", "encodeInto");
 
         let _source = "" + source;
-        if (!isObjectType<Uint8Array>("Uint8Array", destination)) {
+        if (!(destination instanceof Uint8Array || isObjectType<Uint8Array>("Uint8Array", destination))) {
             throw new TypeError("Failed to execute 'encodeInto' on 'TextEncoder': parameter 2 is not of type 'Uint8Array'.");
         }
 
