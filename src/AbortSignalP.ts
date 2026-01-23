@@ -1,5 +1,5 @@
+import { g, polyfill, checkArgsLength, MPException, isPolyfillType } from "./isPolyfill";
 import { createInnerEvent } from "./EventP";
-import { g, polyfill, Class_setStringTag, checkArgsLength, MPException, isPolyfillType } from "./isPolyfill";
 import { EventTargetP, EventTargetState, eventTargetState, EventTarget_fire, attachFn, executeFn } from "./EventTargetP";
 
 /** @internal */
@@ -90,10 +90,9 @@ export class AbortSignalP extends EventTargetP implements AbortSignal {
     }
 
     /** @internal */ toString() { return "[object AbortSignal]"; }
+    /** @internal */ get [Symbol.toStringTag]() { return "AbortSignal"; }
     /** @internal */ get isPolyfill() { return { symbol: polyfill, hierarchy: ["AbortSignal", "EventTarget"] }; }
 }
-
-Class_setStringTag(AbortSignalP, "AbortSignal");
 
 /** @internal */
 const _handlers = Symbol();

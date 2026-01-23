@@ -1,15 +1,15 @@
 import { EventTargetP, attachFn, executeFn } from "./EventTargetP";
 import { emitProcessEvent } from "./ProgressEventP";
 import { Blob_toUint8Array, Uint8Array_toBase64, decode } from "./BlobP";
-import { g, polyfill, Class_setStringTag, checkArgsLength, MPException, isPolyfillType } from "./isPolyfill";
+import { g, polyfill, checkArgsLength, MPException, isPolyfillType } from "./isPolyfill";
 
 /** @internal */
 const state = Symbol(/* "FileReaderState" */);
 
 export class FileReaderP extends EventTargetP implements FileReader {
-    declare static readonly EMPTY: 0;
-    declare static readonly LOADING: 1;
-    declare static readonly DONE: 2;
+    static get EMPTY(): 0 { return 0; }
+    static get LOADING(): 1 { return 1; }
+    static get DONE(): 2 { return 2; }
 
     constructor() {
         super();
@@ -22,16 +22,16 @@ export class FileReaderP extends EventTargetP implements FileReader {
     get readyState() { return this[state].readyState; }
     get result() { return this[state].result; }
 
-    declare readonly EMPTY: 0;
-    declare readonly LOADING: 1;
-    declare readonly DONE: 2;
+    get EMPTY(): 0 { return 0; }
+    get LOADING(): 1 { return 1; }
+    get DONE(): 2 { return 2; }
 
     get error() { return this[state].error as (DOMException | null); }
 
     abort(): void {
-        if (this.readyState === FileReaderP.LOADING) {
+        if (this.readyState === 1 /* LOADING */) {
             const s = this[state];
-            s.readyState = FileReaderP.DONE;
+            s.readyState = 2 /* DONE */;
             s.result = null;
             s.error = new MPException("An ongoing operation was aborted, typically with a call to abort().", "AbortError");
             emitProcessEvent(this, "abort");
@@ -94,19 +94,9 @@ export class FileReaderP extends EventTargetP implements FileReader {
     set onprogress(value) { this[state].onprogress = value; attach(this, "progress"); }
 
     /** @internal */ toString() { return "[object FileReader]"; }
+    /** @internal */ get [Symbol.toStringTag]() { return "FileReader"; }
     /** @internal */ get isPolyfill() { return { symbol: polyfill, hierarchy: ["FileReader", "EventTarget"] }; }
 }
-
-const properties = {
-    EMPTY: { value: 0, enumerable: true },
-    LOADING: { value: 1, enumerable: true },
-    DONE: { value: 2, enumerable: true },
-};
-
-Object.defineProperties(FileReaderP, properties);
-Object.defineProperties(FileReaderP.prototype, properties);
-
-Class_setStringTag(FileReaderP, "FileReader");
 
 /** @internal */
 const _handlers = Symbol();
@@ -119,7 +109,7 @@ class FileReaderState {
 
     target: FileReader;
 
-    readyState: FileReader["readyState"] = FileReaderP.EMPTY;
+    readyState: FileReader["readyState"] = 0 /* EMPTY */;
     result: string | ArrayBuffer | null = null;
     error: DOMException | MPException | null = null;
 
@@ -142,12 +132,12 @@ function read(reader: FileReader, kind: string, args: [Blob, string?], setResult
     const s = (reader as FileReaderP)[state];
 
     s.error = null;
-    s.readyState = FileReaderP.LOADING;
+    s.readyState = 1 /* LOADING */;
     emitProcessEvent(s.target, "loadstart", 0, blob.size);
 
     setTimeout(() => {
-        if (s.readyState === FileReaderP.LOADING) {
-            s.readyState = FileReaderP.DONE;
+        if (s.readyState === 1 /* LOADING */) {
+            s.readyState = 2 /* DONE */;
 
             try {
                 setResult(blob);

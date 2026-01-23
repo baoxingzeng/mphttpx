@@ -433,6 +433,9 @@ export interface IAliRequestFailCallbackResult {
      * 注意：当错误码为 14 或 19 时才会返回此字段
      */
     headers?: object;
+
+    /* Alipay IDE */ statusCode?: number;
+    /* Alipay IDE */ header?: object;
 }
 
 export interface IRequestTask {

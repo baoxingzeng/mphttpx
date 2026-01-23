@@ -1,4 +1,4 @@
-import { g, polyfill, Class_setStringTag, checkArgsLength, isObjectType, isPolyfillType } from "./isPolyfill";
+import { g, polyfill, checkArgsLength, isObjectType, isPolyfillType } from "./isPolyfill";
 
 /** @internal */ const state = Symbol(/* "HeadersState" */);
 const checkArgsFn = (args: any[], required: number, funcName: string) => { checkArgsLength(args, required, "Headers", funcName); }
@@ -9,7 +9,7 @@ export class HeadersP implements Headers {
 
         if (init !== undefined) {
             if (isObjectType<Headers>("Headers", init) || isPolyfillType<Headers>("Headers", init)) {
-                init.forEach((value, name) => { this.append(name, value); }, this);
+                init.forEach((value, name) => { Headers_append(this, name, value); }, this);
             }
 
             else if (Array.isArray(init) || (init && typeof init === "object" && Symbol.iterator in init)) {
@@ -30,7 +30,7 @@ export class HeadersP implements Headers {
 
             else {
                 if (init && typeof init === "object") {
-                    Object.getOwnPropertyNames(init).forEach(name => { this.append(name, init[name]!) }, this);
+                    Object.getOwnPropertyNames(init).forEach(name => { this.append(name, init[name]!); }, this);
                 } else {
                     throw new TypeError("Failed to construct 'Headers': The provided value is not of type '(record<ByteString, ByteString> or sequence<sequence<ByteString>>)'.");
                 }
@@ -48,44 +48,21 @@ export class HeadersP implements Headers {
         checkArgsFn(args, 2, "append");
         let _name = normalizeName(name, throwsFn(this[state][_initialized] ? "append" : ""));
         let _value = normalizeValue(value);
-        let index = -1;
-        let array = this[state][_headersArray];
-        for (let i = 0; i < array.length; ++i) {
-            let item = array[i]!;
-            if (item[0] === _name) {
-                item[1] = `${item[1]}, ${_value}`;
-                index = i;
-                break;
-            }
-        }
-        if (index === -1) { array.push([_name, _value]); }
+        Headers_append(this, _name, _value);
     }
 
     delete(...args: [string]): void {
         const [name] = args;
         checkArgsFn(args, 1, "delete");
         let _name = normalizeName(name, throwsFn("delete"));
-        let index = -1;
-        let array = this[state][_headersArray];
-        let result: [string, string][] = [];
-        for (let i = 0; i < array.length; ++i) {
-            let item = array[i]!;
-            if (item[0] === _name) { index = i; continue; }
-            result.push(item);
-        }
-        if (index > -1) { this[state][_headersArray] = result; }
+        delete this[state][_headersDict][_name];
     }
 
     get(...args: [string]): string | null {
         const [name] = args;
         checkArgsFn(args, 1, "get");
         let _name = normalizeName(name, throwsFn("get"));
-        let array = this[state][_headersArray];
-        for (let i = 0; i < array.length; ++i) {
-            let item = array[i]!;
-            if (item[0] === _name) { return item[1]; }
-        }
-        return null;
+        return this[state][_headersDict][_name] ?? null;
     }
 
     getSetCookie(): string[] {
@@ -97,12 +74,7 @@ export class HeadersP implements Headers {
         const [name] = args;
         checkArgsFn(args, 1, "has");
         let _name = normalizeName(name, throwsFn("has"));
-        let array = this[state][_headersArray];
-        for (let i = 0; i < array.length; ++i) {
-            let item = array[i]!;
-            if (item[0] === _name) { return true; }
-        }
-        return false;
+        return this[state][_headersDict].hasOwnProperty(_name);
     }
 
     set(...args: [string, string]): void {
@@ -110,17 +82,7 @@ export class HeadersP implements Headers {
         checkArgsFn(args, 2, "set");
         let _name = normalizeName(name, throwsFn("set"));
         let _value = normalizeValue(value);
-        let index = -1;
-        let array = this[state][_headersArray];
-        for (let i = 0; i < array.length; ++i) {
-            let item = array[i]!;
-            if (item[0] === _name) {
-                item[1] = _value;
-                index = i;
-                break;
-            }
-        }
-        if (index === -1) { array.push([_name, _value]); }
+        this[state][_headersDict][_name] = _value;
     }
 
     forEach(...args: [(value: string, key: string, parent: Headers) => void, any?]): void {
@@ -129,42 +91,53 @@ export class HeadersP implements Headers {
         if (typeof callbackfn !== "function") {
             throw new TypeError("Failed to execute 'forEach' on 'Headers': parameter 1 is not of type 'Function'.");
         }
-        let array = this[state][_headersArray];
-        for (let i = 0; i < array.length; ++i) {
-            let item = array[i]!
-            callbackfn.call(thisArg, item[1], item[0], this);
+        let names = Object.getOwnPropertyNames(this[state][_headersDict]);
+        for (let i = 0; i < names.length; ++i) {
+            let name = names[i]!;
+            callbackfn.call(thisArg, this[state][_headersDict][name]!, name, this);
         }
     }
 
     entries() {
-        return this[state][_headersArray].map(x => [x[0], x[1]] as [string, string]).values();
+        let array: [string, string][] = [];
+        this.forEach((value, name) => { array.push([name, value]); });
+        return array.values();
     }
 
     keys() {
-        return this[state][_headersArray].map(x => x[0]).values();
+        let array: string[] = [];
+        this.forEach((value, name) => { array.push(name); });
+        return array.values();
     }
 
     values() {
-        return this[state][_headersArray].map(x => x[1]).values();
+        let array: string[] = [];
+        this.forEach((value, name) => { array.push(value); });
+        return array.values();
     }
 
     [Symbol.iterator]() {
         return this.entries();
     }
-
+    
     /** @internal */ toString() { return "[object Headers]"; }
+    /** @internal */ get [Symbol.toStringTag]() { return "Headers"; }
     /** @internal */ get isPolyfill() { return { symbol: polyfill, hierarchy: ["Headers"] }; }
 }
 
-Class_setStringTag(HeadersP, "Headers");
-
 /** @internal */ const _initialized = Symbol();
-/** @internal */ const _headersArray = Symbol();
+/** @internal */ const _headersDict = Symbol();
 
 /** @internal */
 class HeadersState {
     [_initialized] = false;
-    [_headersArray]: [string, string][] = [];
+    [_headersDict]: Record<string, string> = {};
+}
+
+function Headers_append(headers: Headers, name: string, value: string) {
+    let dict = (headers as HeadersP)[state][_headersDict];
+    let oldValue = dict[name];
+    dict[name] = oldValue !== undefined ? `${oldValue}, ${value}` : value;
 }
 
 function throwsFn(kind: string) {

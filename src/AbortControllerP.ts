@@ -1,4 +1,4 @@
-import { g, polyfill, Class_setStringTag } from "./isPolyfill";
+import { g, polyfill } from "./isPolyfill";
 import { createAbortSignal, AbortSignal_abort } from "./AbortSignalP";
 
 /** @internal */
@@ -19,10 +19,9 @@ export class AbortControllerP implements AbortController {
     }
 
     /** @internal */ toString() { return "[object AbortController]"; }
+    /** @internal */ get [Symbol.toStringTag]() { return "AbortController"; }
     /** @internal */ get isPolyfill() { return { symbol: polyfill, hierarchy: ["AbortController"] }; }
 }
-
-Class_setStringTag(AbortControllerP, "AbortController");
 
 /** @internal */
 class AbortControllerState {

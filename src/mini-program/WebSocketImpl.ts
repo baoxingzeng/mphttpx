@@ -6,7 +6,7 @@ import { Event_setTrusted, createInnerEvent } from "../EventP";
 import { EventTargetP, EventTarget_fire, attachFn, executeFn } from "../EventTargetP";
 import { connectSocket } from "./connectSocket";
 import type { TConnectSocketFunc, IConnectSocketOption, ISocketTask } from "./connectSocket";
-import { polyfill, Class_setStringTag, checkArgsLength, MPException, isPolyfillType, isArrayBuffer } from "../isPolyfill";
+import { polyfill, checkArgsLength, MPException, isPolyfillType, isArrayBuffer } from "../isPolyfill";
 
 const mp = { connectSocket: connectSocket };
 export const setConnectSocket = (connectSocket: unknown) => { mp.connectSocket = connectSocket as TConnectSocketFunc; }
@@ -15,10 +15,10 @@ export const setConnectSocket = (connectSocket: unknown) => { mp.connectSocket =
 const state = Symbol(/* "WebSocketState" */);
 
 export class WebSocketImpl extends EventTargetP implements WebSocket {
-    declare static readonly CONNECTING: 0;
-    declare static readonly OPEN: 1;
-    declare static readonly CLOSING: 2;
-    declare static readonly CLOSED: 3;
+    static get CONNECTING(): 0 { return 0; }
+    static get OPEN(): 1 { return 1; }
+    static get CLOSING(): 2 { return 2; }
+    static get CLOSED(): 3 { return 3; }
 
     constructor(...args: [string | URL, (string | string[])?]) {
         const [url, protocols] = args;
@@ -49,10 +49,10 @@ export class WebSocketImpl extends EventTargetP implements WebSocket {
     /** @internal */
     [state]: WebSocketState;
     
-    declare readonly CONNECTING: 0;
-    declare readonly OPEN: 1;
-    declare readonly CLOSING: 2;
-    declare readonly CLOSED: 3;
+    get CONNECTING(): 0 { return 0; }
+    get OPEN(): 1 { return 1; }
+    get CLOSING(): 2 { return 2; }
+    get CLOSED(): 3 { return 3; }
 
     get binaryType() { return this[state].binaryType; }
     set binaryType(value) { if (value === "blob" || value === "arraybuffer") { this[state].binaryType = value; } }
@@ -64,15 +64,15 @@ export class WebSocketImpl extends EventTargetP implements WebSocket {
     get url() { return this[state].url; }
 
     close(code?: number, reason?: string): void {
-        if (this.readyState === WebSocketImpl.CLOSING || this.readyState === WebSocketImpl.CLOSED) return;
-        this[state].readyState = WebSocketImpl.CLOSING;
+        if (this.readyState === 2 /* CLOSING */ || this.readyState === 3 /* CLOSED */) return;
+        this[state].readyState = 2 /* CLOSING */;
 
         this[state][_socketTask].close({
             code: code,
             reason: reason,
             fail(err: unknown) { console.error(err); },
             complete: (function (this: WebSocket) {
-                (this as WebSocketImpl)[state].readyState = WebSocketImpl.CLOSED;
+                (this as WebSocketImpl)[state].readyState = 3 /* CLOSED */;
             }).bind(this),
         });
     }
@@ -81,11 +81,11 @@ export class WebSocketImpl extends EventTargetP implements WebSocket {
         const [data] = args;
         checkArgsLength(args, 1, "WebSocket", "send");
 
-        if (this.readyState === WebSocketImpl.CONNECTING) {
+        if (this.readyState === 0 /* CONNECTING */) {
             throw new MPException("Failed to execute 'send' on 'WebSocket': Still in CONNECTING state.", "InvalidStateError");
         }
 
-        if (this.readyState === WebSocketImpl.CLOSING || this.readyState === WebSocketImpl.CLOSED) {
+        if (this.readyState === 2 /* CLOSING */ || this.readyState === 3 /* CLOSED */) {
             return console.error("WebSocket is already in CLOSING or CLOSED state.");
         }
 
@@ -120,20 +120,9 @@ export class WebSocketImpl extends EventTargetP implements WebSocket {
     set onopen(value) { this[state].onopen = value; attach(this, "open"); }
 
     /** @internal */ toString() { return "[object WebSocket]"; }
+    /** @internal */ get [Symbol.toStringTag]() { return "WebSocket"; }
     /** @internal */ get isPolyfill() { return { symbol: polyfill, hierarchy: ["WebSocket", "EventTarget"] }; }
 }
-
-const properties = {
-    CONNECTING: { value: 0, enumerable: true },
-    OPEN: { value: 1, enumerable: true },
-    CLOSING: { value: 2, enumerable: true },
-    CLOSED: { value: 3, enumerable: true },
-};
-
-Object.defineProperties(WebSocketImpl, properties);
-Object.defineProperties(WebSocketImpl.prototype, properties);
-
-Class_setStringTag(WebSocketImpl, "WebSocket");
 
 /** @internal */ const _socketTask = Symbol();
 /** @internal */ const _error = Symbol();
@@ -191,7 +180,7 @@ function onOpen(ws: WebSocket) {
             _ws[state].protocol = headers.get("Sec-WebSocket-Protocol") || "";
         }
 
-        _ws[state].readyState = WebSocketImpl.OPEN;
+        _ws[state].readyState = 1 /* OPEN */;
         EventTarget_fire(_ws, createInnerEvent(_ws, "open"));
     });
 }
@@ -199,7 +188,7 @@ function onOpen(ws: WebSocket) {
 function onClose(ws: WebSocket) {
     let _ws = ws as WebSocketImpl;
      _ws[state][_socketTask].onClose(res => {
-        _ws[state].readyState = WebSocketImpl.CLOSED;
+        _ws[state].readyState = 3 /* CLOSED */;
 
         let event = new CloseEventP("close", {
             wasClean: !_ws[state][_error],
@@ -218,7 +207,7 @@ function onError(ws: WebSocket) {
         console.error(res);
 
         _ws[state][_error] = res;
-        _ws[state].readyState = WebSocketImpl.CLOSED;
+        _ws[state].readyState = 3 /* CLOSED */;
         EventTarget_fire(_ws, createInnerEvent(_ws, "error"));
     });
 }

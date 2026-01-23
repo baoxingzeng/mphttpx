@@ -1,7 +1,7 @@
-import { BodyImpl, bodyState, Body_init, Body_toPayload } from "./BodyImpl";
 import { HeadersP } from "./HeadersP";
 import { AbortControllerP } from "./AbortControllerP";
-import { g, polyfill, Class_setStringTag, checkArgsLength, isPolyfillType } from "./isPolyfill";
+import { g, polyfill, checkArgsLength, isPolyfillType } from "./isPolyfill";
+import { BodyImpl, bodyState, Body_init, Body_toPayload } from "./BodyImpl";
 
 /** @internal */ const state = Symbol(/* "RequestState" */);
 /** @internal */ export { state as requestState };
@@ -107,10 +107,9 @@ export class RequestP extends BodyImpl implements Request {
     }
 
     /** @internal */ toString() { return "[object Request]"; }
+    /** @internal */ get [Symbol.toStringTag]() { return "Request"; }
     /** @internal */ get isPolyfill() { return { symbol: polyfill, hierarchy: ["Request"] }; }
 }
-
-Class_setStringTag(RequestP, "Request");
 
 /** @internal */
 class RequestState {

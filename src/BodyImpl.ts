@@ -1,6 +1,6 @@
 import { BlobP, Blob_toUint8Array, encode, decode } from "./BlobP";
 import { FormData_toBlob, createFormDataFromBinaryText } from "./FormDataP";
-import { polyfill, Class_setStringTag, isObjectType, isPolyfillType, isArrayBuffer } from "./isPolyfill";
+import { polyfill, isObjectType, isPolyfillType, isArrayBuffer } from "./isPolyfill";
 
 /** @internal */ const state = Symbol(/* "BodyState" */);
 /** @internal */ export { state as bodyState };
@@ -57,10 +57,9 @@ export abstract class BodyImpl implements Body {
     }
 
     /** @internal */ toString() { return "[object Body]"; }
+    /** @internal */ get [Symbol.toStringTag]() { return "Body"; }
     /** @internal */ get isPolyfill() { return { symbol: polyfill, hierarchy: ["Body"] }; }
 }
-
-Class_setStringTag(BodyImpl, "Body");
 
 /** @internal */
 const _body = Symbol();

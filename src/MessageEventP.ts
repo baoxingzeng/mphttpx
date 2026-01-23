@@ -1,6 +1,6 @@
 import { type Event_EtFields } from "./EventP";
 import { EventP, Event_getEtField } from "./EventP";
-import { g, polyfill, Class_setStringTag, checkArgsLength } from "./isPolyfill";
+import { g, polyfill, checkArgsLength } from "./isPolyfill";
 
 const dispatched: Event_EtFields["Dispatched"] = 1;
 
@@ -45,10 +45,9 @@ export class MessageEventP<T> extends EventP implements MessageEvent {
     }
 
     /** @internal */ toString() { return "[object MessageEvent]"; }
+    /** @internal */ get [Symbol.toStringTag]() { return "MessageEvent"; }
     /** @internal */ get isPolyfill() { return { symbol: polyfill, hierarchy: ["MessageEvent", "Event"] }; }
 }
-
-Class_setStringTag(MessageEventP, "MessageEvent");
 
 /** @internal */
 class MessageEventState {

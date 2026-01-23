@@ -1,4 +1,4 @@
-import { polyfill, Class_setStringTag } from "./isPolyfill";
+import { polyfill } from "./isPolyfill";
 import { EventTargetP, attachFn, executeFn } from "./EventTargetP";
 
 /** @internal */ const state = Symbol(/* "XMLHttpRequestEventTargetState" */);
@@ -40,10 +40,9 @@ export class XMLHttpRequestEventTargetP extends EventTargetP implements XMLHttpR
     set ontimeout(value) { this[state].ontimeout = value; attach(this, "timeout"); }
 
     /** @internal */ toString() { return "[object XMLHttpRequestEventTarget]"; }
+    /** @internal */ get [Symbol.toStringTag]() { return "XMLHttpRequestEventTarget"; }
     /** @internal */ get isPolyfill() { return { symbol: polyfill, hierarchy: ["XMLHttpRequestEventTarget", "EventTarget"] }; }
 }
-
-Class_setStringTag(XMLHttpRequestEventTargetP, "XMLHttpRequestEventTarget");
 
 /** @internal */
 const _handlers = Symbol();
@@ -88,15 +87,6 @@ function getHandlers(s: XMLHttpRequestEventTargetState) {
         ontimeout: (ev: ProgressEvent) => { executeFn(s.target, s.ontimeout, ev); },
     };
 }
-
-/** @internal */
-export const XHR_properties = {
-    UNSENT: { value: 0, enumerable: true },
-    OPENED: { value: 1, enumerable: true },
-    HEADERS_RECEIVED: { value: 2, enumerable: true },
-    LOADING: { value: 3, enumerable: true },
-    DONE: { value: 4, enumerable: true },
-};
 
 const responseTypes = ["", "text", "json", "arraybuffer", "blob", "document"];
 

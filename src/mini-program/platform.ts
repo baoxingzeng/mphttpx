@@ -3,8 +3,7 @@ import { g } from "../isPolyfill";
 import type { TRequestFunc } from "./request";
 import type { TConnectSocketFunc } from "./connectSocket";
 
-/** @internal */
-export const mp = (() => {
+function getPlatform() {
     let u = "undefined", r = "request", f = "function";
     let mp: { request: TRequestFunc, connectSocket: TConnectSocketFunc };
 
@@ -30,4 +29,7 @@ export const mp = (() => {
         undefined;
 
     return mp;
-})();
+}
+
+/** @internal */
+export const mp = getPlatform();

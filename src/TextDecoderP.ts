@@ -1,4 +1,4 @@
-import { g, polyfill, Class_setStringTag, isObjectType, isArrayBuffer } from "./isPolyfill";
+import { g, polyfill, isObjectType, isArrayBuffer } from "./isPolyfill";
 
 /** @internal */
 const state = Symbol(/* "TextDecoderState" */);
@@ -163,10 +163,9 @@ export class TextDecoderP implements TextDecoder {
     }
 
     /** @internal */ toString() { return "[object TextDecoder]"; }
+    /** @internal */ get [Symbol.toStringTag]() { return "TextDecoder"; }
     /** @internal */ get isPolyfill() { return { symbol: polyfill, hierarchy: ["TextDecoder"] }; }
 }
-
-Class_setStringTag(TextDecoderP, "TextDecoder");
 
 /** @internal */ const _bomDone = Symbol();
 /** @internal */ const _partial = Symbol();

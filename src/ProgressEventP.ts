@@ -1,4 +1,4 @@
-import { g, polyfill, Class_setStringTag } from "./isPolyfill";
+import { g, polyfill } from "./isPolyfill";
 import { EventTarget_fire } from "./EventTargetP";
 import { EventP, eventState, Event_setTrusted } from "./EventP";
 
@@ -31,10 +31,9 @@ export class ProgressEventP extends EventP implements ProgressEvent {
     get total() { return getValue(this[state].total); }
 
     /** @internal */ toString() { return "[object ProgressEvent]"; }
+    /** @internal */ get [Symbol.toStringTag]() { return "ProgressEvent"; }
     /** @internal */ get isPolyfill() { return { symbol: polyfill, hierarchy: ["ProgressEvent", "Event"] }; }
 }
-
-Class_setStringTag(ProgressEventP, "ProgressEvent");
 
 /** @internal */
 class ProgressEventState {

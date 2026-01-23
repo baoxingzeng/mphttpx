@@ -1,4 +1,4 @@
-import { g, polyfill, Class_setStringTag, checkArgsLength, isObjectType, isPolyfillType } from "./isPolyfill";
+import { g, polyfill, checkArgsLength, isObjectType, isPolyfillType } from "./isPolyfill";
 
 /** @internal */ const state = Symbol(/* "URLSearchParamsState" */);
 const checkArgsFn = (args: any[], required: number, funcName: string) => { checkArgsLength(args, required, "URLSearchParams", funcName); }
@@ -198,11 +198,9 @@ export class URLSearchParamsP implements URLSearchParams {
         return result.join("&");
     }
 
-    /** @internal */
-    get isPolyfill() { return { symbol: polyfill, hierarchy: ["URLSearchParams"] }; }
+    /** @internal */ get [Symbol.toStringTag]() { return "URLSearchParams"; }
+    /** @internal */ get isPolyfill() { return { symbol: polyfill, hierarchy: ["URLSearchParams"] }; }
 }
-
-Class_setStringTag(URLSearchParamsP, "URLSearchParams");
 
 /** @internal */
 const _urlspArray = Symbol();

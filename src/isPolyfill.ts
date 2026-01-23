@@ -10,14 +10,6 @@
 export const polyfill = "MPHTTPX";
 
 /** @internal */
-export function Class_setStringTag(targetFunc: Function, stringTag: string) {
-    Object.defineProperty(targetFunc.prototype, Symbol.toStringTag, {
-        configurable: true,
-        value: stringTag,
-    });
-}
-
-/** @internal */
 export function checkArgsLength(args: any[], required: number, className: string, funcName?: string) {
     if (args.length < required) {
         throw new TypeError(`Failed to ${funcName ? ("execute '" + funcName + "' on") : "construct"} '${className}': ${required} argument${required > 1 ? "s" : ""} required, but only ${args.length} present.`);
@@ -39,7 +31,7 @@ export function isObjectType<T>(name: string, value: unknown): value is T {
 }
 
 /** @internal */
-export function isPolyfillType<T>(name: string, value: unknown): value is T {
+export function isPolyfillType<T>(name: string, value: unknown, strict = false): value is T {
     type THasIsPolyfill = object & Record<"isPolyfill", unknown>;
     type TIsPolyfillObject = object & Record<"isPolyfill", object>;
     type THasSymbol = object & Record<"isPolyfill", object & Record<"symbol", unknown>>;
@@ -55,10 +47,11 @@ export function isPolyfillType<T>(name: string, value: unknown): value is T {
         && (value as THasSymbol).isPolyfill.symbol === polyfill
         && "hierarchy" in (value as TIsPolyfillObject).isPolyfill
         && Array.isArray((value as THasHierarchy).isPolyfill.hierarchy)
-        && (value as THierarchyIsArray).isPolyfill.hierarchy.indexOf(name) > -1;
+        && ((index: number) => strict ? index === 0 : index > -1)((value as THierarchyIsArray).isPolyfill.hierarchy.indexOf(name));
 }
 
 /** @internal */
 export function isArrayBuffer(value: unknown): value is ArrayBuffer {
-    return (!!value && typeof value === "object" && ArrayBuffer.prototype.isPrototypeOf(value)) || isObjectType<ArrayBuffer>("ArrayBuffer", value);
+    // Mini Program
+    return isObjectType<ArrayBuffer>("ArrayBuffer", value) || (!!value && typeof value === "object" && ArrayBuffer.prototype.isPrototypeOf(value));
 }

@@ -3,7 +3,7 @@ import { normalizeName, normalizeValue, parseHeaders } from "./HeadersP";
 import { Body_toPayload } from "./BodyImpl";
 import { RequestP, requestState } from "./RequestP";
 import { ResponseP, responseState } from "./ResponseP";
-import { g, checkArgsLength, MPException, isObjectType } from "./isPolyfill";
+import { g, checkArgsLength, MPException, isObjectType, isPolyfillType } from "./isPolyfill";
 
 const mp = { XMLHttpRequest: XMLHttpRequest };
 export const setXMLHttpRequest = (XHR: unknown) => { mp.XMLHttpRequest = XHR as typeof globalThis["XMLHttpRequest"]; }
@@ -76,7 +76,7 @@ export function fetchP(...args: [RequestInfo | URL, RequestInit?]): Promise<Resp
             xhr.responseType = "arraybuffer";
         }
 
-        if (init && typeof init === "object" && typeof init.headers === "object" && !isObjectType<Headers>("Headers", init.headers)) {
+        if (init && typeof init === "object" && typeof init.headers === "object" && !(isObjectType<Headers>("Headers", init.headers) || isPolyfillType<Headers>("Headers", init.headers))) {
             let headers = init.headers as Record<string, string>;
             let names: string[] = [];
 
@@ -101,8 +101,8 @@ export function fetchP(...args: [RequestInfo | URL, RequestInit?]): Promise<Resp
             signal.addEventListener("abort", abortXHR);
 
             xhr.onreadystatechange = function () {
-                // DONE (success or failure)
-                if (xhr.readyState === 4) {
+                // success or failure
+                if (xhr.readyState === 4 /* DONE */) {
                     signal.removeEventListener("abort", abortXHR);
                 }
             }

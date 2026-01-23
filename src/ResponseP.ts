@@ -1,6 +1,6 @@
-import { BodyImpl, bodyState, Body_init, Body_toPayload } from "./BodyImpl";
 import { HeadersP } from "./HeadersP";
-import { g, polyfill, Class_setStringTag, checkArgsLength } from "./isPolyfill";
+import { g, polyfill, checkArgsLength } from "./isPolyfill";
+import { BodyImpl, bodyState, Body_init, Body_toPayload } from "./BodyImpl";
 
 /** @internal */ const state = Symbol(/* "ResponseState" */);
 /** @internal */ export { state as responseState };
@@ -87,10 +87,9 @@ export class ResponseP extends BodyImpl implements Response {
     }
 
     /** @internal */ toString() { return "[object Response]"; }
+    /** @internal */ get [Symbol.toStringTag]() { return "Response"; }
     /** @internal */ get isPolyfill() { return { symbol: polyfill, hierarchy: ["Response"] }; }
 }
-
-Class_setStringTag(ResponseP, "Response");
 
 /** @internal */
 class ResponseState {

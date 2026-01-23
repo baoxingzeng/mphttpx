@@ -1,7 +1,7 @@
 import { type Event_EtFields } from "./EventP";
 import { Event_getEtField, Event_setEtField } from "./EventP";
 import { EventP, eventState, Event_setTrusted } from "./EventP";
-import { g, polyfill, Class_setStringTag, checkArgsLength, isPolyfillType } from "./isPolyfill";
+import { g, polyfill, checkArgsLength, isPolyfillType } from "./isPolyfill";
 
 const passive: Event_EtFields["Passive"] = 0;
 const dispatched: Event_EtFields["Dispatched"] = 1;
@@ -80,10 +80,9 @@ export class EventTargetP implements EventTarget {
     }
 
     /** @internal */ toString() { return "[object EventTarget]"; }
+    /** @internal */ get [Symbol.toStringTag]() { return "EventTarget"; }
     /** @internal */ get isPolyfill() { return { symbol: polyfill, hierarchy: ["EventTarget"] }; }
 }
-
-Class_setStringTag(EventTargetP, "EventTarget");
 
 /** @internal */
 const _executors = Symbol();
@@ -106,7 +105,7 @@ export function EventTarget_fire(target: EventTarget, event: Event) {
 
     if (!event.target) evs.target = target;
     evs.currentTarget = target;
-    evs.eventPhase = EventP.AT_TARGET;
+    evs.eventPhase = 2 /* AT_TARGET */;
     Event_setEtField(event, dispatched, true);
 
     let onceIndexes: number[] = [];
@@ -138,7 +137,7 @@ export function EventTarget_fire(target: EventTarget, event: Event) {
     }
 
     evs.currentTarget = null;
-    evs.eventPhase = EventP.NONE;
+    evs.eventPhase = 0 /* NONE */;
     Event_setEtField(event, dispatched, false);
 
     return !(event.cancelable && Event_getEtField(event, preventDefaultCalled));

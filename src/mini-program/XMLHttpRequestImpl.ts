@@ -1,4 +1,4 @@
-import { HeadersP, normalizeName } from "../HeadersP";
+import { HeadersP } from "../HeadersP";
 import { Uint8Array_toBase64, encode } from "../BlobP";
 import { convert, convertBack } from "../BodyImpl";
 import { normalizeMethod } from "../RequestP";
@@ -14,22 +14,21 @@ import type {
     IAliRequestFailCallbackResult
 } from "./request";
 import { request } from "./request";
-import { polyfill, Class_setStringTag, checkArgsLength, MPException } from "../isPolyfill";
+import { polyfill, checkArgsLength, MPException } from "../isPolyfill";
 import { createXMLHttpRequestUpload } from "../XMLHttpRequestUploadP";
-import { XMLHttpRequestEventTargetP, XHR_properties, normalizeResponseType, statusTextMap } from "../XMLHttpRequestEventTargetP";
+import { XMLHttpRequestEventTargetP, normalizeResponseType, statusTextMap } from "../XMLHttpRequestEventTargetP";
 
 const mp = { request: request };
 export const setRequest = (request: unknown) => { mp.request = request as TRequestFunc; }
 
-/** @internal */
-const state = Symbol(/* "XMLHttpRequestState" */);
+/** @internal */ const state = Symbol(/* "XMLHttpRequestState" */);
 
 export class XMLHttpRequestImpl extends XMLHttpRequestEventTargetP implements XMLHttpRequest {
-    declare static readonly UNSENT: 0;
-    declare static readonly OPENED: 1;
-    declare static readonly HEADERS_RECEIVED: 2;
-    declare static readonly LOADING: 3;
-    declare static readonly DONE: 4;
+    static get UNSENT(): 0 { return 0; }
+    static get OPENED(): 1 { return 1; }
+    static get HEADERS_RECEIVED(): 2 { return 2; }
+    static get LOADING(): 3 { return 3; }
+    static get DONE(): 4 { return 4; }
 
     constructor() {
         super();
@@ -39,11 +38,11 @@ export class XMLHttpRequestImpl extends XMLHttpRequestEventTargetP implements XM
     /** @internal */
     [state]: XMLHttpRequestState;
 
-    declare readonly UNSENT: 0;
-    declare readonly OPENED: 1;
-    declare readonly HEADERS_RECEIVED: 2;
-    declare readonly LOADING: 3;
-    declare readonly DONE: 4;
+    get UNSENT(): 0 { return 0; }
+    get OPENED(): 1 { return 1; }
+    get HEADERS_RECEIVED(): 2 { return 2; }
+    get LOADING(): 3 { return 3; }
+    get DONE(): 4 { return 4; }
 
     get readyState() { return this[state].readyState; }
     get response() { return this[state].response; }
@@ -57,7 +56,7 @@ export class XMLHttpRequestImpl extends XMLHttpRequestEventTargetP implements XM
     get status() { return this[state].status; }
 
     get statusText() {
-        if (this.readyState === XMLHttpRequestImpl.UNSENT || this.readyState === XMLHttpRequestImpl.OPENED) return "";
+        if (this.readyState === 0 /* UNSENT */ || this.readyState === 1 /* OPENED */) return "";
         return this[state].statusText || statusTextMap(this.status);
     }
 
@@ -118,7 +117,7 @@ export class XMLHttpRequestImpl extends XMLHttpRequestEventTargetP implements XM
         }
 
         s[_inAfterOpenBeforeSend] = true;
-        setReadyStateAndNotify(this, XMLHttpRequestImpl.OPENED);
+        setReadyStateAndNotify(this, 1 /* OPENED */);
     }
 
     overrideMimeType(...args: [string]): void {
@@ -132,7 +131,7 @@ export class XMLHttpRequestImpl extends XMLHttpRequestEventTargetP implements XM
     send(body?: Document | XMLHttpRequestBodyInit | null): void {
         const s = this[state];
 
-        if (!s[_inAfterOpenBeforeSend] || s.readyState !== XMLHttpRequestImpl.OPENED) {
+        if (!s[_inAfterOpenBeforeSend] || s.readyState !== 1 /* OPENED */) {
             throw new MPException("Failed to execute 'send' on 'XMLHttpRequest': The object's state must be OPENED.", "InvalidStateError");
         }
 
@@ -176,7 +175,7 @@ export class XMLHttpRequestImpl extends XMLHttpRequestEventTargetP implements XM
 
         setTimeout(() => {
             if (s.upload) {
-                const _aborted = s[_inAfterOpenBeforeSend] || s.readyState !== XMLHttpRequestImpl.OPENED;
+                const _aborted = s[_inAfterOpenBeforeSend] || s.readyState !== 1 /* OPENED */;
                 const _contentLength = _aborted ? 0 : contentLength;
 
                 if (_aborted) {
@@ -201,15 +200,15 @@ export class XMLHttpRequestImpl extends XMLHttpRequestEventTargetP implements XM
         checkArgsLength(args, 2, "XMLHttpRequest", "setRequestHeader");
 
         const s = this[state];
-        if (!s[_inAfterOpenBeforeSend] || s.readyState !== XMLHttpRequestImpl.OPENED) {
+        if (!s[_inAfterOpenBeforeSend] || s.readyState !== 1 /* OPENED */) {
             throw new MPException("Failed to execute 'setRequestHeader' on 'XMLHttpRequest': The object's state must be OPENED.", "InvalidStateError");
         }
 
-        let _name = normalizeName(name, () => {
-            throw new SyntaxError(`Failed to execute 'setRequestHeader' on 'XMLHttpRequest': '${name}' is not a valid HTTP header field name.`);
-        });
-
-        s[_requestHeaders].append(_name, value);
+        try {
+            s[_requestHeaders].append(name, value);
+        } catch (e) {
+            throw new SyntaxError(`Failed to execute 'setRequestHeader' on 'XMLHttpRequest': '${String(name)}' is not a valid HTTP header field name.`);
+        }
     }
 
     get onreadystatechange() { return this[state].onreadystatechange; }
@@ -219,13 +218,9 @@ export class XMLHttpRequestImpl extends XMLHttpRequestEventTargetP implements XM
     }
 
     /** @internal */ toString() { return "[object XMLHttpRequest]"; }
+    /** @internal */ get [Symbol.toStringTag]() { return "XMLHttpRequest"; }
     /** @internal */ get isPolyfill() { return { symbol: polyfill, hierarchy: ["XMLHttpRequest", "XMLHttpRequestEventTarget", "EventTarget"] }; }
 }
-
-Object.defineProperties(XMLHttpRequestImpl, XHR_properties);
-Object.defineProperties(XMLHttpRequestImpl.prototype, XHR_properties);
-
-Class_setStringTag(XMLHttpRequestImpl, "XMLHttpRequest");
 
 /** @internal */ const _handlers = Symbol();
 
@@ -249,7 +244,7 @@ class XMLHttpRequestState {
 
     target: XMLHttpRequest;
 
-    readyState: XMLHttpRequest["readyState"] = XMLHttpRequestImpl.UNSENT;
+    readyState: XMLHttpRequest["readyState"] = 0 /* UNSENT */;
     response: any = "";
     responseType: XMLHttpRequestResponseType = "";
     responseURL = "";
@@ -290,14 +285,14 @@ function requestSuccess(this: XMLHttpRequest, res: IRequestSuccessCallbackBaseRe
 
     s.responseURL = s[_requestURL];
     s.status = "statusCode" in res ? res.statusCode : "status" in res ? (res as IRequestSuccessCallbackBaseResult).status! : 200;
-    s[_responseHeaders] = new HeadersP(("header" in res ? res.header : "headers" in res ? (res as IRequestSuccessCallbackBaseResult).headers : undefined) as Record<string, string>);
+    s[_responseHeaders] = new HeadersP(("header" in res ? res.header : "headers" in res ? (res as IRequestSuccessCallbackBaseResult).headers! : {}) as Record<string, string>);
 
     let lengthStr = s[_responseHeaders]!.get("Content-Length");
     s[_responseContentLength] = () => { return lengthStr ? parseInt(lengthStr) : 0; }
 
-    if (s.readyState === XMLHttpRequestImpl.OPENED) {
-        setReadyStateAndNotify(this, XMLHttpRequestImpl.HEADERS_RECEIVED);
-        setReadyStateAndNotify(this, XMLHttpRequestImpl.LOADING);
+    if (s.readyState === 1 /* OPENED */) {
+        setReadyStateAndNotify(this, 2 /* HEADERS_RECEIVED */);
+        setReadyStateAndNotify(this, 3 /* LOADING */);
 
         setTimeout(() => {
             if (!s[_inAfterOpenBeforeSend]) {
@@ -328,7 +323,7 @@ function requestFail(this: XMLHttpRequest, err: IRequestFailCallbackResult | IAl
         requestSuccess.call(this, {
             statusCode: "statusCode" in err ? err.statusCode as number : err.status || 0,
             header: "header" in err ? err.header as object : err.headers || {},
-            data: "data" in err ? err.data : "",
+            data: "data" in err ? err.data || "" : "",
         });
         return;
     }
@@ -337,7 +332,7 @@ function requestFail(this: XMLHttpRequest, err: IRequestFailCallbackResult | IAl
     s.status = 0;
     s.statusText = "errMsg" in err ? err.errMsg : "errorMessage" in err ? err.errorMessage : "";
 
-    if (!s[_inAfterOpenBeforeSend] && s.readyState !== XMLHttpRequestImpl.UNSENT && s.readyState !== XMLHttpRequestImpl.DONE) {
+    if (!s[_inAfterOpenBeforeSend] && s.readyState !== 0 /* UNSENT */ && s.readyState !== 4 /* DONE */) {
         emitProcessEvent(this, "error");
         resetRequestTimeout(this);
     }
@@ -347,8 +342,8 @@ function requestComplete(this: XMLHttpRequest) {
     const s = (this as XMLHttpRequestImpl)[state];
     s[_requestTask] = null;
 
-    if (!s[_inAfterOpenBeforeSend] && (s.readyState === XMLHttpRequestImpl.OPENED || s.readyState === XMLHttpRequestImpl.LOADING)) {
-        setReadyStateAndNotify(this, XMLHttpRequestImpl.DONE);
+    if (!s[_inAfterOpenBeforeSend] && (s.readyState === 1 /* OPENED */ || s.readyState === 3 /* LOADING */)) {
+        setReadyStateAndNotify(this, 4 /* DONE */);
     }
 
     setTimeout(() => {
@@ -371,12 +366,11 @@ function clearRequest(xhr: XMLHttpRequest, delay = true) {
     const timerFn = delay ? setTimeout : (f: () => void) => { f(); };
     s[_resetPending] = true;
 
-    if (s[_requestTask] && s.readyState !== XMLHttpRequestImpl.DONE) {
-        if (delay) { setReadyStateAndNotify(xhr, XMLHttpRequestImpl.DONE); }
+    if (s[_requestTask] && s.readyState !== 4 /* DONE */) {
+        if (delay) { setReadyStateAndNotify(xhr, 4 /* DONE */); }
 
         timerFn(() => {
             const requestTask = s[_requestTask];
-
             if (requestTask) { safeAbort(requestTask); }
             if (delay) { emitProcessEvent(xhr, "abort"); }
             if (delay && !requestTask) { emitProcessEvent(xhr, "loadend"); }
@@ -385,7 +379,7 @@ function clearRequest(xhr: XMLHttpRequest, delay = true) {
 
     timerFn(() => {
         if (s[_resetPending]) {
-            if (delay) { s.readyState = XMLHttpRequestImpl.UNSENT; }
+            if (delay) { s.readyState = 0 /* UNSENT */; }
             resetXHR(xhr);
         }
     });
@@ -395,9 +389,9 @@ function checkRequestTimeout(xhr: XMLHttpRequest) {
     const s = (xhr as XMLHttpRequestImpl)[state];
     if (s.timeout) {
         s[_timeoutId] = setTimeout(() => {
-            if (!s.status && s.readyState !== XMLHttpRequestImpl.DONE) {
+            if (!s.status && s.readyState !== 4 /* DONE */) {
                 if (s[_requestTask]) safeAbort(s[_requestTask]!);
-                setReadyStateAndNotify(xhr, XMLHttpRequestImpl.DONE);
+                setReadyStateAndNotify(xhr, 4 /* DONE */);
                 emitProcessEvent(xhr, "timeout");
             }
         }, s.timeout);

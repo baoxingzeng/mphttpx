@@ -1,4 +1,4 @@
-import { g, polyfill, Class_setStringTag, checkArgsLength, isObjectType } from "./isPolyfill";
+import { g, polyfill, checkArgsLength, isObjectType } from "./isPolyfill";
 
 export class TextEncoderP implements TextEncoder {
     get encoding() { return "utf-8"; }
@@ -22,10 +22,9 @@ export class TextEncoderP implements TextEncoder {
     }
 
     /** @internal */ toString() { return "[object TextEncoder]"; }
+    /** @internal */ get [Symbol.toStringTag]() { return "TextEncoder"; }
     /** @internal */ get isPolyfill() { return { symbol: polyfill, hierarchy: ["TextEncoder"] }; }
 }
-
-Class_setStringTag(TextEncoderP, "TextEncoder");
 
 function encodeText(input: string, destination?: Uint8Array) {
     const HAS_DESTINATION = typeof destination !== "undefined";

@@ -1,6 +1,6 @@
 import { BlobP } from "./BlobP";
 import { FileP } from "./FileP";
-import { g, polyfill, Class_setStringTag, checkArgsLength, isObjectType, isPolyfillType } from "./isPolyfill";
+import { g, polyfill, checkArgsLength, isObjectType, isPolyfillType } from "./isPolyfill";
 
 /** @internal */ const state = Symbol(/* "FormDataState" */);
 const checkArgsFn = (args: any[], required: number, funcName: string) => { checkArgsLength(args, required, "FormData", funcName); }
@@ -136,10 +136,9 @@ export class FormDataP implements FormData {
     }
 
     /** @internal */ toString() { return "[object FormData]"; }
+    /** @internal */ get [Symbol.toStringTag]() { return "FormData"; }
     /** @internal */ get isPolyfill() { return { symbol: polyfill, hierarchy: ["FormData"] }; }
 }
-
-Class_setStringTag(FormDataP, "FormData");
 
 /** @internal */
 const _formData = Symbol();
@@ -178,7 +177,7 @@ function normalizeArgs(name: string, value: string | Blob, filename?: string): [
             : typeof (value as File).name === "string"
                 ? (value as File).name
                 : "blob";
-        if ((value as File).name !== filename || isObjectType<Blob>("Blob", value)) {
+        if ((value as File).name !== filename || isObjectType<Blob>("Blob", value) || isPolyfillType<Blob>("Blob", value, true)) {
             value = new FileP([value], filename);
         }
         return ["" + name, value as File];

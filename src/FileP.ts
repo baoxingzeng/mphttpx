@@ -1,5 +1,5 @@
 import { BlobP } from "./BlobP";
-import { g, polyfill, Class_setStringTag, checkArgsLength } from "./isPolyfill";
+import { g, polyfill, checkArgsLength } from "./isPolyfill";
 
 /** @internal */
 const state = Symbol(/* "FileState" */);
@@ -24,10 +24,9 @@ export class FileP extends BlobP implements File {
     get webkitRelativePath() { return ""; }
 
     /** @internal */ toString() { return "[object File]"; }
+    /** @internal */ get [Symbol.toStringTag]() { return "File"; }
     /** @internal */ get isPolyfill() { return { symbol: polyfill, hierarchy: ["File", "Blob"] }; }
 }
-
-Class_setStringTag(FileP, "File");
 
 /** @internal */
 class FileState {

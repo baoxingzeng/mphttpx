@@ -1,5 +1,5 @@
 import { EventP } from "./EventP";
-import { g, polyfill, Class_setStringTag } from "./isPolyfill";
+import { g, polyfill } from "./isPolyfill";
 
 /** @internal */
 const state = Symbol(/* "CloseEventState" */);
@@ -24,10 +24,9 @@ export class CloseEventP extends EventP implements CloseEvent {
     get wasClean() { return this[state].wasClean; }
 
     /** @internal */ toString() { return "[object CloseEvent]"; }
+    /** @internal */ get [Symbol.toStringTag]() { return "CloseEvent"; }
     /** @internal */ get isPolyfill() { return { symbol: polyfill, hierarchy: ["CloseEvent", "Event"] }; }
 }
-
-Class_setStringTag(CloseEventP, "CloseEvent");
 
 /** @internal */
 class CloseEventState {

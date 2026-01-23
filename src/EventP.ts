@@ -1,13 +1,13 @@
-import { g, polyfill, Class_setStringTag, checkArgsLength } from "./isPolyfill";
+import { g, polyfill, checkArgsLength } from "./isPolyfill";
 
 /** @internal */ const state = Symbol(/* "EventState" */);
 /** @internal */ export { state as eventState };
 
 export class EventP implements Event {
-    declare static readonly NONE: 0;
-    declare static readonly CAPTURING_PHASE: 1;
-    declare static readonly AT_TARGET: 2;
-    declare static readonly BUBBLING_PHASE: 3;
+    static get NONE(): 0 { return 0; }
+    static get CAPTURING_PHASE(): 1 { return 1; }
+    static get AT_TARGET(): 2 { return 2; }
+    static get BUBBLING_PHASE(): 3 { return 3; }
 
     constructor(...args: [string, EventInit?]) {
         const [type, eventInitDict] = args;
@@ -39,10 +39,10 @@ export class EventP implements Event {
     get currentTarget() { return this[state].currentTarget; }
     get eventPhase() { return this[state].eventPhase; }
 
-    declare readonly NONE: 0;
-    declare readonly CAPTURING_PHASE: 1;
-    declare readonly AT_TARGET: 2;
-    declare readonly BUBBLING_PHASE: 3;
+    get NONE(): 0 { return 0; }
+    get CAPTURING_PHASE(): 1 { return 1; }
+    get AT_TARGET(): 2 { return 2; }
+    get BUBBLING_PHASE(): 3 { return 3; }
 
     get srcElement() { return this[state].target; }
     get cancelBubble() { return this[state].cancelBubble; }
@@ -96,20 +96,9 @@ export class EventP implements Event {
     }
 
     /** @internal */ toString() { return "[object Event]"; }
+    /** @internal */ get [Symbol.toStringTag]() { return "Event"; }
     /** @internal */ get isPolyfill() { return { symbol: polyfill, hierarchy: ["Event"] }; }
 }
-
-const properties = {
-    NONE: { value: 0, enumerable: true },
-    CAPTURING_PHASE: { value: 1, enumerable: true },
-    AT_TARGET: { value: 2, enumerable: true },
-    BUBBLING_PHASE: { value: 3, enumerable: true },
-};
-
-Object.defineProperties(EventP, properties);
-Object.defineProperties(EventP.prototype, properties);
-
-Class_setStringTag(EventP, "Event");
 
 /** @internal */ const _timeStamp = (new Date()).getTime();
 /** @internal */ const _isTrusted = Symbol();
@@ -128,7 +117,7 @@ class EventState {
 
     target: EventTarget | null = null;
     currentTarget: EventTarget | null = null;
-    eventPhase: Event["eventPhase"] = EventP.NONE;
+    eventPhase: Event["eventPhase"] = 0 /* NONE */;
 
     cancelBubble = false;
 

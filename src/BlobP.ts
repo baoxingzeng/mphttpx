@@ -1,6 +1,6 @@
 import { TextEncoderP } from "./TextEncoderP";
 import { TextDecoderP } from "./TextDecoderP";
-import { g, polyfill, Class_setStringTag, isPolyfillType, isArrayBuffer } from "./isPolyfill";
+import { g, polyfill, isPolyfillType, isArrayBuffer } from "./isPolyfill";
 
 /** @internal */
 const state = Symbol(/* "BlobState" */);
@@ -67,10 +67,9 @@ export class BlobP implements Blob {
     }
 
     /** @internal */ toString() { return "[object Blob]"; }
+    /** @internal */ get [Symbol.toStringTag]() { return "Blob"; }
     /** @internal */ get isPolyfill() { return { symbol: polyfill, hierarchy: ["Blob"] }; }
 }
-
-Class_setStringTag(BlobP, "Blob");
 
 /** @internal */
 const _buffer = Symbol();
