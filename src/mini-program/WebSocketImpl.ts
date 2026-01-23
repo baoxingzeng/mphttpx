@@ -242,3 +242,6 @@ function onMessage(ws: WebSocket) {
         EventTarget_fire(socket, event);
     });
 }
+
+const WebSocketE = (typeof WebSocket !== "undefined" && WebSocket) || WebSocketImpl;
+export { WebSocketE as WebSocket };

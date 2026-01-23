@@ -20,9 +20,17 @@ export { EventTarget, EventTargetP } from "./EventTargetP";
 export { Event, EventP } from "./EventP";
 export { CustomEvent, CustomEventP } from "./CustomEventP";
 
-export { XMLHttpRequest, XMLHttpRequestP } from "./XMLHttpRequestP";
-export { WebSocket, WebSocketP } from "./WebSocketP";
+export { XMLHttpRequest, XMLHttpRequestImpl as XMLHttpRequestP } from "./mini-program/XMLHttpRequestImpl";
+export { WebSocket, WebSocketImpl as WebSocketP } from "./mini-program/WebSocketImpl";
 
 export { setXMLHttpRequest } from "./fetchP";
 export { setRequest } from "./mini-program/XMLHttpRequestImpl";
 export { setConnectSocket } from "./mini-program/WebSocketImpl";
+
+/** @internal */ export { g } from "./isPolyfill";
+/** @internal */ export { mp } from "./mini-program/platform";
+/** @internal */ export { convert, convertBack } from "./convertor";
+/** @internal */ export { BodyImpl } from "./BodyImpl";
+/** @internal */ export { ProgressEvent, ProgressEventP } from "./ProgressEventP";
+/** @internal */ export { CloseEvent, CloseEventP } from "./CloseEventP";
+/** @internal */ export { MessageEvent, MessageEventP } from "./MessageEventP";

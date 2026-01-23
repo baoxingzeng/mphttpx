@@ -1,6 +1,6 @@
 import { HeadersP } from "../HeadersP";
 import { Uint8Array_toBase64, encode } from "../BlobP";
-import { convert, convertBack } from "../BodyImpl";
+import { convert, convertBack } from "../convertor";
 import { normalizeMethod } from "../RequestP";
 import { EventTarget_fire, attachFn, executeFn } from "../EventTargetP";
 import { createInnerEvent } from "../EventP";
@@ -437,3 +437,6 @@ function setReadyStateAndNotify(xhr: XMLHttpRequest, value: number) {
         EventTarget_fire(xhr, evt);
     }
 }
+
+const XMLHttpRequestE = (typeof XMLHttpRequest !== "undefined" && XMLHttpRequest) || XMLHttpRequestImpl;
+export { XMLHttpRequestE as XMLHttpRequest };

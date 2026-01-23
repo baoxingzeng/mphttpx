@@ -1,4 +1,4 @@
-import { XMLHttpRequest } from "./XMLHttpRequestP";
+import { XMLHttpRequest } from "./mini-program/XMLHttpRequestImpl";
 import { normalizeName, normalizeValue, parseHeaders } from "./HeadersP";
 import { Body_toPayload } from "./BodyImpl";
 import { RequestP, requestState } from "./RequestP";
