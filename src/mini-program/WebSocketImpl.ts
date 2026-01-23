@@ -173,48 +173,48 @@ function getHandlers(s: WebSocketState) {
 }
 
 function onOpen(ws: WebSocket) {
-    let _ws = ws as WebSocketImpl;
-    _ws[state][_socketTask].onOpen(res => {
+    let socket = ws as WebSocketImpl;
+    socket[state][_socketTask].onOpen(res => {
         if ("header" in res && res.header && typeof res.header === "object") {
             let headers = new HeadersP(res.header as Record<string, string>);
-            _ws[state].protocol = headers.get("Sec-WebSocket-Protocol") || "";
+            socket[state].protocol = headers.get("Sec-WebSocket-Protocol") || "";
         }
 
-        _ws[state].readyState = 1 /* OPEN */;
-        EventTarget_fire(_ws, createInnerEvent(_ws, "open"));
+        socket[state].readyState = 1 /* OPEN */;
+        EventTarget_fire(socket, createInnerEvent(socket, "open"));
     });
 }
 
 function onClose(ws: WebSocket) {
-    let _ws = ws as WebSocketImpl;
-     _ws[state][_socketTask].onClose(res => {
-        _ws[state].readyState = 3 /* CLOSED */;
+    let socket = ws as WebSocketImpl;
+     socket[state][_socketTask].onClose(res => {
+        socket[state].readyState = 3 /* CLOSED */;
 
         let event = new CloseEventP("close", {
-            wasClean: !_ws[state][_error],
+            wasClean: !socket[state][_error],
             code: res.code,
             reason: res.reason,
         });
 
         Event_setTrusted(event, true);
-        EventTarget_fire(_ws, event);
+        EventTarget_fire(socket, event);
     });
 }
 
 function onError(ws: WebSocket) {
-    let _ws = ws as WebSocketImpl;
-    _ws[state][_socketTask].onError(res => {
+    let socket = ws as WebSocketImpl;
+    socket[state][_socketTask].onError(res => {
         console.error(res);
 
-        _ws[state][_error] = res;
-        _ws[state].readyState = 3 /* CLOSED */;
-        EventTarget_fire(_ws, createInnerEvent(_ws, "error"));
+        socket[state][_error] = res;
+        socket[state].readyState = 3 /* CLOSED */;
+        EventTarget_fire(socket, createInnerEvent(socket, "error"));
     });
 }
 
 function onMessage(ws: WebSocket) {
-    let _ws = ws as WebSocketImpl;
-    _ws[state][_socketTask].onMessage(res => {
+    let socket = ws as WebSocketImpl;
+    socket[state][_socketTask].onMessage(res => {
         let data = res.data;
         let _data: string | ArrayBuffer | Blob;
 
@@ -229,16 +229,16 @@ function onMessage(ws: WebSocket) {
             _data = data;
         }
 
-        if (isArrayBuffer(_data) && _ws.binaryType === "blob") {
+        if (isArrayBuffer(_data) && socket.binaryType === "blob") {
             _data = new BlobP([_data]);
         }
 
         let event = new MessageEventP("message", {
             data: _data,
-            origin: _ws.url,
+            origin: socket.url,
         });
 
         Event_setTrusted(event, true);
-        EventTarget_fire(_ws, event);
+        EventTarget_fire(socket, event);
     });
 }

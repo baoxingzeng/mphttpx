@@ -204,10 +204,13 @@ export class XMLHttpRequestImpl extends XMLHttpRequestEventTargetP implements XM
             throw new MPException("Failed to execute 'setRequestHeader' on 'XMLHttpRequest': The object's state must be OPENED.", "InvalidStateError");
         }
 
+        let _name = "" + name;
+        let _value = "" + value;
+
         try {
-            s[_requestHeaders].append(name, value);
+            s[_requestHeaders].append(_name, _value);
         } catch (e) {
-            throw new SyntaxError(`Failed to execute 'setRequestHeader' on 'XMLHttpRequest': '${String(name)}' is not a valid HTTP header field name.`);
+            throw new SyntaxError(`Failed to execute 'setRequestHeader' on 'XMLHttpRequest': '${_name}' is not a valid HTTP header field name.`);
         }
     }
 
@@ -371,6 +374,7 @@ function clearRequest(xhr: XMLHttpRequest, delay = true) {
 
         timerFn(() => {
             const requestTask = s[_requestTask];
+
             if (requestTask) { safeAbort(requestTask); }
             if (delay) { emitProcessEvent(xhr, "abort"); }
             if (delay && !requestTask) { emitProcessEvent(xhr, "loadend"); }
