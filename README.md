@@ -79,6 +79,7 @@ This allows web code to be reused in other environments (such as mini-programs).
 - **EventTarget**
 - **XMLHttpRequest (mini-programs)**
 - **WebSocket (mini-programs, since 1.1.0)**
+- **Supports tree-shaking (since 2.0.0)**
 
 ## Installation
 

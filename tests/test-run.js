@@ -25,8 +25,8 @@ export default function run() {
 
     URLSearchParams_suite.run();
     FormData_suite.run();
-    Headers_suite.run();
 
+    Headers_suite.run();
     Request_suite.run();
     Response_suite.run();
 

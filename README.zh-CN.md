@@ -77,6 +77,7 @@
 - **EventTarget**
 - **XMLHttpRequest (小程序)**
 - **WebSocket (小程序, 从1.1.0之后)**
+- **支持 tree-shaking (从2.0.0之后)**
 
 ## 安装
 
