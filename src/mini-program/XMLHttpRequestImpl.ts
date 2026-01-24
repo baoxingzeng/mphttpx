@@ -1,7 +1,6 @@
-import { HeadersP } from "../HeadersP";
-import { Uint8Array_toBase64, encode } from "../BlobP";
 import { convert, convertBack } from "../convertor";
-import { normalizeMethod } from "../RequestP";
+import { Uint8Array_toBase64, encode } from "../BlobP";
+import { HeadersP, normalizeMethod } from "../HeadersP";
 import { EventTarget_fire, attachFn, executeFn } from "../EventTargetP";
 import { createInnerEvent } from "../EventP";
 import { emitProcessEvent } from "../ProgressEventP";

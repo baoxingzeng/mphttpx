@@ -1,5 +1,5 @@
-import { HeadersP } from "./HeadersP";
 import { AbortControllerP } from "./AbortControllerP";
+import { HeadersP, normalizeMethod } from "./HeadersP";
 import { g, polyfill, checkArgsLength, isPolyfillType } from "./isPolyfill";
 import { BodyImpl, bodyState, Body_init, Body_toPayload } from "./BodyImpl";
 
@@ -126,15 +126,6 @@ class RequestState {
     referrerPolicy: ReferrerPolicy = "";
     signal?: AbortSignal;
     url: string = "";
-}
-
-// HTTP methods whose capitalization should be normalized
-const methods = ["CONNECT", "DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT", "TRACE"];
-
-/** @internal */
-export function normalizeMethod(method: string) {
-    let upcased = method.toUpperCase();
-    return methods.indexOf(upcased) > -1 ? upcased : method;
 }
 
 const RequestE = g["Request"] || RequestP;
