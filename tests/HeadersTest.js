@@ -1,10 +1,10 @@
 import { suite } from "uvu";
 import * as assert from "uvu/assert";
 import { ui_rec } from "./utils.js";
-import { HeadersP as Headers } from "../dist/index.esm.js";
+import { HeadersP as Headers } from "../dist/esm/index.js";
 
 const _name = "Headers";
-const _test = suite(_name);
+export const _test = suite(_name);
 
 /**
  * @param {string} n 
@@ -132,5 +132,3 @@ test("Headers edge scenes: invalid keys/ null values", () => {
     headers.append("Empty-Value", "new-val");
     assert.equal(headers.get("Empty-Value"), ", new-val");
 });
-
-_test.run();

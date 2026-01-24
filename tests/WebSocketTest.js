@@ -1,10 +1,10 @@
 import { suite } from "uvu";
 import * as assert from "uvu/assert";
 import { ui_rec, config } from "./utils.js";
-import { WebSocketP as WebSocket } from "../dist/index.esm.js";
+import { WebSocketP as WebSocket } from "../dist/esm/index.js";
 
 const _name = "WebSocket";
-const _test = suite(_name);
+export const _test = suite(_name);
 
 /**
  * @param {string} n 
@@ -128,5 +128,3 @@ test("WebSocket send/receive binary messages", async () => {
         };
     });
 });
-
-export default _test;

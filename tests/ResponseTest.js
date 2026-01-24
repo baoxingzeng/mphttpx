@@ -1,14 +1,14 @@
 import { suite } from "uvu";
 import * as assert from "uvu/assert";
 import { ui_rec } from "./utils.js";
-import { BlobP as Blob } from "../dist/index.esm.js";
-import { FormDataP as FormData } from "../dist/index.esm.js";
-import { HeadersP as Headers } from "../dist/index.esm.js";
-import { RequestP as Request } from "../dist/index.esm.js";
-import { ResponseP as Response } from "../dist/index.esm.js";
+import { BlobP as Blob } from "../dist/esm/index.js";
+import { FormDataP as FormData } from "../dist/esm/index.js";
+import { HeadersP as Headers } from "../dist/esm/index.js";
+import { RequestP as Request } from "../dist/esm/index.js";
+import { ResponseP as Response } from "../dist/esm/index.js";
 
 const _name = "Response";
-const _test = suite(_name);
+export const _test = suite(_name);
 
 /**
  * @param {string} n 
@@ -116,5 +116,3 @@ test("Request → Response linkage: simulate Request Response process", async ()
     assert.equal(resBody.name, "张三");
     assert.equal(res.ok, true);
 });
-
-_test.run();

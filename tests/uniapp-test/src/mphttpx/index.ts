@@ -1,23 +1,10 @@
 // @ts-nocheck
-import "../../../TextEncoderTest";
-import "../../../TextDecoderTest";
+import run from "../../../test-run";
 
-import "../../../BlobTest";
-import "../../../FileTest";
-import "../../../FileReaderTest";
+import { _test as fetch_suite } from "../../../fetchTest";
+import { _test as WebSocket_suite } from "../../../WebSocketTest";
 
-import "../../../URLSearchParamsTest";
-import "../../../FormDataTest";
-import "../../../HeadersTest";
-
-import "../../../RequestTest";
-import "../../../ResponseTest";
-
-import "../../../AbortControllerTest";
-import "../../../EventTargetTest";
-
-import fetch_suite from "../../../fetchTest";
-import WebSocket_suite from "../../../WebSocketTest";
+run();
 
 fetch_suite.run();
 WebSocket_suite.run();

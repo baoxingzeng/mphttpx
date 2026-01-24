@@ -1,12 +1,12 @@
 import { suite } from "uvu";
 import * as assert from "uvu/assert";
 import { ui_rec } from "./utils.js";
-import { BlobP as Blob } from "../dist/index.esm.js";
-import { FileP as File } from "../dist/index.esm.js";
-import { FormDataP as FormData } from "../dist/index.esm.js";
+import { BlobP as Blob } from "../dist/esm/index.js";
+import { FileP as File } from "../dist/esm/index.js";
+import { FormDataP as FormData } from "../dist/esm/index.js";
 
 const _name = "FormData";
-const _test = suite(_name);
+export const _test = suite(_name);
 
 /**
  * @param {string} n 
@@ -130,5 +130,3 @@ test("FormData strictly distinguish between File/Blob and regular strings", () =
     assert.instance(formData.get("blob"), Blob);
     assert.type(formData.get("str"), "string");
 });
-
-_test.run();

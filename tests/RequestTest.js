@@ -1,15 +1,15 @@
 import { suite } from "uvu";
 import * as assert from "uvu/assert";
 import { ui_rec } from "./utils.js";
-import { BlobP as Blob } from "../dist/index.esm.js";
-import { FileP as File } from "../dist/index.esm.js";
-import { URLSearchParamsP as URLSearchParams } from "../dist/index.esm.js";
-import { FormDataP as FormData } from "../dist/index.esm.js";
-import { HeadersP as Headers } from "../dist/index.esm.js";
-import { RequestP as Request } from "../dist/index.esm.js";
+import { BlobP as Blob } from "../dist/esm/index.js";
+import { FileP as File } from "../dist/esm/index.js";
+import { URLSearchParamsP as URLSearchParams } from "../dist/esm/index.js";
+import { FormDataP as FormData } from "../dist/esm/index.js";
+import { HeadersP as Headers } from "../dist/esm/index.js";
+import { RequestP as Request } from "../dist/esm/index.js";
 
 const _name = "Request";
-const _test = suite(_name);
+export const _test = suite(_name);
 
 /**
  * @param {string} n 
@@ -116,5 +116,3 @@ test("clone clone instance", async () => {
     await req.text();
     assert.throws(() => req.clone(), (err) => err instanceof TypeError);
 });
-
-_test.run();

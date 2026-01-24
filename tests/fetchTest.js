@@ -1,13 +1,13 @@
 import { suite } from "uvu";
 import * as assert from "uvu/assert";
 import { ui_rec, config } from "./utils.js";
-import { BlobP as Blob } from "../dist/index.esm.js";
-import { FormDataP as FormData } from "../dist/index.esm.js";
-import { AbortControllerP as AbortController } from "../dist/index.esm.js";
-import { fetchP as fetch } from "../dist/index.esm.js";
+import { BlobP as Blob } from "../dist/esm/index.js";
+import { FormDataP as FormData } from "../dist/esm/index.js";
+import { AbortControllerP as AbortController } from "../dist/esm/index.js";
+import { fetchP as fetch } from "../dist/esm/index.js";
 
 const _name = "fetch";
-const _test = suite(_name);
+export const _test = suite(_name);
 
 /**
  * @param {string} n 
@@ -89,5 +89,3 @@ test("fetch custom request header", async () => {
     assert.equal(data.token, "123456789");
     assert.equal(data.contentType, "application/json");
 });
-
-export default _test;

@@ -1,11 +1,11 @@
 import { suite } from "uvu";
 import * as assert from "uvu/assert";
 import { ui_rec } from "./utils.js";
-import { TextEncoderP as TextEncoder } from "../dist/index.esm.js";
-import { BlobP as Blob } from "../dist/index.esm.js";
+import { TextEncoderP as TextEncoder } from "../dist/esm/index.js";
+import { BlobP as Blob } from "../dist/esm/index.js";
 
 const _name = "Blob";
-const _test = suite(_name);
+export const _test = suite(_name);
 
 /**
  * @param {string} n 
@@ -139,5 +139,3 @@ test("Blob contains mixed type content", async () => {
     let text = await blob.text();
     assert.equal(text, "Hello World🎉");
 });
-
-_test.run();

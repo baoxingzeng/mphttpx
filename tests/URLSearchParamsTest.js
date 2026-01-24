@@ -1,10 +1,10 @@
 import { suite } from "uvu";
 import * as assert from "uvu/assert";
 import { ui_rec } from "./utils.js";
-import { URLSearchParamsP as URLSearchParams } from "../dist/index.esm.js";
+import { URLSearchParamsP as URLSearchParams } from "../dist/esm/index.js";
 
 const _name = "URLSearchParams";
-const _test = suite(_name);
+export const _test = suite(_name);
 
 /**
  * @param {string} n 
@@ -107,5 +107,3 @@ test("URLSearchParams edge scene (repeated key/ null key/ null value/ special ch
     let p4 = new URLSearchParams(encodedStr);
     assert.equal(p4.get("name"), "张三");
 });
-
-_test.run();

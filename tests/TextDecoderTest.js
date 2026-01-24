@@ -1,10 +1,10 @@
 import { suite } from "uvu";
 import * as assert from "uvu/assert";
 import { ui_rec } from "./utils.js";
-import { TextDecoderP as TextDecoder } from "../dist/index.esm.js";
+import { TextDecoderP as TextDecoder } from "../dist/esm/index.js";
 
 const _name = "TextDecoder";
-const _test = suite(_name);
+export const _test = suite(_name);
 
 /**
  * @param {string} n 
@@ -91,5 +91,3 @@ test("decode control characters (spaces, line breaks, tabs)", () => {
     let decoded = decoder.decode(new Uint8Array([97, 32, 98, 10, 99, 9]));
     assert.equal(decoded, "a b\nc\t");
 });
-
-_test.run();

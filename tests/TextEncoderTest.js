@@ -1,10 +1,10 @@
 import { suite } from "uvu";
 import * as assert from "uvu/assert";
 import { ui_rec } from "./utils.js";
-import { TextEncoderP as TextEncoder } from "../dist/index.esm.js";
+import { TextEncoderP as TextEncoder } from "../dist/esm/index.js";
 
 const _name = "TextEncoder";
-const _test = suite(_name);
+export const _test = suite(_name);
 
 /**
  * @param {string} n 
@@ -114,5 +114,3 @@ test("encodeInto reserve the remaining buffer space after partial writing", () =
     encoder.encodeInto("Hi", dest);
     compare(dest, new Uint8Array([72, 105, 30, 40, 50]));
 });
-
-_test.run();

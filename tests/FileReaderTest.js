@@ -1,12 +1,12 @@
 import { suite } from "uvu";
 import * as assert from "uvu/assert";
 import { ui_rec } from "./utils.js";
-import { BlobP as Blob } from "../dist/index.esm.js";
-import { FileP as File } from "../dist/index.esm.js";
-import { FileReaderP as FileReader } from "../dist/index.esm.js";
+import { BlobP as Blob } from "../dist/esm/index.js";
+import { FileP as File } from "../dist/esm/index.js";
+import { FileReaderP as FileReader } from "../dist/esm/index.js";
 
 const _name = "FileReader";
-const _test = suite(_name);
+export const _test = suite(_name);
 
 /**
  * @param {string} n 
@@ -116,5 +116,3 @@ test("FileReader event triggering sequence", async () => {
     await loadendPromise;
     assert.equal(events.join(","), "loadstart,load,loadend");
 });
-
-_test.run();

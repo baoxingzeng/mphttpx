@@ -1,11 +1,11 @@
 import { suite } from "uvu";
 import * as assert from "uvu/assert";
 import { ui_rec } from "./utils.js";
-import { EventTargetP as EventTarget } from "../dist/index.esm.js";
-import { EventP as Event } from "../dist/index.esm.js";
+import { EventTargetP as EventTarget } from "../dist/esm/index.js";
+import { EventP as Event } from "../dist/esm/index.js";
 
 const _name = "EventTarget";
-const _test = suite(_name);
+export const _test = suite(_name);
 
 /**
  * @param {string} n 
@@ -137,5 +137,3 @@ test("EventTarget the listening function is null/undefined, and the same functio
     target.dispatchEvent(new Event("click"));
     assert.equal(callCount, 1);
 });
-
-_test.run();

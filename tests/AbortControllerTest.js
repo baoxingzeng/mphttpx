@@ -1,11 +1,11 @@
 import { suite } from "uvu";
 import * as assert from "uvu/assert";
 import { ui_rec } from "./utils.js";
-import { AbortControllerP as AbortController } from "../dist/index.esm.js";
-import { AbortSignalP as AbortSignal } from "../dist/index.esm.js";
+import { AbortControllerP as AbortController } from "../dist/esm/index.js";
+import { AbortSignalP as AbortSignal } from "../dist/esm/index.js";
 
 const _name = "AbortController";
-const _test = suite(_name);
+export const _test = suite(_name);
 
 /**
  * @param {string} n 
@@ -117,5 +117,3 @@ test("AbortController/AbortSignal edge scenes: multiple abort()/ unbound listeni
     });
     assert.equal(lateHandlerCalled, false);
 });
-
-_test.run();

@@ -1,10 +1,10 @@
 import { suite } from "uvu";
 import * as assert from "uvu/assert";
 import { ui_rec } from "./utils.js";
-import { FileP as File } from "../dist/index.esm.js";
+import { FileP as File } from "../dist/esm/index.js";
 
 const _name = "File";
-const _test = suite(_name);
+export const _test = suite(_name);
 
 /**
  * @param {string} n 
@@ -49,5 +49,3 @@ test("slice return Blob instead of File", () => {
     let sliced = file.slice(0, 2);
     assert.not.instance(sliced, File);
 });
-
-_test.run();
