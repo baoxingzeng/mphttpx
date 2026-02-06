@@ -1,7 +1,7 @@
 import { g, SymbolP, setState } from "../utils";
 import { AbortSignal_abort, createAbortSignal } from "./AbortSignalP";
 
-export class AbortControllerP implements AbortController, MPObject {
+export class AbortControllerP implements AbortController {
     constructor() {
         setState(this, "__AbortController__", new AbortControllerState());
     }

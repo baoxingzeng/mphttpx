@@ -1,7 +1,7 @@
 import { EventP } from "./EventP";
 import { g, SymbolP, setState } from "../utils";
 
-export class CloseEventP extends EventP implements CloseEvent, MPObject {
+export class CloseEventP extends EventP implements CloseEvent {
     constructor(type: string, eventInitDict?: CloseEventInit) {
         super(type, eventInitDict);
         setState(this, "__CloseEvent__", new CloseEventState());

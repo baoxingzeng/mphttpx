@@ -2,7 +2,7 @@ import { isSequence } from "../helpers/isSequence";
 import { isURLSearchParams } from "../helpers/isURLSearchParams";
 import { g, SymbolP, setState, checkArgsLength } from "../utils";
 
-export class URLSearchParamsP implements URLSearchParams, MPObject {
+export class URLSearchParamsP implements URLSearchParams {
     constructor(init?: string[][] | Record<string, string> | string | URLSearchParams) {
         setState(this, "__URLSearchParams__", new URLSearchParamsState());
 
@@ -85,7 +85,7 @@ export class URLSearchParamsP implements URLSearchParams, MPObject {
         checkArgsFn(arguments.length, 1, "get");
         let _name = "" + name;
         let array = state(this).array;
-        for (let i = 0; i <array.length; ++i) {
+        for (let i = 0; i < array.length; ++i) {
             let item = array[i]!;
             if (item[0] === _name) { return item[1]; }
         }
@@ -175,8 +175,10 @@ export class URLSearchParamsP implements URLSearchParams, MPObject {
         return state(this).array.map(x => x[1]).values();
     }
 
-    /** @internal */
-    [SymbolP.iterator]() {
+    declare [Symbol.iterator]: () => URLSearchParamsIterator<[string, string]>;
+
+    // @ts-ignore
+    /** @internal */[SymbolP.iterator]() {
         return this.entries();
     }
 

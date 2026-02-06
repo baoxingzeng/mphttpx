@@ -55,7 +55,7 @@ const enum XHRCycle {
 const mp = { request: getRequest() };
 export const setRequest = (request: unknown) => { mp.request = request as TRequestFunc; }
 
-export class XMLHttpRequestImpl extends XMLHttpRequestEventTargetP implements XMLHttpRequest, MPObject {
+export class XMLHttpRequestImpl extends XMLHttpRequestEventTargetP implements XMLHttpRequest {
     static get UNSENT(): 0 { return 0; }
     static get OPENED(): 1 { return 1; }
     static get HEADERS_RECEIVED(): 2 { return 2; }

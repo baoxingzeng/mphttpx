@@ -1,7 +1,7 @@
 import { EventP } from "./EventP";
 import { g, SymbolP, setState, checkArgsLength } from "../utils";
 
-export class CustomEventP<T> extends EventP implements CustomEvent, MPObject {
+export class CustomEventP<T> extends EventP implements CustomEvent {
     constructor(type: string, eventInitDict?: CustomEventInit<T>) {
         super(type, eventInitDict);
         setState(this, "__CustomEvent__", new CustomEventState());

@@ -2,7 +2,7 @@ import { isBlob } from "../helpers/isBlob";
 import { FileP } from "../file-system/FileP";
 import { g, SymbolP, setState, checkArgsLength } from "../utils";
 
-export class FormDataP implements FormData, MPObject {
+export class FormDataP implements FormData {
     constructor(form?: HTMLFormElement, submitter?: HTMLElement | null) {
         if (submitter === undefined) {
             if (form !== undefined) {
@@ -120,8 +120,10 @@ export class FormDataP implements FormData, MPObject {
         return state(this).array.map(x => x[1]).values();
     }
 
-    /** @internal */
-    [SymbolP.iterator](): FormDataIterator<[string, FormDataEntryValue]> {
+    declare [Symbol.iterator]: () => FormDataIterator<[string, FormDataEntryValue]>;
+
+    // @ts-ignore
+    /** @internal */[SymbolP.iterator](): FormDataIterator<[string, FormDataEntryValue]> {
         return this.entries();
     }
 

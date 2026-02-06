@@ -16,7 +16,7 @@ import type { TConnectSocketFunc, IConnectSocketOption, ISocketTask } from "./co
 const mp = { connectSocket: getConnectSocket() };
 export const setConnectSocket = (connectSocket: unknown) => { mp.connectSocket = connectSocket as TConnectSocketFunc; }
 
-export class WebSocketImpl extends EventTargetP implements WebSocket, MPObject {
+export class WebSocketImpl extends EventTargetP implements WebSocket {
     static get CONNECTING(): 0 { return 0; }
     static get OPEN(): 1 { return 1; }
     static get CLOSING(): 2 { return 2; }

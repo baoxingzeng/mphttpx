@@ -1,7 +1,7 @@
 import { EventP } from "./EventP";
 import { g, SymbolP, setState, checkArgsLength } from "../utils";
 
-export class MessageEventP<T> extends EventP implements MessageEvent, MPObject {
+export class MessageEventP<T> extends EventP implements MessageEvent {
     constructor(type: string, eventInitDict?: MessageEventInit<T>) {
         super(type, eventInitDict);
         setState(this, "__MessageEvent__", new MessageEventState());

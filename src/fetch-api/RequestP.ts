@@ -6,7 +6,7 @@ import { isEventTarget } from "../helpers/isEventTarget";
 import { createAbortSignal } from "../event-system/AbortSignalP";
 import { g, SymbolP, setState, isPolyfillType, checkArgsLength } from "../utils";
 
-export class RequestP extends BodyImpl implements Request, MPObject {
+export class RequestP extends BodyImpl implements Request {
     constructor(input: RequestInfo | URL, init?: RequestInit) {
         checkArgsLength(arguments.length, 1, "Request");
         super();

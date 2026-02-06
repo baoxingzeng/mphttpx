@@ -6,6 +6,7 @@ import { isPolyfillType } from "../utils";
 import { isArrayBuffer } from "./isArrayBuffer";
 import { isURLSearchParams } from "./isURLSearchParams";
 
+/** @internal */
 export class Payload {
     constructor(body?: XMLHttpRequestBodyInit | null) {
         if (typeof body === "string") {

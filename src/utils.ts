@@ -13,7 +13,7 @@ export const SymbolP = {
 };
 
 /** @internal */
-export class DOMExceptionP extends Error implements MPObject {
+export class DOMExceptionP extends Error {
     constructor(message?: string, name?: string) {
         super(message);
         if (name !== undefined) this.name = "" + name;
@@ -24,7 +24,7 @@ export class DOMExceptionP extends Error implements MPObject {
 }
 
 /** @internal */
-export function className(object: MPObject): string {
+export function className(object: { __MPHTTPX__: { chain: string[] } }): string {
     return object.__MPHTTPX__.chain[0]!;
 }
 

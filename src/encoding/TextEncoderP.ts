@@ -1,6 +1,6 @@
 import { g, SymbolP, isObjectType, checkArgsLength } from "../utils";
 
-export class TextEncoderP implements TextEncoder, MPObject {
+export class TextEncoderP implements TextEncoder {
     get encoding() { return "utf-8"; }
 
     encode(input = ""): Uint8Array<ArrayBuffer> {

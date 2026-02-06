@@ -4,7 +4,7 @@ import { FileP } from "../file-system/FileP";
 import { FormDataP } from "../network/FormDataP";
 import { SymbolP, className, setState, isObjectType } from "../utils";
 
-export class BodyImpl implements Body, MPObject {
+export class BodyImpl implements Body {
     /** @internal */
     constructor() {
         if (new.target === BodyImpl) {

@@ -5,7 +5,7 @@ import { isSequence } from "../helpers/isSequence";
 import { isArrayBuffer } from "../helpers/isArrayBuffer";
 import { g, SymbolP, className, setState } from "../utils";
 
-export class BlobP implements Blob, MPObject {
+export class BlobP implements Blob {
     constructor(blobParts: BlobPart[] = [], options?: BlobPropertyBag) {
         if (!isSequence(blobParts)) {
             throw new TypeError(`Failed to construct 'Blob/File': The provided value cannot be converted to a sequence.`);

@@ -1,6 +1,6 @@
 import { g, SymbolP, className, setState, checkArgsLength } from "../utils";
 
-export class EventP implements Event, MPObject {
+export class EventP implements Event {
     static get NONE(): 0 { return 0; }
     static get CAPTURING_PHASE(): 1 { return 1; }
     static get AT_TARGET(): 2 { return 2; }

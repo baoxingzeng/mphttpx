@@ -5,7 +5,7 @@ import { isSequence } from "../helpers/isSequence";
 import { isEventTarget } from "../helpers/isEventTarget";
 import { g, SymbolP, DOMExceptionP, setState, checkArgsLength } from "../utils";
 
-export class AbortSignalP extends EventTargetP implements AbortSignal, MPObject {
+export class AbortSignalP extends EventTargetP implements AbortSignal {
     static abort(reason?: any) {
         let signal = createAbortSignal();
         AbortSignal_abort(signal, false, reason);

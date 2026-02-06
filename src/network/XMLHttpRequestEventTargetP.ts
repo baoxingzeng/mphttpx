@@ -2,7 +2,7 @@ import { SymbolP, setState } from "../utils";
 import { attachFn, executeFn } from "../helpers/handlers";
 import { EventTargetP } from "../event-system/EventTargetP";
 
-export class XMLHttpRequestEventTargetP extends EventTargetP implements XMLHttpRequestEventTarget, MPObject {
+export class XMLHttpRequestEventTargetP extends EventTargetP implements XMLHttpRequestEventTarget {
     /** @internal */
     constructor() {
         if (new.target === XMLHttpRequestEventTargetP) {

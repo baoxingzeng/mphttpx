@@ -2,7 +2,7 @@ import { SymbolP, setState } from "../utils";
 import { EventTargetState } from "../event-system/EventTargetP";
 import { XMLHttpRequestEventTargetP, XMLHttpRequestEventTargetState } from "./XMLHttpRequestEventTargetP";
 
-export class XMLHttpRequestUploadP extends XMLHttpRequestEventTargetP implements XMLHttpRequestUpload, MPObject {
+export class XMLHttpRequestUploadP extends XMLHttpRequestEventTargetP implements XMLHttpRequestUpload {
     /** @internal */
     constructor() {
         if (new.target === XMLHttpRequestUploadP) {

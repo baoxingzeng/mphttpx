@@ -1,7 +1,7 @@
 import { isSequence } from "../helpers/isSequence";
 import { g, SymbolP, setState, isPolyfillType, checkArgsLength } from "../utils";
 
-export class HeadersP implements Headers, MPObject {
+export class HeadersP implements Headers {
     constructor(init?: HeadersInit) {
         setState(this, "__Headers__", new HeadersState());
 
@@ -99,8 +99,10 @@ export class HeadersP implements Headers, MPObject {
         return array.values();
     }
 
-    /** @internal */
-    [SymbolP.iterator](): HeadersIterator<[string, string]> {
+    declare [Symbol.iterator]: () => HeadersIterator<[string, string]>;
+
+    // @ts-ignore
+    /** @internal */[SymbolP.iterator](): HeadersIterator<[string, string]> {
         return this.entries();
     }
 

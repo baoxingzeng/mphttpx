@@ -5,7 +5,7 @@ import { EventTargetP } from "../event-system/EventTargetP";
 import { emitProgressEvent } from "../helpers/emitProgressEvent";
 import { g, SymbolP, DOMExceptionP, setState, checkArgsLength } from "../utils";
 
-export class FileReaderP extends EventTargetP implements FileReader, MPObject {
+export class FileReaderP extends EventTargetP implements FileReader {
     static get EMPTY(): 0 { return 0; }
     static get LOADING(): 1 { return 1; }
     static get DONE(): 2 { return 2; }

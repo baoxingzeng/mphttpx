@@ -1,7 +1,7 @@
 import { BlobP } from "./BlobP";
 import { g, SymbolP, setState, checkArgsLength } from "../utils";
 
-export class FileP extends BlobP implements File, MPObject {
+export class FileP extends BlobP implements File {
     constructor(fileBits: BlobPart[], fileName: string, options?: FilePropertyBag) {
         checkArgsLength(arguments.length, 2, "File");
         super(fileBits, options);

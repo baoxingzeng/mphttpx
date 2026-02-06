@@ -1,7 +1,7 @@
 import { EventP } from "./EventP";
 import { g, SymbolP, setState } from "../utils";
 
-export class ProgressEventP extends EventP implements ProgressEvent, MPObject {
+export class ProgressEventP extends EventP implements ProgressEvent {
     constructor(type: string, eventInitDict?: ProgressEventInit) {
         super(type, eventInitDict);
         setState(this, "__ProgressEvent__", new ProgressEventState());

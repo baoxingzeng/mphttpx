@@ -1,7 +1,7 @@
 import { g, SymbolP, setState } from "../utils";
 import { isArrayBuffer } from "../helpers/isArrayBuffer";
 
-export class TextDecoderP implements TextDecoder, MPObject {
+export class TextDecoderP implements TextDecoder {
     constructor(label = "utf-8", options?: TextDecoderOptions) {
         if (["utf-8", "utf8", "unicode-1-1-utf-8"].indexOf(("" + label).toLowerCase()) === -1) {
             throw new RangeError(`Failed to construct 'TextDecoder': encoding ('${label}') not implemented.`);

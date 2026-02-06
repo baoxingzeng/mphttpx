@@ -2,7 +2,7 @@ import { HeadersP } from "./HeadersP";
 import { BodyImpl, Body_init } from "./BodyImpl"
 import { g, SymbolP, setState, checkArgsLength } from "../utils";
 
-export class ResponseP extends BodyImpl implements Response, MPObject {
+export class ResponseP extends BodyImpl implements Response {
     static json(data: any, init?: ResponseInit): Response {
         checkArgsLength(arguments.length, 1, "Response", "json");
         let response = new ResponseP(typeof data === "string" ? data : JSON.stringify(data), init);

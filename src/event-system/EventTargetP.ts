@@ -2,7 +2,7 @@ import { EventP, Event_setTrusted } from "./EventP";
 import { isEventTarget } from "../helpers/isEventTarget";
 import { g, SymbolP, className, setState, checkArgsLength, isPolyfillType } from "../utils";
 
-export class EventTargetP implements EventTarget, MPObject {
+export class EventTargetP implements EventTarget {
     constructor() {
         setState(this, "__EventTarget__", new EventTargetState());
     }
