@@ -50,7 +50,7 @@ export class ResponseP extends BodyImpl implements Response, MPObject {
         Body_init(this, body);
         let payload = this.__Body__.payload;
 
-        if (!this.headers.has("Content-Type") && payload && payload.type) {
+        if (payload && payload.type && !this.headers.has("Content-Type")) {
             this.headers.set("Content-Type", payload.type);
         }
     }

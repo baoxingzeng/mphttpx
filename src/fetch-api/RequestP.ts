@@ -59,7 +59,7 @@ export class RequestP extends BodyImpl implements Request, MPObject {
         Body_init(this, bodyInited ? null : body);
         let payload = this.__Body__.payload;
 
-        if (!this.headers.has("Content-Type") && payload && payload.type) {
+        if (payload && payload.type && !this.headers.has("Content-Type")) {
             this.headers.set("Content-Type", payload.type);
         }
 
