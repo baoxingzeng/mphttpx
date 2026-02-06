@@ -1,25 +1,29 @@
-import { mp } from "./platform";
+import { getPlatform } from "./platform";
 
-export const connectSocket = mp ? mp.connectSocket : function errorConnectSocket(options: IConnectSocketOption): ISocketTask {
-    return {
-        send(obj) { },
-        close(obj) { },
-        onOpen(listener) { },
-        onMessage(listener) { },
+/** @internal */
+export function getConnectSocket() {
+    let mp = getPlatform();
+    return mp ? mp.connectSocket : function errorConnectSocket(options: IConnectSocketOption): ISocketTask {
+        return {
+            send(obj) { },
+            close(obj) { },
+            onOpen(listener) { },
+            onMessage(listener) { },
 
-        onError(listener) {
-            if (typeof listener === "function") {
-                listener({ errMsg: "NOT_SUPPORTED_ERR" });
-            }
-        },
+            onError(listener) {
+                if (typeof listener === "function") {
+                    listener({ errMsg: "NOT_SUPPORTED_ERR" });
+                }
+            },
 
-        onClose(listener) {
-            if (typeof listener === "function") {
-                setTimeout(() => { listener({ code: 3009, reason: "NOT_SUPPORTED_ERR" }); });
-            }
-        },
-    };
-};
+            onClose(listener) {
+                if (typeof listener === "function") {
+                    setTimeout(() => { listener({ code: 3009, reason: "NOT_SUPPORTED_ERR" }); });
+                }
+            },
+        };
+    }
+}
 
 /**
  * 创建一个 WebSocket 连接。

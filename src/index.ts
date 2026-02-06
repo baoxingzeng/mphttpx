@@ -1,36 +1,28 @@
-export { TextEncoder, TextEncoderP } from "./TextEncoderP";
-export { TextDecoder, TextDecoderP } from "./TextDecoderP";
+export { TextEncoder, TextEncoderP } from "./encoding/TextEncoderP";
+export { TextDecoder, TextDecoderP } from "./encoding/TextDecoderP";
 
-export { Blob, BlobP } from "./BlobP";
-export { File, FileP } from "./FileP";
-export { FileReader, FileReaderP } from "./FileReaderP";
+export { Blob, BlobP } from "./file-system/BlobP";
+export { File, FileP } from "./file-system/FileP";
+export { FileReader, FileReaderP } from "./file-system/FileReaderP";
 
-export { URLSearchParams, URLSearchParamsP } from "./URLSearchParamsP";
-export { FormData, FormDataP } from "./FormDataP";
+export { URLSearchParams, URLSearchParamsP } from "./network/URLSearchParamsP";
+export { FormData, FormDataP } from "./network/FormDataP";
 
-export { fetch, fetchP } from "./fetchP";
-export { Headers, HeadersP } from "./HeadersP";
-export { Request, RequestP } from "./RequestP";
-export { Response, ResponseP } from "./ResponseP";
+export { fetch, fetchP } from "./fetch-api/fetchP";
+export { Headers, HeadersP } from "./fetch-api/HeadersP";
+export { Request, RequestP } from "./fetch-api/RequestP";
+export { Response, ResponseP } from "./fetch-api/ResponseP";
 
-export { AbortController, AbortControllerP } from "./AbortControllerP";
-export { AbortSignal, AbortSignalP } from "./AbortSignalP";
+export { AbortController, AbortControllerP } from "./event-system/AbortControllerP";
+export { AbortSignal, AbortSignalP } from "./event-system/AbortSignalP";
 
-export { EventTarget, EventTargetP } from "./EventTargetP";
-export { Event, EventP } from "./EventP";
-export { CustomEvent, CustomEventP } from "./CustomEventP";
+export { EventTarget, EventTargetP } from "./event-system/EventTargetP";
+export { Event, EventP } from "./event-system/EventP";
+export { CustomEvent, CustomEventP } from "./event-system/CustomEventP";
 
-export { XMLHttpRequest, XMLHttpRequestImpl as XMLHttpRequestP } from "./mini-program/XMLHttpRequestImpl";
 export { WebSocket, WebSocketImpl as WebSocketP } from "./mini-program/WebSocketImpl";
+export { XMLHttpRequest, XMLHttpRequestImpl as XMLHttpRequestP } from "./mini-program/XMLHttpRequestImpl";
 
-export { setXMLHttpRequest } from "./fetchP";
+export { setXMLHttpRequest } from "./fetch-api/fetchP";
 export { setRequest } from "./mini-program/XMLHttpRequestImpl";
 export { setConnectSocket } from "./mini-program/WebSocketImpl";
-
-/** @internal */ export { g } from "./isPolyfill";
-/** @internal */ export { mp } from "./mini-program/platform";
-/** @internal */ export { convert, convertBack } from "./convertor";
-/** @internal */ export { BodyImpl } from "./BodyImpl";
-/** @internal */ export { ProgressEvent, ProgressEventP } from "./ProgressEventP";
-/** @internal */ export { CloseEvent, CloseEventP } from "./CloseEventP";
-/** @internal */ export { MessageEvent, MessageEventP } from "./MessageEventP";

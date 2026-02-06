@@ -1,9 +1,9 @@
 // @ts-nocheck
-import { g } from "../isPolyfill";
 import type { TRequestFunc } from "./request";
 import type { TConnectSocketFunc } from "./connectSocket";
 
-function getPlatform() {
+/** @internal */
+export function getPlatform() {
     let u = "undefined", r = "request", f = "function";
     let mp: { request: TRequestFunc, connectSocket: TConnectSocketFunc };
 
@@ -19,17 +19,14 @@ function getPlatform() {
         (typeof xhs !== u && typeof xhs?.[r] === f && xhs) ||     // 小红书
         undefined;
 
-    if (typeof g["XMLHttpRequest"] === f) {
+    if (typeof XMLHttpRequest === f && typeof WebSocket === f) {
         return;
     }
 
-    if (mp === undefined) mp =
+    if (mp === undefined) mp = 
         (typeof uni !== u && typeof uni?.[r] === f && uni) ||     // UniApp
         (typeof Taro !== u && typeof Taro?.[r] === f && Taro) ||  // Taro
         undefined;
 
     return mp;
 }
-
-/** @internal */
-export const mp = getPlatform();

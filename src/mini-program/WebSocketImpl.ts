@@ -1,41 +1,42 @@
-import { HeadersP } from "../HeadersP";
-import { Blob_toUint8Array, BlobP } from "../BlobP";
-import { CloseEventP } from "../CloseEventP";
-import { MessageEventP } from "../MessageEventP";
-import { Event_setTrusted, createInnerEvent } from "../EventP";
-import { EventTargetP, EventTarget_fire, attachFn, executeFn } from "../EventTargetP";
-import { connectSocket } from "./connectSocket";
+import { BlobP } from "../file-system/BlobP";
+import { Payload } from "../helpers/Payload";
+import { HeadersP } from "../fetch-api/HeadersP";
+import { CloseEventP } from "../event-system/CloseEventP";
+import { MessageEventP } from "../event-system/MessageEventP";
+import { emitEvent } from "../helpers/emitEvent";
+import { attachFn, executeFn } from "../helpers/handlers";
+import { Event_setTrusted } from "../event-system/EventP";
+import { EventTargetP, EventTarget_fire } from "../event-system/EventTargetP";
+import { isSequence } from "../helpers/isSequence";
+import { isArrayBuffer } from "../helpers/isArrayBuffer";
+import { SymbolP, DOMExceptionP, setState, checkArgsLength } from "../utils";
+import { getConnectSocket } from "./connectSocket";
 import type { TConnectSocketFunc, IConnectSocketOption, ISocketTask } from "./connectSocket";
-import { polyfill, checkArgsLength, MPException, isPolyfillType, isArrayBuffer } from "../isPolyfill";
 
-const mp = { connectSocket: connectSocket };
+const mp = { connectSocket: getConnectSocket() };
 export const setConnectSocket = (connectSocket: unknown) => { mp.connectSocket = connectSocket as TConnectSocketFunc; }
 
-/** @internal */
-const state = Symbol(/* "WebSocketState" */);
-
-export class WebSocketImpl extends EventTargetP implements WebSocket {
+export class WebSocketImpl extends EventTargetP implements WebSocket, MPObject {
     static get CONNECTING(): 0 { return 0; }
     static get OPEN(): 1 { return 1; }
     static get CLOSING(): 2 { return 2; }
     static get CLOSED(): 3 { return 3; }
 
-    constructor(...args: [string | URL, (string | string[])?]) {
-        const [url, protocols] = args;
-        checkArgsLength(args, 1, "WebSocket");
+    constructor(url: string | URL, protocols?: string | string[]) {
+        checkArgsLength(arguments.length, 1, "WebSocket");
         super();
-        this[state] = new WebSocketState(this, {
+        setState(this, "__WebSocket__", new WebSocketState(this, {
             url: "" + url,
             protocols: protocols !== undefined
-                ? (Array.isArray(protocols) || (protocols && typeof protocols === "object" && Symbol.iterator in protocols))
-                    ? Array.isArray(protocols) ? protocols : Array.from<string>(protocols as never)
+                ? isSequence(protocols)
+                    ? Array.isArray(protocols) ? protocols : Array.from<string>(protocols)
                     : ["" + protocols]
                 : [],
             multiple: true, // Alipay Mini Program
             fail(err: unknown) { console.error(err); },
-        });
+        }));
 
-        let socketTask = this[state][_socketTask];
+        let socketTask = state(this).socketTask;
         if (socketTask && typeof socketTask === "object") {
             onOpen(this);
             onClose(this);
@@ -46,94 +47,79 @@ export class WebSocketImpl extends EventTargetP implements WebSocket {
         }
     }
 
-    /** @internal */
-    [state]: WebSocketState;
-    
+    /** @internal */ declare readonly __WebSocket__: WebSocketState;
+
     get CONNECTING(): 0 { return 0; }
     get OPEN(): 1 { return 1; }
     get CLOSING(): 2 { return 2; }
     get CLOSED(): 3 { return 3; }
 
-    get binaryType() { return this[state].binaryType; }
-    set binaryType(value) { if (value === "blob" || value === "arraybuffer") { this[state].binaryType = value; } }
+    get binaryType() { return state(this).binaryType; }
+    set binaryType(value) { if (value === "blob" || value === "arraybuffer") { state(this).binaryType = value; } }
 
-    get bufferedAmount() { return this[state].bufferedAmount; }
-    get extensions() { return this[state].extensions; }
-    get protocol() { return this[state].protocol; }
-    get readyState() { return this[state].readyState; }
-    get url() { return this[state].url; }
+    get bufferedAmount() { return state(this).bufferedAmount; }
+    get extensions() { return state(this).extensions; }
+    get protocol() { return state(this).protocol; }
+    get readyState() { return state(this).readyState; }
+    get url() { return state(this).url; }
 
     close(code?: number, reason?: string): void {
         if (this.readyState === 2 /* CLOSING */ || this.readyState === 3 /* CLOSED */) return;
-        this[state].readyState = 2 /* CLOSING */;
+        state(this).readyState = 2 /* CLOSING */;
 
-        this[state][_socketTask].close({
+        state(this).socketTask.close({
             code: code,
             reason: reason,
             fail(err: unknown) { console.error(err); },
-            complete: (function (this: WebSocket) {
-                (this as WebSocketImpl)[state].readyState = 3 /* CLOSED */;
+            complete: (function (this: WebSocketImpl) {
+                state(this).readyState = 3 /* CLOSED */;
             }).bind(this),
         });
     }
 
-    send(...args: [string | ArrayBufferLike | Blob | ArrayBufferView]): void {
-        const [data] = args;
-        checkArgsLength(args, 1, "WebSocket", "send");
-
+    send(data: string | ArrayBufferLike | Blob | ArrayBufferView): void {
+        checkArgsLength(arguments.length, 1, "WebSocket", "send");
         if (this.readyState === 0 /* CONNECTING */) {
-            throw new MPException("Failed to execute 'send' on 'WebSocket': Still in CONNECTING state.", "InvalidStateError");
+            throw new DOMExceptionP("Failed to execute 'send' on 'WebSocket': Still in CONNECTING state.", "InvalidStateError");
         }
 
         if (this.readyState === 2 /* CLOSING */ || this.readyState === 3 /* CLOSED */) {
             return console.error("WebSocket is already in CLOSING or CLOSED state.");
         }
 
-        let _data: string | ArrayBuffer;
+        const transfer = (function (this: WebSocketImpl, data: string | ArrayBuffer) {
+            if (this.readyState !== 1 /* OPEN */) return;
+            state(this).socketTask.send({ data, fail(err: unknown) { console.error(err); } });
+        }).bind(this);
 
-        if (isArrayBuffer(data)) {
-            _data = data;
-        } else if (ArrayBuffer.isView(data)) {
-            _data = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
-        } else if (isPolyfillType<Blob>("Blob", data)) {
-            _data = Blob_toUint8Array(data).buffer.slice(0);
-        } else {
-            _data = "" + data;
-        }
-
-        this[state][_socketTask].send({
-            data: _data,
-            fail(err: unknown) { console.error(err); },
-        });
+        let payload = new Payload(data ?? "" + data);
+        payload.promise.then(transfer);
     }
 
-    get onclose() { return this[state].onclose; }
-    set onclose(value) { this[state].onclose = value; attach(this, "close"); }
+    get onclose() { return state(this).onclose; }
+    set onclose(value) { state(this).onclose = value; state(this).attach("close"); }
 
-    get onerror() { return this[state].onerror; }
-    set onerror(value) { this[state].onerror = value; attach(this, "error"); }
+    get onerror() { return state(this).onerror; }
+    set onerror(value) { state(this).onerror = value; state(this).attach("error"); }
 
-    get onmessage() { return this[state].onmessage; }
-    set onmessage(value) { this[state].onmessage = value; attach(this, "message"); }
+    get onmessage() { return state(this).onmessage; }
+    set onmessage(value) { state(this).onmessage = value; state(this).attach("message"); }
 
-    get onopen() { return this[state].onopen; }
-    set onopen(value) { this[state].onopen = value; attach(this, "open"); }
+    get onopen() { return state(this).onopen; }
+    set onopen(value) { state(this).onopen = value; state(this).attach("open"); }
 
     /** @internal */ toString() { return "[object WebSocket]"; }
-    /** @internal */ get [Symbol.toStringTag]() { return "WebSocket"; }
-    /** @internal */ get isPolyfill() { return { symbol: polyfill, hierarchy: ["WebSocket", "EventTarget"] }; }
+    /** @internal */ get [SymbolP.toStringTag]() { return "WebSocket"; }
+    /** @internal */ get __MPHTTPX__() { return { chain: ["WebSocket", "EventTarget"] }; }
 }
-
-/** @internal */ const _socketTask = Symbol();
-/** @internal */ const _error = Symbol();
-/** @internal */ const _handlers = Symbol();
 
 /** @internal */
 class WebSocketState {
     constructor(target: WebSocket, opts: IConnectSocketOption) {
         this.target = target;
         this.url = opts.url;
-        this[_socketTask] = mp.connectSocket(opts);
+        this.socketTask = mp.connectSocket(opts);
+        this.attach = attachFn<WebSocket, keyof WebSocketEventMap>(target, getHandlers(target));
     }
 
     target: WebSocket;
@@ -145,76 +131,68 @@ class WebSocketState {
     readyState = 0;
     url: string;
 
-    [_socketTask]: ISocketTask;
-    [_error]: unknown = null;
+    socketTask: ISocketTask;
+    error: unknown = null;
 
-    readonly [_handlers] = getHandlers(this);
+    attach: (type: keyof WebSocketEventMap) => void;
     onclose: ((this: WebSocket, ev: CloseEvent) => any) | null = null;
     onerror: ((this: WebSocket, ev: Event) => any) | null = null;
     onmessage: ((this: WebSocket, ev: MessageEvent) => any) | null = null;
     onopen: ((this: WebSocket, ev: Event) => any) | null = null;
 }
 
-function attach(target: WebSocket, type: keyof WebSocketEventMap) {
-    const s = (target as WebSocketImpl)[state];
-    const fnName = ("on" + type) as `on${typeof type}`;
-    const cb = s[fnName];
-    const listener = s[_handlers][fnName];
-    attachFn(target, type, cb, listener as EventListener);
-}
-
-function getHandlers(s: WebSocketState) {
+function getHandlers(t: WebSocket) {
     return {
-        onclose: (ev: CloseEvent) => { executeFn(s.target, s.onclose, ev); },
-        onerror: (ev: Event) => { executeFn(s.target, s.onerror, ev); },
-        onmessage: (ev: MessageEvent) => { executeFn(s.target, s.onmessage, ev); },
-        onopen: (ev: Event) => { executeFn(s.target, s.onopen, ev); },
+        onclose: (ev: CloseEvent) => { executeFn(t, t.onclose, ev); },
+        onerror: (ev: Event) => { executeFn(t, t.onerror, ev); },
+        onmessage: (ev: MessageEvent) => { executeFn(t, t.onmessage, ev); },
+        onopen: (ev: Event) => { executeFn(t, t.onopen, ev); },
     };
 }
 
-function onOpen(ws: WebSocket) {
-    let socket = ws as WebSocketImpl;
-    socket[state][_socketTask].onOpen(res => {
+function state(target: WebSocketImpl) {
+    return target.__WebSocket__;
+}
+
+function onOpen(ws: WebSocketImpl) {
+    state(ws).socketTask.onOpen(res => {
         if ("header" in res && res.header && typeof res.header === "object") {
             let headers = new HeadersP(res.header as Record<string, string>);
-            socket[state].protocol = headers.get("Sec-WebSocket-Protocol") || "";
+            state(ws).protocol = headers.get("Sec-WebSocket-Protocol") || "";
         }
 
-        socket[state].readyState = 1 /* OPEN */;
-        EventTarget_fire(socket, createInnerEvent(socket, "open"));
+        state(ws).readyState = 1 /* OPEN */;
+        emitEvent(ws, "open");
     });
 }
 
-function onClose(ws: WebSocket) {
-    let socket = ws as WebSocketImpl;
-     socket[state][_socketTask].onClose(res => {
-        socket[state].readyState = 3 /* CLOSED */;
+function onClose(ws: WebSocketImpl) {
+    state(ws).socketTask.onClose(res => {
+        state(ws).readyState = 3 /* CLOSED */;
 
         let event = new CloseEventP("close", {
-            wasClean: !socket[state][_error],
+            wasClean: !state(ws).error,
             code: res.code,
             reason: res.reason,
         });
 
         Event_setTrusted(event, true);
-        EventTarget_fire(socket, event);
+        EventTarget_fire(ws, event);
     });
 }
 
-function onError(ws: WebSocket) {
-    let socket = ws as WebSocketImpl;
-    socket[state][_socketTask].onError(res => {
+function onError(ws: WebSocketImpl) {
+    state(ws).socketTask.onError(res => {
         console.error(res);
 
-        socket[state][_error] = res;
-        socket[state].readyState = 3 /* CLOSED */;
-        EventTarget_fire(socket, createInnerEvent(socket, "error"));
+        state(ws).error = res;
+        state(ws).readyState = 3 /* CLOSED */;
+        emitEvent(ws, "error");
     });
 }
 
-function onMessage(ws: WebSocket) {
-    let socket = ws as WebSocketImpl;
-    socket[state][_socketTask].onMessage(res => {
+function onMessage(ws: WebSocketImpl) {
+    state(ws).socketTask.onMessage(res => {
         let data = res.data;
         let _data: string | ArrayBuffer | Blob;
 
@@ -229,17 +207,17 @@ function onMessage(ws: WebSocket) {
             _data = data;
         }
 
-        if (isArrayBuffer(_data) && socket.binaryType === "blob") {
+        if (isArrayBuffer(_data) && ws.binaryType === "blob") {
             _data = new BlobP([_data]);
         }
 
         let event = new MessageEventP("message", {
             data: _data,
-            origin: socket.url,
+            origin: ws.url,
         });
 
         Event_setTrusted(event, true);
-        EventTarget_fire(socket, event);
+        EventTarget_fire(ws, event);
     });
 }
 

@@ -10,8 +10,6 @@
     // See also https://aka.ms/tsconfig/module
     "module": "esnext",
     "target": "es6",
-    "moduleResolution": "node",
-    "allowSyntheticDefaultImports": true,
     "types": [],
     // For nodejs:
     // "lib": ["esnext"],
@@ -39,11 +37,12 @@
     // Recommended Options
     "strict": true,
     "jsx": "react-jsx",
-    "verbatimModuleSyntax": true,
-    "isolatedModules": true,
+    // "verbatimModuleSyntax": true,
+    // "isolatedModules": true,
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
     "skipLibCheck": true,
+    "preserveConstEnums": false,
     "useDefineForClassFields": false
   }
 }

@@ -1,24 +1,28 @@
-import { mp } from "./platform";
+import { getPlatform } from "./platform";
 
-export const request = mp ? mp.request : function errorRequest(options: IRequestOptions): IRequestTask {
-    const errMsg = "NOT_SUPPORTED_ERR";
-    const errno = 9;
+/** @internal */
+export function getRequest() {
+    let mp = getPlatform();
+    return mp ? mp.request : function errorRequest(options: IRequestOptions): IRequestTask {
+        const errMsg = "NOT_SUPPORTED_ERR";
+        const errno = 9;
 
-    const err = {
-        errMsg,
-        errno,
-        exception: {
-            retryCount: 0,
-            reasons: [{ errMsg, errno }],
-        },
-        useHttpDNS: false,
-    };
+        const err = {
+            errMsg,
+            errno,
+            exception: {
+                retryCount: 0,
+                reasons: [{ errMsg, errno }],
+            },
+            useHttpDNS: false,
+        };
 
-    Promise.resolve(err)
-        .then(err => { try { if (options.fail) { options.fail(err); } } catch (e) { console.error(e); } })
-        .then(() => { if (options.complete) { options.complete(err); } });
+        Promise.resolve(err)
+            .then(err => { try { if (options.fail) { options.fail(err); } } catch (e) { console.error(e); } })
+            .then(() => { if (options.complete) { options.complete(err); } });
 
-    throw new ReferenceError("request is not defined");
+        throw new ReferenceError("request is not defined");
+    }
 }
 
 /**
@@ -35,7 +39,7 @@ export interface IRequestOptions {
     /**
      * 请求的参数
      */
-    data: string | object | ArrayBuffer | undefined;
+    data?: string | object | ArrayBuffer | undefined;
 
     /**
      * 设置请求的 header，header 中不能设置 Referer。content-type 默认为 application/json
