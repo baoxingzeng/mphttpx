@@ -52,8 +52,8 @@ const enum XHRCycle {
     END                         // outer
 };
 
-const mp = { request: getRequest() };
-export const setRequest = (request: unknown) => { mp.request = request as TRequestFunc; }
+class mp { static request = getRequest(); }
+export function setRequest(request: unknown) { mp.request = request as TRequestFunc; }
 
 export class XMLHttpRequestImpl extends XMLHttpRequestEventTargetP implements XMLHttpRequest {
     static get UNSENT(): 0 { return 0; }
@@ -581,7 +581,7 @@ function execAbort(xhr: XMLHttpRequestImpl) {
     state(xhr).pos = XHRCycle.ABORT;
     setReadyStateAndNotify(xhr, 4 /* DONE */);
     emitProgressEvent(xhr, "abort");
-    execLoadend(xhr, 0);
+    execLoadend(xhr);
 }
 
 function execError(xhr: XMLHttpRequestImpl, err?: IRequestFailCallbackResult | IAliRequestFailCallbackResult) {
@@ -595,17 +595,17 @@ function execError(xhr: XMLHttpRequestImpl, err?: IRequestFailCallbackResult | I
 
     setReadyStateAndNotify(xhr, 4 /* DONE */);
     emitProgressEvent(xhr, "error");
-    execLoadend(xhr, 0);
+    execLoadend(xhr);
 }
 
 function execTimeout(xhr: XMLHttpRequestImpl) {
     state(xhr).pos = XHRCycle.TIMEOUT;
     setReadyStateAndNotify(xhr, 4 /* DONE */);
     emitProgressEvent(xhr, "timeout");
-    execLoadend(xhr, 0);
+    execLoadend(xhr);
 }
 
-function execLoadend(xhr: XMLHttpRequestImpl, contentLength: number) {
+function execLoadend(xhr: XMLHttpRequestImpl, contentLength = 0) {
     state(xhr).pos = XHRCycle.LOADEND;
     emitProgressEvent(xhr, "loadend", contentLength, contentLength);
     execEnd(xhr);

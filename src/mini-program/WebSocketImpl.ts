@@ -13,8 +13,8 @@ import { SymbolP, DOMExceptionP, setState, checkArgsLength } from "../utils";
 import { getConnectSocket } from "./connectSocket";
 import type { TConnectSocketFunc, IConnectSocketOption, ISocketTask } from "./connectSocket";
 
-const mp = { connectSocket: getConnectSocket() };
-export const setConnectSocket = (connectSocket: unknown) => { mp.connectSocket = connectSocket as TConnectSocketFunc; }
+class mp { static connectSocket = getConnectSocket(); }
+export function setConnectSocket(connectSocket: unknown) { mp.connectSocket = connectSocket as TConnectSocketFunc; }
 
 export class WebSocketImpl extends EventTargetP implements WebSocket {
     static get CONNECTING(): 0 { return 0; }
@@ -154,45 +154,45 @@ function state(target: WebSocketImpl) {
     return target.__WebSocket__;
 }
 
-function onOpen(ws: WebSocketImpl) {
-    state(ws).socketTask.onOpen(res => {
+function onOpen(socket: WebSocketImpl) {
+    state(socket).socketTask.onOpen(res => {
         if ("header" in res && res.header && typeof res.header === "object") {
             let headers = new HeadersP(res.header as Record<string, string>);
-            state(ws).protocol = headers.get("Sec-WebSocket-Protocol") || "";
+            state(socket).protocol = headers.get("Sec-WebSocket-Protocol") || "";
         }
 
-        state(ws).readyState = 1 /* OPEN */;
-        emitEvent(ws, "open");
+        state(socket).readyState = 1 /* OPEN */;
+        emitEvent(socket, "open");
     });
 }
 
-function onClose(ws: WebSocketImpl) {
-    state(ws).socketTask.onClose(res => {
-        state(ws).readyState = 3 /* CLOSED */;
+function onClose(socket: WebSocketImpl) {
+    state(socket).socketTask.onClose(res => {
+        state(socket).readyState = 3 /* CLOSED */;
 
         let event = new CloseEventP("close", {
-            wasClean: !state(ws).error,
+            wasClean: !state(socket).error,
             code: res.code,
             reason: res.reason,
         });
 
         Event_setTrusted(event, true);
-        EventTarget_fire(ws, event);
+        EventTarget_fire(socket, event);
     });
 }
 
-function onError(ws: WebSocketImpl) {
-    state(ws).socketTask.onError(res => {
+function onError(socket: WebSocketImpl) {
+    state(socket).socketTask.onError(res => {
         console.error(res);
 
-        state(ws).error = res;
-        state(ws).readyState = 3 /* CLOSED */;
-        emitEvent(ws, "error");
+        state(socket).error = res;
+        state(socket).readyState = 3 /* CLOSED */;
+        emitEvent(socket, "error");
     });
 }
 
-function onMessage(ws: WebSocketImpl) {
-    state(ws).socketTask.onMessage(res => {
+function onMessage(socket: WebSocketImpl) {
+    state(socket).socketTask.onMessage(res => {
         let data = res.data;
         let _data: string | ArrayBuffer | Blob;
 
@@ -207,17 +207,17 @@ function onMessage(ws: WebSocketImpl) {
             _data = data;
         }
 
-        if (isArrayBuffer(_data) && ws.binaryType === "blob") {
+        if (isArrayBuffer(_data) && socket.binaryType === "blob") {
             _data = new BlobP([_data]);
         }
 
         let event = new MessageEventP("message", {
             data: _data,
-            origin: ws.url,
+            origin: socket.url,
         });
 
         Event_setTrusted(event, true);
-        EventTarget_fire(ws, event);
+        EventTarget_fire(socket, event);
     });
 }
 
