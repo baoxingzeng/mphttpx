@@ -1,4 +1,4 @@
-import { g, SymbolP, className, setState, checkArgsLength } from "../utils";
+import { SymbolP, className, setState, checkArgsLength } from "../utils";
 
 export class EventP implements Event {
     static get NONE(): 0 { return 0; }
@@ -128,5 +128,5 @@ export function Event_setTrusted(event: Event, isTrusted: boolean) {
     state(event as EventP).isTrusted = `${createTrustedPropertyDescriptor.name}:${isTrusted ? "YES" : "NO"}`;
 }
 
-const EventE = g.EventTarget ? g.Event : EventP;
+const EventE = (typeof Event !== "undefined" && Event) || EventP;
 export { EventE as Event };

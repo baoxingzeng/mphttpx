@@ -1,6 +1,6 @@
 import { HeadersP } from "./HeadersP";
 import { BodyImpl, Body_init } from "./BodyImpl"
-import { g, SymbolP, setState, checkArgsLength } from "../utils";
+import { SymbolP, setState, checkArgsLength } from "../utils";
 
 export class ResponseP extends BodyImpl implements Response {
     static json(data: any, init?: ResponseInit): Response {
@@ -100,5 +100,5 @@ function state(target: ResponseP) {
     return target.__Response__;
 }
 
-const ResponseE = g["Response"] || ResponseP;
+const ResponseE = (typeof Response !== "undefined" && Response) || ResponseP;
 export { ResponseE as Response };

@@ -1,6 +1,6 @@
 import { EventP, Event_setTrusted } from "./EventP";
 import { isEventTarget } from "../helpers/isEventTarget";
-import { g, SymbolP, className, setState, checkArgsLength, isPolyfillType } from "../utils";
+import { SymbolP, className, setState, checkArgsLength, isPolyfillType } from "../utils";
 
 export class EventTargetP implements EventTarget {
     constructor() {
@@ -167,5 +167,5 @@ function isEventListenerObject(cb: EventListenerObject | null): cb is EventListe
     return !!cb && typeof cb === "object" && "handleEvent" in cb && typeof cb.handleEvent === "function";
 }
 
-const EventTargetE = g.EventTarget || EventTargetP;
+const EventTargetE = (typeof EventTarget !== "undefined" && EventTarget) || EventTargetP;
 export { EventTargetE as EventTarget };

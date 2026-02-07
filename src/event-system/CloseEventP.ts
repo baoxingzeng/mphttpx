@@ -1,5 +1,5 @@
 import { EventP } from "./EventP";
-import { g, SymbolP, setState } from "../utils";
+import { SymbolP, setState } from "../utils";
 
 export class CloseEventP extends EventP implements CloseEvent {
     constructor(type: string, eventInitDict?: CloseEventInit) {
@@ -34,6 +34,3 @@ class CloseEventState {
 function state(target: CloseEventP) {
     return target.__CloseEvent__;
 }
-
-const CloseEventE = g["EventTarget"] ? g["CloseEvent"] : CloseEventP;
-export { CloseEventE as CloseEvent };

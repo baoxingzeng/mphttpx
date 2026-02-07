@@ -3,7 +3,7 @@ import { attachFn, executeFn } from "../helpers/handlers";
 import { EventTargetP, EventTargetState } from "./EventTargetP";
 import { isSequence } from "../helpers/isSequence";
 import { isEventTarget } from "../helpers/isEventTarget";
-import { g, SymbolP, DOMExceptionP, setState, checkArgsLength } from "../utils";
+import { SymbolP, DOMExceptionP, setState, checkArgsLength } from "../utils";
 
 export class AbortSignalP extends EventTargetP implements AbortSignal {
     static abort(reason?: any) {
@@ -134,5 +134,5 @@ export function createAbortSignal(): AbortSignal {
     return signal;
 }
 
-const AbortSignalE = g["AbortSignal"] || AbortSignalP;
+const AbortSignalE = (typeof AbortSignal !== "undefined" && AbortSignal) || AbortSignalP;
 export { AbortSignalE as AbortSignal };

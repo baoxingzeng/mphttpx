@@ -1,4 +1,4 @@
-import { g, SymbolP, setState } from "../utils";
+import { SymbolP, setState } from "../utils";
 import { isArrayBuffer } from "../helpers/isArrayBuffer";
 
 export class TextDecoderP implements TextDecoder {
@@ -195,5 +195,5 @@ function concatString(val: number[]) {
     return str;
 }
 
-const TextDecoderE = g.TextDecoder || TextDecoderP;
+const TextDecoderE = (typeof TextDecoder !== "undefined" && TextDecoder) || TextDecoderP;
 export { TextDecoderE as TextDecoder };

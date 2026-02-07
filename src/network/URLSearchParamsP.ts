@@ -1,6 +1,6 @@
+import { SymbolP, setState, checkArgsLength } from "../utils";
 import { isSequence } from "../helpers/isSequence";
 import { isURLSearchParams } from "../helpers/isURLSearchParams";
-import { g, SymbolP, setState, checkArgsLength } from "../utils";
 
 export class URLSearchParamsP implements URLSearchParams {
     constructor(init?: string[][] | Record<string, string> | string | URLSearchParams) {
@@ -236,5 +236,5 @@ function decode(str: string) {
         .replace(/(%[a-f0-9]{2})+/ig, match => decodeURIComponent(match));
 }
 
-const URLSearchParamsE = g["URLSearchParams"] || URLSearchParamsP;
+const URLSearchParamsE = (typeof URLSearchParams !== "undefined" && URLSearchParams) || URLSearchParamsP;
 export { URLSearchParamsE as URLSearchParams };

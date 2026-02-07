@@ -4,8 +4,8 @@ import { DOMExceptionP, checkArgsLength } from "../utils";
 import { XMLHttpRequest } from "../mini-program/XMLHttpRequestImpl";
 import { HeadersP, isHeaders, normalizeName, normalizeValue } from "./HeadersP";
 
-const mp = { XMLHttpRequest: XMLHttpRequest };
-export const setXMLHttpRequest = (XHR: unknown) => { mp.XMLHttpRequest = XHR as typeof globalThis["XMLHttpRequest"]; }
+class mp { static XMLHttpRequest = XMLHttpRequest; }
+export function setXMLHttpRequest(XHR: unknown) { mp.XMLHttpRequest = XHR as typeof globalThis.XMLHttpRequest; }
 
 export function fetchP(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
     checkArgsLength(arguments.length, 1, "Window", "fetch");

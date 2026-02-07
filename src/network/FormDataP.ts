@@ -1,6 +1,6 @@
 import { isBlob } from "../helpers/isBlob";
 import { FileP } from "../file-system/FileP";
-import { g, SymbolP, setState, checkArgsLength } from "../utils";
+import { SymbolP, setState, checkArgsLength } from "../utils";
 
 export class FormDataP implements FormData {
     constructor(form?: HTMLFormElement, submitter?: HTMLElement | null) {
@@ -160,5 +160,5 @@ function normalizeArgs(name: string, value: string | Blob, filename?: string): [
     return ["" + name, "" + value];
 }
 
-const FormDataE = g.FormData || FormDataP;
+const FormDataE = (typeof FormData !== "undefined" && FormData) || FormDataP;
 export { FormDataE as FormData };

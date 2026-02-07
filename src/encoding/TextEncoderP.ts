@@ -1,4 +1,4 @@
-import { g, SymbolP, isObjectType, checkArgsLength } from "../utils";
+import { SymbolP, isObjectType, checkArgsLength } from "../utils";
 
 export class TextEncoderP implements TextEncoder {
     get encoding() { return "utf-8"; }
@@ -124,5 +124,5 @@ function encodeText(input: string, destination?: Uint8Array<ArrayBufferLike>) {
     };
 }
 
-const TextEncoderE = g.TextEncoder || TextEncoderP;
+const TextEncoderE = (typeof TextEncoder !== "undefined" && TextEncoder) || TextEncoderP;
 export { TextEncoderE as TextEncoder };

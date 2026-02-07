@@ -1,5 +1,5 @@
 import { isSequence } from "../helpers/isSequence";
-import { g, SymbolP, setState, isPolyfillType, checkArgsLength } from "../utils";
+import { SymbolP, setState, isPolyfillType, checkArgsLength } from "../utils";
 
 export class HeadersP implements Headers {
     constructor(init?: HeadersInit) {
@@ -164,5 +164,5 @@ export function normalizeValue(value: string) {
     return typeof value === "string" ? value : ("" + value);
 }
 
-const HeadersE = g.Headers || HeadersP;
+const HeadersE = (typeof Headers !== "undefined" && Headers) || HeadersP;
 export { HeadersE as Headers };

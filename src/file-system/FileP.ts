@@ -1,5 +1,5 @@
 import { BlobP } from "./BlobP";
-import { g, SymbolP, setState, checkArgsLength } from "../utils";
+import { SymbolP, setState, checkArgsLength } from "../utils";
 
 export class FileP extends BlobP implements File {
     constructor(fileBits: BlobPart[], fileName: string, options?: FilePropertyBag) {
@@ -31,5 +31,5 @@ function state(target: FileP) {
     return target.__File__;
 }
 
-const FileE = g.Blob ? g.File : FileP;
+const FileE = (typeof File !== "undefined" && File) || FileP;
 export { FileE as File };

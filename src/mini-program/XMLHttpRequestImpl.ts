@@ -116,8 +116,6 @@ export class XMLHttpRequestImpl extends XMLHttpRequestEventTargetP implements XM
                 break;
 
             case XHRCycle.UPLOAD_FINISHING:
-                thenExec(() => execUploadLoadend(this, "loadend"));
-
             case XHRCycle.RESPONSE_HEADERS_WAITING:
             case XHRCycle.RESPONSE_BODY_WAITING:
             case XHRCycle.RESPONSE_BODY_RECEIVING:
@@ -311,8 +309,6 @@ function checkRequestTimeout(xhr: XMLHttpRequestImpl, requestId: number) {
                 break;
 
             case XHRCycle.UPLOAD_FINISHING:
-                thenExec(() => execUploadLoadend(xhr, "loadend"));
-
             case XHRCycle.RESPONSE_HEADERS_WAITING:
             case XHRCycle.RESPONSE_BODY_WAITING:
             case XHRCycle.RESPONSE_BODY_RECEIVING:
@@ -440,8 +436,8 @@ function execLoadstart(xhr: XMLHttpRequestImpl) {
 // external call
 function execUploadLoadstart(xhr: XMLHttpRequestImpl, payload: Payload, callback: (data?: string | ArrayBuffer) => void) {
     state(xhr).pos = XHRCycle.UPLOAD_LOADSTART;
-    if (state(xhr).upload) emitProgressEvent(xhr.upload, "loadstart", 0, payload.size);
     execUploadUploading(xhr, payload, callback);
+    if (state(xhr).upload) emitProgressEvent(xhr.upload, "loadstart", 0, payload.size);
 }
 
 function execUploadUploading(xhr: XMLHttpRequestImpl, payload: Payload, callback: (data?: string | ArrayBuffer) => void) {
@@ -462,8 +458,8 @@ function execUploadUploading(xhr: XMLHttpRequestImpl, payload: Payload, callback
 function execUploadLoad(xhr: XMLHttpRequestImpl, payload: Payload, data: string | ArrayBuffer, callback: (data?: string | ArrayBuffer) => void) {
     if (state(xhr).pos !== XHRCycle.UPLOAD_UPLOADING) return;
     state(xhr).pos = XHRCycle.UPLOAD_LOAD;
-    if (state(xhr).upload && payload.size > 0) emitProgressEvent(xhr.upload, "load", payload.size, payload.size);
     execUploadFinishing(xhr, payload, data, callback);
+    if (state(xhr).upload && payload.size > 0) emitProgressEvent(xhr.upload, "load", payload.size, payload.size);
 }
 
 function execUploadAbort(xhr: XMLHttpRequestImpl) {
@@ -495,13 +491,17 @@ function execUploadFinishing(xhr: XMLHttpRequestImpl, payload: Payload, data: st
 
 function execUploadLoadend(xhr: XMLHttpRequestImpl, type: string, payload?: Payload, data?: string | ArrayBuffer, callback?: (data?: string | ArrayBuffer) => void) {
     if (type === "load") {
-        if (state(xhr).pos !== XHRCycle.UPLOAD_FINISHING) return;
-        state(xhr).pos = XHRCycle.UPLOAD_LOADEND;
-        if (state(xhr).upload && payload!.size > 0) emitProgressEvent(xhr.upload, "loadend", payload!.size, payload!.size);
-        execResponseHeadersWaiting(xhr, data!, callback!);
+        if (state(xhr).pos === XHRCycle.UPLOAD_FINISHING) {
+            state(xhr).pos = XHRCycle.UPLOAD_LOADEND;
+            execResponseHeadersWaiting(xhr, data!, callback!);
+        }
+
+        if (state(xhr).upload && payload!.size > 0) {
+            emitProgressEvent(xhr.upload, "loadend", payload!.size, payload!.size);
+        }
     } else {
-        if (type !== "loadend") state(xhr).pos = XHRCycle.UPLOAD_LOADEND;
-        if (state(xhr).upload) emitProgressEvent(xhr.upload, "loadend");
+        state(xhr).pos = XHRCycle.UPLOAD_LOADEND;
+        if (state(xhr).upload) { emitProgressEvent(xhr.upload, "loadend"); }
 
         switch (type) {
             case "abort": execAbort(xhr); break;
@@ -511,7 +511,6 @@ function execUploadLoadend(xhr: XMLHttpRequestImpl, type: string, payload?: Payl
     }
 }
 
-// GET(external call) || POST(internal call) 
 function execResponseHeadersWaiting(xhr: XMLHttpRequestImpl, data: string | ArrayBuffer, callback: (data?: string | ArrayBuffer) => void) {
     if (state(xhr).pos !== XHRCycle.LOADSTART && state(xhr).pos !== XHRCycle.UPLOAD_LOADEND) return;
     state(xhr).pos = XHRCycle.RESPONSE_HEADERS_WAITING;
@@ -526,8 +525,8 @@ function execResponseHeadersReceived(xhr: XMLHttpRequestImpl, res: IRequestSucce
     state(xhr).responseURL = state(xhr).requestURL;
     state(xhr).status = "statusCode" in res ? res.statusCode : "status" in res ? (res as IRequestSuccessCallbackBaseResult).status! : 200;
     state(xhr).responseHeaders = new HeadersP(("header" in res ? res.header : "headers" in res ? (res as IRequestSuccessCallbackBaseResult).headers! : {}) as Record<string, string>);
-    setReadyStateAndNotify(xhr, 2 /* HEADERS_RECEIVED */);
     execResponseBodyWaiting(xhr, res);
+    setReadyStateAndNotify(xhr, 2 /* HEADERS_RECEIVED */);
 }
 
 function execResponseBodyWaiting(xhr: XMLHttpRequestImpl, res: IRequestSuccessCallbackBaseResult) {
@@ -538,28 +537,31 @@ function execResponseBodyWaiting(xhr: XMLHttpRequestImpl, res: IRequestSuccessCa
 function execResponseBodyLoading(xhr: XMLHttpRequestImpl, res: IRequestSuccessCallbackBaseResult) {
     if (state(xhr).pos !== XHRCycle.RESPONSE_BODY_WAITING) return;
     state(xhr).pos = XHRCycle.RESPONSE_BODY_LOADING;
-    setReadyStateAndNotify(xhr, 3 /* LOADING */);
     execResponseBodyReceiving(xhr, res);
+    setReadyStateAndNotify(xhr, 3 /* LOADING */);
 }
 
 function execResponseBodyReceiving(xhr: XMLHttpRequestImpl, res: IRequestSuccessCallbackBaseResult) {
     state(xhr).pos = XHRCycle.RESPONSE_BODY_RECEIVING;
 
     const setResponse = () => {
+        if (state(xhr).pos !== XHRCycle.RESPONSE_BODY_RECEIVING) return;
         state(xhr).response = getResponse(xhr.responseType, res.data ?? "");
         if (!xhr.responseType || xhr.responseType === "text") state(xhr).responseText = xhr.response;
         thenExec(() => execRequestDone(xhr));
     }
 
-    try { setResponse(); }
-    catch (e) { execError(xhr); console.error(e); }
+    thenExec(() => {
+        try { setResponse(); }
+        catch (e) { execError(xhr); console.error(e); }
+    });
 }
 
 function execRequestDone(xhr: XMLHttpRequestImpl) {
     if (state(xhr).pos !== XHRCycle.RESPONSE_BODY_RECEIVING) return;
     state(xhr).pos = XHRCycle.REQUEST_DONE;
-    setReadyStateAndNotify(xhr, 4 /* DONE */);
     execRequestFinishing(xhr);
+    setReadyStateAndNotify(xhr, 4 /* DONE */);
 }
 
 function execRequestFinishing(xhr: XMLHttpRequestImpl) {

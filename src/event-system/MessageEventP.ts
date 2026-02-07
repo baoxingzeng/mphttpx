@@ -1,5 +1,5 @@
 import { EventP } from "./EventP";
-import { g, SymbolP, setState, checkArgsLength } from "../utils";
+import { SymbolP, setState, checkArgsLength } from "../utils";
 
 export class MessageEventP<T> extends EventP implements MessageEvent {
     constructor(type: string, eventInitDict?: MessageEventInit<T>) {
@@ -53,6 +53,3 @@ class MessageEventState {
 function state<T>(target: MessageEventP<T>) {
     return target.__MessageEvent__;
 }
-
-const MessageEventE = g["EventTarget"] ? g["MessageEvent"] : MessageEventP;
-export { MessageEventE as MessageEvent };

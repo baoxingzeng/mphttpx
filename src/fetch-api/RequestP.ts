@@ -4,7 +4,7 @@ import { Method } from "../helpers/Method";
 import { Payload } from "../helpers/Payload";
 import { isEventTarget } from "../helpers/isEventTarget";
 import { createAbortSignal } from "../event-system/AbortSignalP";
-import { g, SymbolP, setState, isPolyfillType, checkArgsLength } from "../utils";
+import { SymbolP, setState, isPolyfillType, checkArgsLength } from "../utils";
 
 export class RequestP extends BodyImpl implements Request {
     constructor(input: RequestInfo | URL, init?: RequestInit) {
@@ -152,5 +152,5 @@ function clearCache(req: RequestP) {
     }
 }
 
-const RequestE = g["Request"] || RequestP;
+const RequestE = (typeof Request !== "undefined" && Request) || RequestP;
 export { RequestE as Request };

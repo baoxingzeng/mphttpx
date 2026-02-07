@@ -1,5 +1,5 @@
 import { EventP } from "./EventP";
-import { g, SymbolP, setState, checkArgsLength } from "../utils";
+import { SymbolP, setState, checkArgsLength } from "../utils";
 
 export class CustomEventP<T> extends EventP implements CustomEvent {
     constructor(type: string, eventInitDict?: CustomEventInit<T>) {
@@ -33,5 +33,5 @@ function state<T>(target: CustomEventP<T>) {
     return target.__CustomEvent__;
 }
 
-const CustomEventE = g["EventTarget"] ? g["CustomEvent"] : CustomEventP;
+const CustomEventE = (typeof CustomEvent !== "undefined" && CustomEvent) || CustomEventP;
 export { CustomEventE as CustomEvent };

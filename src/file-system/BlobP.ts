@@ -1,9 +1,9 @@
-import { encode } from "../helpers/encode";
-import { decode } from "../helpers/decode";
 import { isBlob } from "../helpers/isBlob";
 import { isSequence } from "../helpers/isSequence";
+import { SymbolP, className, setState } from "../utils";
+import { encode } from "../helpers/encode";
+import { decode } from "../helpers/decode";
 import { isArrayBuffer } from "../helpers/isArrayBuffer";
-import { g, SymbolP, className, setState } from "../utils";
 
 export class BlobP implements Blob {
     constructor(blobParts: BlobPart[] = [], options?: BlobPropertyBag) {
@@ -129,5 +129,5 @@ function calcSlicedSize(originalSize: number, start?: number, end?: number) {
     return Math.max(0, normalizeNumer(end) - normalizeNumer(start));
 }
 
-const BlobE = g.Blob || BlobP;
+const BlobE = (typeof Blob !== "undefined" && Blob) || BlobP;
 export { BlobE as Blob };

@@ -3,7 +3,20 @@ import { attachFn, executeFn } from "../helpers/handlers";
 import { Uint8Array_toBase64 } from "../helpers/toBase64";
 import { EventTargetP } from "../event-system/EventTargetP";
 import { emitProgressEvent } from "../helpers/emitProgressEvent";
-import { g, SymbolP, DOMExceptionP, setState, checkArgsLength } from "../utils";
+import { SymbolP, DOMExceptionP, setState, checkArgsLength } from "../utils";
+
+const enum FRCycle {
+    READER_EMPTY,
+    IDLE,           // outer
+    START,          // async
+    LOADSTART,      // event(async)
+    READING,        // async
+    LOAD,           // event
+    ABORT,          // event
+    ERROR,          // event
+    LOADEND,        // event
+    END             // outer
+};
 
 export class FileReaderP extends EventTargetP implements FileReader {
     static get EMPTY(): 0 { return 0; }
@@ -26,55 +39,47 @@ export class FileReaderP extends EventTargetP implements FileReader {
     get result() { return state(this).result; }
 
     abort(): void {
-        if (this.readyState === 1 /* LOADING */) {
-            state(this).readyState = 2 /* DONE */;
-            state(this).result = null;
-            state(this).error = new DOMExceptionP("An ongoing operation was aborted, typically with a call to abort().", "AbortError");
-            emitProgressEvent(this, "abort");
+        switch (state(this).pos) {
+            case FRCycle.START:
+            case FRCycle.READING:
+                execAbort(this);
+                break;
         }
     }
 
     readAsArrayBuffer(blob: Blob): void {
-        const kind = "readAsArrayBuffer";
-        checkArgs(kind, arguments.length, blob);
-        read(this, kind, blob, () => blob.arrayBuffer());
+        check(this, "readAsArrayBuffer", arguments.length, blob);
+        read(this, blob.size, () => blob.arrayBuffer());
     }
 
     readAsBinaryString(blob: Blob): void {
-        const kind = "readAsBinaryString";
-        checkArgs(kind, arguments.length, blob);
-        read(this, kind, blob, () => {
-            return blob.arrayBuffer().then(res => {
-                let str: string[] = [];
-                let buf = new Uint8Array(res);
-                for (let i = 0; i < buf.length; ++i) {
-                    str.push(String.fromCharCode(buf[i]!));
-                }
-                return str.join("");
-            });
-        });
+        check(this, "readAsBinaryString", arguments.length, blob);
+        read(this, blob.size, () => blob.arrayBuffer().then(res => {
+            let str: string[] = [];
+            let buf = new Uint8Array(res);
+            for (let i = 0; i < buf.length; ++i) {
+                str.push(String.fromCharCode(buf[i]!));
+            }
+            return str.join("");
+        }));
     }
 
     readAsDataURL(blob: Blob): void {
-        const kind = "readAsDataURL";
-        checkArgs(kind, arguments.length, blob);
-        read(this, kind, blob, () => {
-            return blob.arrayBuffer().then(res => {
-                return "data:" + (blob.type || "application/octet-stream") + ";base64," + Uint8Array_toBase64(new Uint8Array(res));
-            });
-        });
+        check(this, "readAsDataURL", arguments.length, blob);
+        read(this, blob.size, () => blob.arrayBuffer().then(res => {
+            return "data:" + (blob.type || "application/octet-stream") + ";base64," + Uint8Array_toBase64(new Uint8Array(res));
+        }));
     }
 
     readAsText(blob: Blob, encoding?: string): void {
-        const kind = "readAsText";
-        checkArgs(kind, arguments.length, blob);
+        check(this, "readAsText", arguments.length, blob);
         if (encoding !== undefined) {
             let _encoding = "" + encoding;
             if (["utf-8", "utf8", "unicode-1-1-utf-8"].indexOf(_encoding.toLowerCase()) === -1) {
                 console.warn(`Ignoring the execution of 'readAsText' on 'FileReader': encoding ('${_encoding}') not implemented.`);
             }
         }
-        read(this, kind, blob, () => blob.text());
+        read(this, blob.size, () => blob.text());
     }
 
     get onabort() { return state(this).onabort; }
@@ -106,6 +111,8 @@ class FileReaderState {
         this.attach = attachFn<FileReader, keyof FileReaderEventMap>(target, getHandlers(target));
     }
 
+    pos: FRCycle = FRCycle.IDLE;
+
     readyState: FileReader["readyState"] = 0 /* EMPTY */;
     result: string | ArrayBuffer | null = null;
     error: DOMException | DOMExceptionP | null = null;
@@ -134,47 +141,75 @@ function state(target: FileReaderP) {
     return target.__FileReader__;
 }
 
-function checkArgs(kind: string, actual: number, blob: Blob) {
+function check(reader: FileReaderP, kind: string, actual: number, blob: Blob) {
     checkArgsLength(actual, 1, "FileReader", kind);
     if (!isBlob(blob)) throw new TypeError("Failed to execute '" + kind + "' on 'FileReader': parameter 1 is not of type 'Blob'.");
+    if (reader.readyState === 1 /* LOADING */) throw new DOMExceptionP(`Failed to execute '${kind}' on 'FileReader': The object is already busy reading Blobs.`, "InvalidStateError");
 }
 
-function read(reader: FileReaderP, kind: string, blob: Blob, getResult: () => Promise<string | ArrayBuffer>) {
-    if (state(reader).readyState === 1 /* LOADING */) {
-        throw new DOMExceptionP(`Failed to execute '${kind}' on 'FileReader': The object is already busy reading Blobs.`, "InvalidStateError");
-    }
+function read(reader: FileReaderP, size: number, start: () => Promise<string | ArrayBuffer>) {
+    execStart(reader, size, start);
+}
 
+function execStart(reader: FileReaderP, size: number, start: () => Promise<string | ArrayBuffer>) {
+    state(reader).pos = FRCycle.START;
     state(reader).error = null;
+    state(reader).result = null;
     state(reader).readyState = 1 /* LOADING */;
-    emitProgressEvent(reader, "loadstart", 0, blob.size);
-
-    const guard = () => {
-        let ok = reader.readyState === 1 /* LOADING */;
-        if (ok) state(reader).readyState = 2 /* DONE */;
-        return ok;
-    }
-
-    const success = (result: string | ArrayBuffer) => {
-        if (!guard()) return;
-        state(reader).result = result;
-        emitProgressEvent(reader, "load", blob.size, blob.size);
-        complete();
-    }
-
-    const fail = (err: unknown) => {
-        if (!guard()) return;
-        state(reader).result = null;
-        state(reader).error = err as DOMException;
-        emitProgressEvent(reader, "error", 0, blob.size);
-        complete();
-    }
-
-    const complete = () => {
-        emitProgressEvent(reader, "loadend", reader.result ? blob.size : 0, blob.size);
-    }
-
-    getResult().then(success).catch(fail);
+    Promise.resolve().then(() => execLoadstart(reader, size, start));
 }
 
-const FileReaderE = g.Blob ? g.FileReader : FileReaderP;
+function execLoadstart(reader: FileReaderP, size: number, start: () => Promise<string | ArrayBuffer>) {
+    if (state(reader).pos !== FRCycle.START) return;
+    state(reader).pos = FRCycle.LOADSTART;
+    execReading(reader, size, start);
+    emitProgressEvent(reader, "loadstart", 0, size);
+}
+
+function execReading(reader: FileReaderP, size: number, start: () => Promise<string | ArrayBuffer>) {
+    state(reader).pos = FRCycle.READING;
+    start()
+        .then(r => execLoad(reader, size, r))
+        .catch(err => execError(reader, err));
+}
+
+function execLoad(reader: FileReaderP, size: number, result: string | ArrayBuffer) {
+    if (state(reader).pos !== FRCycle.READING) return;
+    state(reader).pos = FRCycle.LOAD;
+    state(reader).result = result;
+    state(reader).readyState = 2 /* DONE */;
+    emitProgressEvent(reader, "load", size, size);
+    execLoadend(reader, size);
+}
+
+function execAbort(reader: FileReaderP) {
+    state(reader).pos = FRCycle.ABORT;
+    state(reader).error = new DOMExceptionP("An ongoing operation was aborted, typically with a call to abort().", "AbortError");
+    state(reader).result = null;
+    state(reader).readyState = 2 /* DONE */;
+    emitProgressEvent(reader, "abort");
+    execLoadend(reader);
+}
+
+function execError(reader: FileReaderP, err: unknown) {
+    if (state(reader).pos !== FRCycle.READING) return;
+    state(reader).pos = FRCycle.ERROR;
+    state(reader).error = err as DOMException;
+    state(reader).result = null;
+    state(reader).readyState = 2 /* DONE */;
+    emitProgressEvent(reader, "error");
+    execLoadend(reader);
+}
+
+function execLoadend(reader: FileReaderP, size = 0) {
+    state(reader).pos = FRCycle.LOADEND;
+    emitProgressEvent(reader, "loadend", size, size);
+    execEnd(reader);
+}
+
+function execEnd(reader: FileReaderP) {
+    state(reader).pos = FRCycle.END;
+}
+
+const FileReaderE = (typeof FileReader !== "undefined" && FileReader) || FileReaderP;
 export { FileReaderE as FileReader };

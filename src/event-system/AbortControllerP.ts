@@ -1,4 +1,4 @@
-import { g, SymbolP, setState } from "../utils";
+import { SymbolP, setState } from "../utils";
 import { AbortSignal_abort, createAbortSignal } from "./AbortSignalP";
 
 export class AbortControllerP implements AbortController {
@@ -28,5 +28,5 @@ function state(target: AbortControllerP) {
     return target.__AbortController__;
 }
 
-const AbortControllerE = g["AbortController"] || AbortControllerP;
+const AbortControllerE = (typeof AbortController !== "undefined" && AbortController) || AbortControllerP;
 export { AbortControllerE as AbortController };

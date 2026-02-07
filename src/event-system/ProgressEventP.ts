@@ -1,5 +1,5 @@
 import { EventP } from "./EventP";
-import { g, SymbolP, setState } from "../utils";
+import { SymbolP, setState } from "../utils";
 
 export class ProgressEventP extends EventP implements ProgressEvent {
     constructor(type: string, eventInitDict?: ProgressEventInit) {
@@ -40,6 +40,3 @@ function checkNumber(field: string, value: number) {
         throw new TypeError(`Failed to construct 'ProgressEvent': Failed to read the '${field}' property from 'ProgressEventInit': The provided double value is non-finite.`);
     }
 }
-
-const ProgressEventE = g.EventTarget ? g.ProgressEvent : ProgressEventP;
-export { ProgressEventE as ProgressEvent };
