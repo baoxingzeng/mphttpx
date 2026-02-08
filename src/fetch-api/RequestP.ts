@@ -1,8 +1,8 @@
 import { HeadersP } from "./HeadersP";
 import { BodyImpl, Body_init } from "./BodyImpl";
-import { Method } from "../helpers/Method";
 import { Payload } from "../helpers/Payload";
 import { isEventTarget } from "../helpers/isEventTarget";
+import { normalizeMethod } from "../helpers/normalizeMethod";
 import { createAbortSignal } from "../event-system/AbortSignalP";
 import { SymbolP, setState, isPolyfillType, checkArgsLength } from "../utils";
 
@@ -45,7 +45,7 @@ export class RequestP extends BodyImpl implements Request {
         if (_init.cache) { s.cache = _init.cache; }
         if (_init.credentials) { s.credentials = _init.credentials; }
         if (_init.headers !== undefined) { state(this).headers = new HeadersP(_init.headers); }
-        if (_init.method) { s.method = Method.normalizeMethod(_init.method); }
+        if (_init.method) { s.method = normalizeMethod(_init.method); }
         if (_init.mode) { s.mode = _init.mode; }
         if (_init.signal !== null && _init.signal !== undefined) {
             if (isEventTarget(_init.signal)) s.signal = _init.signal;

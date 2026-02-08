@@ -13,7 +13,7 @@ import { SymbolP, DOMExceptionP, setState, checkArgsLength } from "../utils";
 import { getConnectSocket } from "./connectSocket";
 import type { TConnectSocketFunc, IConnectSocketOption, ISocketTask } from "./connectSocket";
 
-class mp { static connectSocket = getConnectSocket(); }
+const mp = { connectSocket: getConnectSocket() };
 export function setConnectSocket(connectSocket: unknown) { mp.connectSocket = connectSocket as TConnectSocketFunc; }
 
 export class WebSocketImpl extends EventTargetP implements WebSocket {

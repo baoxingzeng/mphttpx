@@ -2,12 +2,12 @@ import { BlobP } from "../file-system/BlobP";
 import { HeadersP } from "../fetch-api/HeadersP";
 import { encode } from "../helpers/encode";
 import { decode } from "../helpers/decode";
-import { Method } from "../helpers/Method";
 import { Payload } from "../helpers/Payload";
 import { isArrayBuffer } from "../helpers/isArrayBuffer";
 import { statusTextMap } from "../helpers/statusTextMap";
 import { Uint8Array_toBase64 } from "../helpers/toBase64";
 import { attachFn, executeFn } from "../helpers/handlers";
+import { normalizeMethod } from "../helpers/normalizeMethod";
 import { emitEvent } from "../helpers/emitEvent";
 import { emitProgressEvent } from "../helpers/emitProgressEvent";
 import type {
@@ -52,7 +52,7 @@ const enum XHRCycle {
     END                         // outer
 };
 
-class mp { static request = getRequest(); }
+const mp = { request: getRequest() };
 export function setRequest(request: unknown) { mp.request = request as TRequestFunc; }
 
 export class XMLHttpRequestImpl extends XMLHttpRequestEventTargetP implements XMLHttpRequest {
@@ -146,7 +146,7 @@ export class XMLHttpRequestImpl extends XMLHttpRequestEventTargetP implements XM
         checkArgsLength(arguments.length, 2, "XMLHttpRequest", "open");
         if (!async) { console.warn("Synchronous XMLHttpRequest is not supported because of its detrimental effects to the end user's experience."); }
 
-        let _method = Method.normalizeMethod(method);
+        let _method = normalizeMethod(method);
         let _url = "" + url;
         let _username = "" + (username ?? "");
         let _password = "" + (password ?? "");
