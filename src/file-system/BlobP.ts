@@ -125,7 +125,6 @@ function calcSlicedSize(originalSize: number, start?: number, end?: number) {
         }
         return num;
     }
-    console.log(normalizeNumer(start), normalizeNumer(end));
     return Math.max(0, normalizeNumer(end) - normalizeNumer(start));
 }
 
