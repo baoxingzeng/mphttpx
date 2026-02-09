@@ -98,13 +98,14 @@ class EventState {
     declare isTrusted: string;
     returnValue = true;
     target: EventTarget | null = null;
-    static timeStamp = (new Date()).getTime();
-    timeStamp = (new Date()).getTime() - EventState.timeStamp;
+    timeStamp = (new Date()).getTime() - timeStamp;
     type = "";
     passive = false;
     eventDispatched = false;
     immediatePropagationStopped = false;
 }
+
+const timeStamp = (new Date()).getTime();
 
 /** @internal */
 export function state(target: EventP) {

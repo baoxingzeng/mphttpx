@@ -1,8 +1,8 @@
-import { isBlob } from "../helpers/isBlob";
-import { isSequence } from "../helpers/isSequence";
-import { SymbolP, className, setState } from "../utils";
 import { encode } from "../helpers/encode";
 import { decode } from "../helpers/decode";
+import { SymbolP, className, setState } from "../utils";
+import { isBlob } from "../helpers/isBlob";
+import { isSequence } from "../helpers/isSequence";
 import { isArrayBuffer } from "../helpers/isArrayBuffer";
 
 export class BlobP implements Blob {
@@ -20,12 +20,10 @@ export class BlobP implements Blob {
             if (isBlob(chunk)) {
                 size += chunk.size;
                 tasks.push(chunk.arrayBuffer().then(r => new Uint8Array(r)));
-            } else if (isArrayBuffer(chunk) || ArrayBuffer.isView(chunk)) {
-                let bytes = BufferSource_toUint8Array(chunk);
-                size += bytes.length;
-                tasks.push(Promise.resolve(bytes));
             } else {
-                let bytes = encode("" + chunk);
+                let bytes = (isArrayBuffer(chunk) || ArrayBuffer.isView(chunk))
+                    ? BufferSource_toUint8Array(chunk)
+                    : encode(chunk);
                 size += bytes.length;
                 tasks.push(Promise.resolve(bytes));
             }
@@ -38,8 +36,8 @@ export class BlobP implements Blob {
 
     /** @internal */ declare readonly __Blob__: BlobState;
 
-    get size() { return state(this).size; }
-    get type() { return state(this).type; }
+    get size(): number { return state(this).size; }
+    get type(): string { return state(this).type; }
 
     arrayBuffer(): Promise<ArrayBuffer> {
         return state(this).promise.then(r => clone(r.buffer).buffer);
@@ -106,22 +104,17 @@ function clone(buf: BufferSource) {
 function concat(chunks: Uint8Array<ArrayBuffer>[]) {
     let totalByteLength = chunks.reduce((acc, cur) => acc + cur.byteLength, 0);
     let result = new Uint8Array(totalByteLength);
-
-    chunks.reduce((offset, chunk) => {
-        result.set(chunk, offset);
-        return offset + chunk.byteLength;
-    }, 0);
-
+    chunks.reduce((offset, chunk) => { result.set(chunk, offset); return offset + chunk.byteLength; }, 0);
     return result;
 }
 
-function calcSlicedSize(originalSize: number, start?: number, end?: number) {
+function calcSlicedSize(size: number, start?: number, end?: number) {
     const normalizeNumer = (n?: number) => {
         let num = Number(n); if (isNaN(num)) num = 0;
         if (num >= 0) {
-            num = Math.min(num, originalSize);
+            num = Math.min(num, size);
         } else {
-            num = Math.max(0, num + originalSize);
+            num = Math.max(0, num + size);
         }
         return num;
     }

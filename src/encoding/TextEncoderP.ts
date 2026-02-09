@@ -1,10 +1,10 @@
 import { SymbolP, isObjectType, checkArgsLength } from "../utils";
 
 export class TextEncoderP implements TextEncoder {
-    get encoding() { return "utf-8"; }
+    get encoding(): string { return "utf-8"; }
 
     encode(input = ""): Uint8Array<ArrayBuffer> {
-        return encodeText("" + input).encoded;
+        return encodeText(typeof input === "string" ? input : ("" + input)).encoded;
     }
 
     encodeInto(source: string, destination: Uint8Array<ArrayBufferLike>): TextEncoderEncodeIntoResult {
@@ -14,7 +14,7 @@ export class TextEncoderP implements TextEncoder {
             throw new TypeError("Failed to execute 'encodeInto' on 'TextEncoder': parameter 2 is not of type 'Uint8Array'.");
         }
 
-        let result = encodeText("" + source, destination);
+        let result = encodeText(typeof source === "string" ? source : ("" + source), destination);
         return { read: result.read, written: result.written };
     }
 
@@ -34,9 +34,13 @@ function encodeText(input: string, destination?: Uint8Array<ArrayBufferLike>) {
     let tlen = Math.max(32, len + (len >> 1) + 7);                                  // 1.5x size
     let target = HAS_DESTINATION ? destination : new Uint8Array((tlen >> 3) << 3);  // ... but at 8 byte offset
 
+    let value = 0;
+    let codeUnitCount = 0;
+    let byteCount = 0;
+
     while (pos < len) {
-        let value = input.charCodeAt(pos);
-        let codeUnitCount = 1;
+        value = input.charCodeAt(pos);
+        codeUnitCount = 1;
 
         if (value >= 0xd800 && value <= 0xdbff) {
             // high surrogate
@@ -63,15 +67,12 @@ function encodeText(input: string, destination?: Uint8Array<ArrayBufferLike>) {
 
         // expand the buffer if we couldn't write 4 bytes
         if (!HAS_DESTINATION && at + 4 > target.length) {
-            tlen += 8;                                  // minimum extra
-            tlen *= (1.0 + (pos / input.length) * 2);   // take 2x the remaining
-            tlen = (tlen >> 3) << 3;                    // 8 byte offset
-
+            tlen += 8;                                      // minimum extra
+            tlen *= (1.0 + (pos / input.length) * 2);       // take 2x the remaining
+            tlen = (tlen >> 3) << 3;                        // 8 byte offset
             let update = new Uint8Array(tlen);
             update.set(target); target = update;
         }
-
-        let byteCount: 1 | 2 | 3 | 4;
 
         if ((value & 0xffffff80) === 0) {           // 1-byte
             byteCount = 1;

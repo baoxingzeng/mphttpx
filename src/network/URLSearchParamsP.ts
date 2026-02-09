@@ -163,15 +163,15 @@ export class URLSearchParamsP implements URLSearchParams {
         }
     }
 
-    entries() {
+    entries(): URLSearchParamsIterator<[string, string]> {
         return state(this).array.map(x => [x[0], x[1]] as [string, string]).values();
     }
 
-    keys() {
+    keys(): URLSearchParamsIterator<string> {
         return state(this).array.map(x => x[0]).values();
     }
 
-    values() {
+    values(): URLSearchParamsIterator<string> {
         return state(this).array.map(x => x[1]).values();
     }
 

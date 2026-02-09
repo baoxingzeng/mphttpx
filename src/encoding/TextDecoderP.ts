@@ -1,25 +1,24 @@
 import { SymbolP, setState } from "../utils";
 import { isArrayBuffer } from "../helpers/isArrayBuffer";
 
+const validLabels = ["utf-8", "utf8", "unicode-1-1-utf-8"];
+
 export class TextDecoderP implements TextDecoder {
     constructor(label = "utf-8", options?: TextDecoderOptions) {
-        if (["utf-8", "utf8", "unicode-1-1-utf-8"].indexOf(("" + label).toLowerCase()) === -1) {
+        if (validLabels.indexOf((typeof label === "string" ? label : ("" + label)).toLowerCase()) === -1) {
             throw new RangeError(`Failed to construct 'TextDecoder': encoding ('${label}') not implemented.`);
         }
-
-        setState(this, "__TextDecoder__", new TextDecoderState());
-        state(this).fatal = !!options?.fatal;
-        state(this).ignoreBOM = !!options?.ignoreBOM;
+        setState(this, "__TextDecoder__", new TextDecoderState(options));
     }
 
     /** @internal */ declare readonly __TextDecoder__: TextDecoderState;
 
-    get encoding() { return "utf-8"; }
-    get fatal() { return state(this).fatal; }
-    get ignoreBOM() { return state(this).ignoreBOM; }
+    get encoding(): string { return "utf-8"; }
+    get fatal(): boolean { return state(this).fatal; }
+    get ignoreBOM(): boolean { return state(this).ignoreBOM; }
 
     decode(input?: AllowSharedBufferSource, options?: TextDecodeOptions): string {
-        return decodeText(state(this), input, options);
+        return decodeText(input, options, state(this));
     }
 
     /** @internal */ toString() { return "[object TextDecoder]"; }
@@ -29,8 +28,12 @@ export class TextDecoderP implements TextDecoder {
 
 /** @internal */
 class TextDecoderState {
-    fatal = false;
-    ignoreBOM = false;
+    constructor({ fatal = false, ignoreBOM = false } = {}) {
+        this.fatal = !!fatal;
+        this.ignoreBOM = !!ignoreBOM;
+    }
+    fatal: boolean;
+    ignoreBOM: boolean;
     initial = 0;
     partial: number[] = [];
 }
@@ -39,17 +42,8 @@ function state(target: TextDecoderP) {
     return target.__TextDecoder__;
 }
 
-function decodeText(settings: TextDecoderState, input?: AllowSharedBufferSource, options?: TextDecodeOptions): string {
-    let bytes: Uint8Array<ArrayBuffer>;
-    if (input !== undefined) {
-        if (isArrayBuffer(input)) {
-            bytes = new Uint8Array(input);
-        } else if (ArrayBuffer.isView(input)) {
-            bytes = new Uint8Array(input.buffer, input.byteOffset, input.byteLength);
-        } else {
-            throw new TypeError("Input could not be converted to any of: ArrayBufferView, ArrayBuffer.");
-        }
-    } else {
+function decodeText(input?: AllowSharedBufferSource, { stream = false } = {}, settings = { fatal: false, ignoreBOM: false, initial: 0, partial: [] as number[] }): string {
+    if (input === undefined) {
         if (settings.partial.length > 0) {
             if (settings.fatal) {
                 settings.partial = [];
@@ -59,9 +53,14 @@ function decodeText(settings: TextDecoderState, input?: AllowSharedBufferSource,
         return "";
     }
 
+    let bytes = isArrayBuffer(input)
+        ? new Uint8Array(input)
+        : ArrayBuffer.isView(input)
+            ? new Uint8Array(input.buffer, input.byteOffset, input.byteLength)
+            : (() => { throw new TypeError("Input could not be converted to any of: ArrayBufferView, ArrayBuffer."); })();
+
     if (settings.initial < 3) {
-        settings.initial += bytes.length;
-        if (bytes.length >= 3) {
+        settings.initial += bytes.length; if (bytes.length >= 3) {
             if (bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf) {
                 bytes = bytes.subarray(3);                              // × WeChat 2.5.0
             }
@@ -78,31 +77,34 @@ function decodeText(settings: TextDecoderState, input?: AllowSharedBufferSource,
     let end = bytes.length;
     let res: number[] = [];
 
-    if (!!options?.stream && bytes.length > 0) {
+    if (stream && bytes.length > 0) {
         let i = bytes.length;
         while (i > 0 && i > bytes.length - 4) {
             let byte = bytes[i - 1]!;
             if ((byte & 0b11000000) !== 0b10000000) {
-                let len = getBytesPerSequence(byte);
+                let len = (byte > 0xEF) ? 4 : (byte > 0xDF) ? 3 : (byte > 0xBF) ? 2 : 1;
                 if (len > bytes.length - (i - 1)) { end = i - 1; }
                 break;
             }
-            i--;
+            --i;
         }
 
         settings.partial = Array.from(bytes.slice(end)); // save tail   // × WeChat 2.5.0
         bytes = bytes.slice(0, end);                                    // × WeChat 2.5.0
     }
 
+    let codePoint = 0;
+    let tempCodePoint = 0;
+    let bytesPerSequence = 0;
+    let firstByte = 0, secondByte = 0, thirdByte = 0, fourthByte = 0;
+
     let i = 0;
     while (i < end) {
-        let codePoint: number | null = null;
-        let firstByte = bytes[i]!;
-        let bytesPerSequence = getBytesPerSequence(firstByte);
+        codePoint = 0;
+        firstByte = bytes[i]!;
+        bytesPerSequence = (firstByte > 0xEF) ? 4 : (firstByte > 0xDF) ? 3 : (firstByte > 0xBF) ? 2 : 1;
 
         if (i + bytesPerSequence <= end) {
-            let secondByte: number, thirdByte: number, fourthByte: number, tempCodePoint: number;
-
             switch (bytesPerSequence) {
                 case 1:
                     if (firstByte < 0x80) {
@@ -145,7 +147,7 @@ function decodeText(settings: TextDecoderState, input?: AllowSharedBufferSource,
             }
         }
 
-        if (codePoint === null) {
+        if (codePoint === 0 && ((bytesPerSequence === 1 && firstByte !== 0) || bytesPerSequence > 1)) {
             if (settings.fatal) {
                 settings.partial = [];
                 throw new TypeError("Decoding failed.")
@@ -173,10 +175,6 @@ function decodeText(settings: TextDecoderState, input?: AllowSharedBufferSource,
     }
 
     return res.length > 0x4000 ? buildString(res) : concatString(res);
-}
-
-function getBytesPerSequence(byte: number) {
-    return (byte > 0xEF) ? 4 : (byte > 0xDF) ? 3 : (byte > 0xBF) ? 2 : 1;
 }
 
 function buildString(val: number[]) {

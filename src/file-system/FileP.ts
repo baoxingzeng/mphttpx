@@ -12,9 +12,9 @@ export class FileP extends BlobP implements File {
 
     /** @internal */ declare readonly __File__: FileState;
 
-    get lastModified() { return state(this).lastModified; }
-    get name() { return state(this).name; }
-    get webkitRelativePath() { return ""; }
+    get lastModified(): number { return state(this).lastModified; }
+    get name(): string { return state(this).name; }
+    get webkitRelativePath(): string { return ""; }
 
     /** @internal */ toString() { return "[object File]"; }
     /** @internal */ get [SymbolP.toStringTag]() { return "File"; }
