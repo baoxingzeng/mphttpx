@@ -69,7 +69,6 @@ export class Payload {
 
     private length?: number;
     private calcLength?: () => number;
-
     text() { return this.promise.then(r => typeof r === "string" ? r : decode(r)); }
     arrayBuffer() { return this.promise.then(r => isArrayBuffer(r) ? r : encode(r).buffer); }
 }
