@@ -6,16 +6,14 @@ import { emitProgressEvent } from "../helpers/emitProgressEvent";
 import { SymbolP, DOMExceptionP, setState, checkArgsLength } from "../utils";
 
 const enum FRCycle {
-    READER_EMPTY,
-    IDLE,           // outer
-    START,          // async
-    LOADSTART,      // event(async)
-    READING,        // async
-    LOAD,           // event
-    ABORT,          // event
-    ERROR,          // event
-    LOADEND,        // event
-    END             // outer
+    EMPTY,
+    LOADSTART,
+    LOADING,
+    DONE,
+    LOAD,
+    ABORT,
+    ERROR,
+    LOADEND
 };
 
 export class FileReaderP extends EventTargetP implements FileReader {
@@ -39,12 +37,7 @@ export class FileReaderP extends EventTargetP implements FileReader {
     get result() { return state(this).result; }
 
     abort(): void {
-        switch (state(this).pos) {
-            case FRCycle.START:
-            case FRCycle.READING:
-                execAbort(this);
-                break;
-        }
+        if (state(this).pos === FRCycle.LOADING) execAbort(this);
     }
 
     readAsArrayBuffer(blob: Blob): void {
@@ -111,7 +104,7 @@ class FileReaderState {
         this.attach = attachFn<FileReader, keyof FileReaderEventMap>(target, getHandlers(target));
     }
 
-    pos: FRCycle = FRCycle.IDLE;
+    pos: FRCycle = FRCycle.EMPTY;
 
     readyState: FileReader["readyState"] = 0 /* EMPTY */;
     result: string | ArrayBuffer | null = null;
@@ -147,37 +140,37 @@ function check(reader: FileReaderP, kind: string, actual: number, blob: Blob) {
     if (reader.readyState === 1 /* LOADING */) throw new DOMExceptionP(`Failed to execute '${kind}' on 'FileReader': The object is already busy reading Blobs.`, "InvalidStateError");
 }
 
-function read(reader: FileReaderP, size: number, start: () => Promise<string | ArrayBuffer>) {
-    execStart(reader, size, start);
+function read(reader: FileReaderP, size: number, launch: () => Promise<string | ArrayBuffer>) {
+    execLoadstart(reader, size, launch);
 }
 
-function execStart(reader: FileReaderP, size: number, start: () => Promise<string | ArrayBuffer>) {
-    state(reader).pos = FRCycle.START;
+function execLoadstart(reader: FileReaderP, size: number, launch: () => Promise<string | ArrayBuffer>) {
+    state(reader).pos = FRCycle.LOADSTART;
     state(reader).error = null;
     state(reader).result = null;
+    const callback = () => { emitProgressEvent(reader, "loadstart", 0, size); return launch(); }
+    execLoading(reader, size, callback);
+}
+
+function execLoading(reader: FileReaderP, size: number, launch: () => Promise<string | ArrayBuffer>) {
+    state(reader).pos = FRCycle.LOADING;
     state(reader).readyState = 1 /* LOADING */;
-    Promise.resolve().then(() => execLoadstart(reader, size, start));
+    Promise.resolve().then(() => {
+        if (state(reader).pos !== FRCycle.LOADING) return;
+        launch().then(r => execDone(reader, size, r)).catch(err => execError(reader, err));
+    });
 }
 
-function execLoadstart(reader: FileReaderP, size: number, start: () => Promise<string | ArrayBuffer>) {
-    if (state(reader).pos !== FRCycle.START) return;
-    state(reader).pos = FRCycle.LOADSTART;
-    execReading(reader, size, start);
-    emitProgressEvent(reader, "loadstart", 0, size);
-}
-
-function execReading(reader: FileReaderP, size: number, start: () => Promise<string | ArrayBuffer>) {
-    state(reader).pos = FRCycle.READING;
-    start()
-        .then(r => execLoad(reader, size, r))
-        .catch(err => execError(reader, err));
-}
-
-function execLoad(reader: FileReaderP, size: number, result: string | ArrayBuffer) {
-    if (state(reader).pos !== FRCycle.READING) return;
-    state(reader).pos = FRCycle.LOAD;
+function execDone(reader: FileReaderP, size: number, result: string | ArrayBuffer) {
+    if (state(reader).pos !== FRCycle.LOADING) return;
+    state(reader).pos = FRCycle.DONE;
     state(reader).result = result;
-    state(reader).readyState = 2 /* DONE */;
+    state(reader).readyState = 2 /* DONE */
+    execLoad(reader, size);
+}
+
+function execLoad(reader: FileReaderP, size: number) {
+    state(reader).pos = FRCycle.LOAD;
     emitProgressEvent(reader, "load", size, size);
     execLoadend(reader, size);
 }
@@ -192,7 +185,7 @@ function execAbort(reader: FileReaderP) {
 }
 
 function execError(reader: FileReaderP, err: unknown) {
-    if (state(reader).pos !== FRCycle.READING) return;
+    if (state(reader).pos !== FRCycle.LOADING) return;
     state(reader).pos = FRCycle.ERROR;
     state(reader).error = err as DOMException;
     state(reader).result = null;
@@ -204,11 +197,6 @@ function execError(reader: FileReaderP, err: unknown) {
 function execLoadend(reader: FileReaderP, size = 0) {
     state(reader).pos = FRCycle.LOADEND;
     emitProgressEvent(reader, "loadend", size, size);
-    execEnd(reader);
-}
-
-function execEnd(reader: FileReaderP) {
-    state(reader).pos = FRCycle.END;
 }
 
 const FileReaderE = (typeof FileReader !== "undefined" && FileReader) || FileReaderP;
