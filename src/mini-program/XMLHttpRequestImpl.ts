@@ -189,16 +189,19 @@ export class XMLHttpRequestImpl extends XMLHttpRequestEventTargetP implements XM
         const payload = (s.method !== "GET" && s.method !== "HEAD" && body !== null && body !== undefined) && new Payload(body as XMLHttpRequestBodyInit);
         if (payload && payload.type && !s.requestHeaders!.has("Content-Type")) { (options.header as Record<string, string>)["Content-Type"] = payload.type; }
 
-        const launch = (function (this: XMLHttpRequestImpl, data?: string | ArrayBuffer) {
+        const request = (function (data?: string | ArrayBuffer) {
             if (requestId !== s.requestId) return;
-            if (state(this).pos !== XHRCycle.LOADSTART && state(this).pos !== XHRCycle.UPLOAD_LOADEND) return;
+            if (s.pos !== XHRCycle.LOADSTART && s.pos !== XHRCycle.UPLOAD_LOADEND) return;
             options.data = data !== "" ? data : undefined;
             options.headers = options.header!; // Alipay Mini Program
             s.requestTask = mp.request(options);
         }).bind(this);
 
         checkRequestTimeout(this);
-        execLoadstart(this, launch, payload || undefined);
+        const task = execLoadstart(this, payload || undefined);
+
+        if (!task) request();
+        else task.then(data => { if (data !== undefined) request(data); });
     }
 
     setRequestHeader(name: string, value: string): void {
@@ -395,29 +398,29 @@ function execOpened(xhr: XMLHttpRequestImpl) {
     setReadyStateAndNotify(xhr, 1 /* OPENED */);
 }
 
-function execLoadstart(xhr: XMLHttpRequestImpl, launch: (data?: string | ArrayBuffer) => void, payload?: Payload) {
+function execLoadstart(xhr: XMLHttpRequestImpl, payload?: Payload) {
     state(xhr).pos = XHRCycle.LOADSTART;
     emitProgressEvent(xhr, "loadstart");
-    if (!payload) { launch(); }
-    else { execUploadLoadstart(xhr, launch, payload); }
+    return payload && execUploadLoadstart(xhr, payload);
 }
 
-function execUploadLoadstart(xhr: XMLHttpRequestImpl, launch: (data?: string | ArrayBuffer) => void, payload: Payload) {
+function execUploadLoadstart(xhr: XMLHttpRequestImpl, payload: Payload) {
     if (state(xhr).pos !== XHRCycle.LOADSTART) return;
     state(xhr).pos = XHRCycle.UPLOAD_LOADSTART;
     const id = state(xhr).requestId;
-    if (state(xhr).upload) emitProgressEvent(xhr.upload, "loadstart", 0, payload.size);
-    payload.promise
-        .then(r => { id === state(xhr).requestId && execUploadLoad(xhr, launch, payload, r); })
-        .catch(e => { id === state(xhr).requestId && execUploadError(xhr); console.error(e); });
+    if (state(xhr).upload)
+        emitProgressEvent(xhr.upload, "loadstart", 0, payload.size);
+    return payload.promise
+        .then(r => { if (id === state(xhr).requestId) { return execUploadLoad(xhr, payload, r); } })
+        .catch(e => { if (id === state(xhr).requestId) { execUploadError(xhr); console.error(e); } });
 }
 
-function execUploadLoad(xhr: XMLHttpRequestImpl, launch: (data?: string | ArrayBuffer) => void, payload: Payload, data: string | ArrayBuffer) {
+function execUploadLoad(xhr: XMLHttpRequestImpl, payload: Payload, data: string | ArrayBuffer) {
     if (state(xhr).pos !== XHRCycle.UPLOAD_LOADSTART) return;
     state(xhr).pos = XHRCycle.UPLOAD_LOAD;
     if (state(xhr).upload && payload.size > 0)
         emitProgressEvent(xhr.upload, "load", payload.size, payload.size);
-    execUploadLoadend(xhr, "load", { launch, payload, data });
+    return execUploadLoadend(xhr, "load", { payload, data });
 }
 
 function execUploadAbort(xhr: XMLHttpRequestImpl) {
@@ -445,7 +448,7 @@ function execUploadTimeout(xhr: XMLHttpRequestImpl) {
     execUploadLoadend(xhr, "timeout");
 }
 
-function execUploadLoadend(xhr: XMLHttpRequestImpl, type: string, ctx?: { launch: (data?: string | ArrayBuffer) => void, payload: Payload, data: string | ArrayBuffer }) {
+function execUploadLoadend(xhr: XMLHttpRequestImpl, type: string, ctx?: { payload: Payload, data: string | ArrayBuffer }) {
     if ((type === "load" && state(xhr).pos === XHRCycle.UPLOAD_LOAD) || type !== "load")
         state(xhr).pos = XHRCycle.UPLOAD_LOADEND;
 
@@ -455,7 +458,7 @@ function execUploadLoadend(xhr: XMLHttpRequestImpl, type: string, ctx?: { launch
     }
 
     switch (type) {
-        case "load": ctx && ctx.launch(ctx.data); break;
+        case "load": return ctx && ctx.data;
         case "abort": execAbort(xhr); break;
         case "error": execError(xhr); break;
         case "timeout": execTimeout(xhr); break;
