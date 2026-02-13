@@ -16,7 +16,7 @@ export class BodyImpl implements Body {
 
     /** @internal */ declare readonly __Body__: BodyState;
 
-    get bodyUsed() { return state(this).bodyUsed; };
+    get bodyUsed(): boolean { return state(this).bodyUsed; };
     get body(): ReadableStream<Uint8Array<ArrayBuffer>> | null {
         throw new TypeError(`Failed to access 'body' on '${className(this)}': property not implemented.`);
     }

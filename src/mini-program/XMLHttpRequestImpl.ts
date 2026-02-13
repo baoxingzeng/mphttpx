@@ -66,42 +66,40 @@ export class XMLHttpRequestImpl extends XMLHttpRequestEventTargetP implements XM
     get LOADING(): 3 { return 3; }
     get DONE(): 4 { return 4; }
 
-    get readyState() { return state(this).readyState; }
-    get response() { return state(this).response; }
-    get responseText() { return state(this).responseText; }
-    get responseType() { return state(this).responseType; }
-    set responseType(value) {
-        if (state(this).pos > XHRCycle.HEADERS_RECEIVED) {
-            throw new DOMExceptionP("Failed to set the 'responseType' property on 'XMLHttpRequest': The response type cannot be set if the object's state is LOADING or DONE.", "InvalidStateError");
-        }
-        if (responseTypes.indexOf(value) > -1) { state(this).responseType = value; }
+    get readyState(): number { return state(this).readyState; }
+    get response(): any { return state(this).response; }
+    get responseText(): string { return state(this).responseText; }
+    get responseType(): XMLHttpRequestResponseType { return state(this).responseType; }
+    set responseType(value: XMLHttpRequestResponseType) {
+        if (state(this).pos > XHRCycle.HEADERS_RECEIVED) throw new DOMExceptionP("Failed to set the 'responseType' property on 'XMLHttpRequest': The response type cannot be set if the object's state is LOADING or DONE.", "InvalidStateError");
+        if (responseTypes.indexOf(value) > -1) state(this).responseType = value;
     }
-    get responseURL() { return state(this).responseURL; }
+    get responseURL(): string { return state(this).responseURL; }
     get responseXML(): Document | null { return null; }
-    get status() { return state(this).status; }
-    get statusText() {
+    get status(): number { return state(this).status; }
+    get statusText(): string {
         if (state(this).pos < XHRCycle.HEADERS_RECEIVED) return "";
         return state(this).statusText || statusTextMap[this.status] || "unknown";
     }
-    get timeout() { return state(this).timeout; }
-    set timeout(value) { state(this).timeout = value >= 0 ? value : 0; }
-    get upload() {
-        if (!state(this).upload) { state(this).upload = createXMLHttpRequestUpload(); }
+    get timeout(): number { return state(this).timeout; }
+    set timeout(value: number) { state(this).timeout = value >= 0 ? value : 0; }
+    get upload(): XMLHttpRequestUpload {
+        if (!state(this).upload) state(this).upload = createXMLHttpRequestUpload();
         return state(this).upload!;
     }
-    get withCredentials() { return state(this).withCredentials; }
-    set withCredentials(value) {
-        if (state(this).pos < XHRCycle.LOADSTART) { state(this).withCredentials = !!value; }
-        else { throw new TypeError("Failed to set the 'withCredentials' property on 'XMLHttpRequest': The value may only be set if the object's state is UNSENT or OPENED."); }
+    get withCredentials(): boolean { return state(this).withCredentials; }
+    set withCredentials(value: boolean) {
+        if (state(this).pos < XHRCycle.LOADSTART) state(this).withCredentials = !!value;
+        else throw new TypeError("Failed to set the 'withCredentials' property on 'XMLHttpRequest': The value may only be set if the object's state is UNSENT or OPENED.");
     }
 
     abort(): void {
-        const requestTask = state(this).requestTask;
-        clearRequest(state(this));
+        const s = state(this);
+        const requestTask = s.requestTask;
 
-        switch (state(this).pos) {
+        switch (s.pos) {
             case XHRCycle.OPENED:
-                state(this).requestHeaders = new HeadersP();
+                s.requestHeaders = new HeadersP();
                 break;
 
             case XHRCycle.LOADSTART:
@@ -121,6 +119,7 @@ export class XMLHttpRequestImpl extends XMLHttpRequestEventTargetP implements XM
                 break;
         }
 
+        clearRequest(s);
         safeAbort(requestTask);
     }
 
@@ -214,11 +213,8 @@ export class XMLHttpRequestImpl extends XMLHttpRequestEventTargetP implements XM
         let _name = "" + name;
         let _value = "" + value;
 
-        try {
-            state(this).requestHeaders!.append(_name, _value);
-        } catch (e) {
-            throw new SyntaxError(`Failed to execute 'setRequestHeader' on 'XMLHttpRequest': '${_name}' is not a valid HTTP header field name.`);
-        }
+        try { state(this).requestHeaders!.append(_name, _value); }
+        catch (e) { throw new SyntaxError(`Failed to execute 'setRequestHeader' on 'XMLHttpRequest': '${_name}' is not a valid HTTP header field name.`); }
     }
 
     get onreadystatechange() { return state(this).onreadystatechange; }
@@ -303,10 +299,11 @@ function clearRequestTimeout(state: XMLHttpRequestState) {
 }
 
 function checkRequestTimeout(xhr: XMLHttpRequestImpl) {
-    const whenTimeout = () => {
-        const requestTask = state(xhr).requestTask;
+    if (!xhr.timeout) return
 
-        switch (state(xhr).pos) {
+    const s = state(xhr);
+    const whenTimeout = () => {
+        switch (s.pos) {
             case XHRCycle.LOADSTART:
             case XHRCycle.UPLOAD_LOADSTART:
                 execUploadTimeout(xhr);
@@ -316,13 +313,9 @@ function checkRequestTimeout(xhr: XMLHttpRequestImpl) {
                 execTimeout(xhr);
                 break;
         }
-
-        safeAbort(requestTask);
     }
 
-    if (xhr.timeout) {
-        state(xhr).timeoutId = setTimeout(whenTimeout, xhr.timeout);
-    }
+    s.timeoutId = setTimeout(() => { let task = s.requestTask; whenTimeout(); safeAbort(task); }, xhr.timeout);
 }
 
 function requestSuccess(this: XMLHttpRequestImpl, requestId: number, res: IRequestSuccessCallbackBaseResult) {
@@ -331,8 +324,6 @@ function requestSuccess(this: XMLHttpRequestImpl, requestId: number, res: IReque
 }
 
 function requestFail(this: XMLHttpRequestImpl, requestId: number, err: IRequestFailCallbackResult | IAliRequestFailCallbackResult) {
-    if (requestId !== state(this).requestId) return;
-
     // Alipay Mini Program
     if (("header" in err && "statusCode" in err) || ("headers" in err && "status" in err)) {
         return requestSuccess.call(this, requestId, {
@@ -342,6 +333,7 @@ function requestFail(this: XMLHttpRequestImpl, requestId: number, err: IRequestF
         });
     }
 
+    if (requestId !== state(this).requestId) return;
     execError(this, err);
 }
 
@@ -405,20 +397,22 @@ function execLoadstart(xhr: XMLHttpRequestImpl, payload?: Payload) {
 }
 
 function execUploadLoadstart(xhr: XMLHttpRequestImpl, payload: Payload) {
-    if (state(xhr).pos !== XHRCycle.LOADSTART) return;
-    state(xhr).pos = XHRCycle.UPLOAD_LOADSTART;
-    const id = state(xhr).requestId;
-    if (state(xhr).upload)
+    let s = state(xhr);
+    let requestId = s.requestId;
+    if (s.pos !== XHRCycle.LOADSTART) return;
+    s.pos = XHRCycle.UPLOAD_LOADSTART;
+    if (s.upload)
         emitProgressEvent(xhr.upload, "loadstart", 0, payload.size);
     return payload.promise
-        .then(r => { if (id === state(xhr).requestId) { return execUploadLoad(xhr, payload, r); } })
-        .catch(e => { if (id === state(xhr).requestId) { execUploadError(xhr); console.error(e); } });
+        .then(r => { if (requestId === s.requestId) { return execUploadLoad(xhr, payload, r); } })
+        .catch(e => { if (requestId === s.requestId) { execUploadError(xhr); console.error(e); } });
 }
 
 function execUploadLoad(xhr: XMLHttpRequestImpl, payload: Payload, data: string | ArrayBuffer) {
-    if (state(xhr).pos !== XHRCycle.UPLOAD_LOADSTART) return;
-    state(xhr).pos = XHRCycle.UPLOAD_LOAD;
-    if (state(xhr).upload && payload.size > 0)
+    let s = state(xhr);
+    if (s.pos !== XHRCycle.UPLOAD_LOADSTART) return;
+    s.pos = XHRCycle.UPLOAD_LOAD;
+    if (s.upload && payload.size > 0)
         emitProgressEvent(xhr.upload, "load", payload.size, payload.size);
     return execUploadLoadend(xhr, "load", { payload, data });
 }
@@ -432,10 +426,11 @@ function execUploadAbort(xhr: XMLHttpRequestImpl) {
 }
 
 function execUploadError(xhr: XMLHttpRequestImpl) {
-    if (state(xhr).pos !== XHRCycle.UPLOAD_LOADSTART) return;
-    state(xhr).pos = XHRCycle.UPLOAD_ERROR;
+    let s = state(xhr);
+    if (s.pos !== XHRCycle.UPLOAD_LOADSTART) return;
+    s.pos = XHRCycle.UPLOAD_ERROR;
     setReadyStateAndNotify(xhr, 4 /* DONE */);
-    if (state(xhr).upload)
+    if (s.upload)
         emitProgressEvent(xhr.upload, "error");
     execUploadLoadend(xhr, "error");
 }
@@ -449,10 +444,11 @@ function execUploadTimeout(xhr: XMLHttpRequestImpl) {
 }
 
 function execUploadLoadend(xhr: XMLHttpRequestImpl, type: string, ctx?: { payload: Payload, data: string | ArrayBuffer }) {
-    if ((type === "load" && state(xhr).pos === XHRCycle.UPLOAD_LOAD) || type !== "load")
-        state(xhr).pos = XHRCycle.UPLOAD_LOADEND;
+    let s = state(xhr);
+    if ((type === "load" && s.pos === XHRCycle.UPLOAD_LOAD) || type !== "load")
+        s.pos = XHRCycle.UPLOAD_LOADEND;
 
-    if (state(xhr).upload) {
+    if (s.upload) {
         let l = ctx ? ctx.payload.size : 0;
         emitProgressEvent(xhr.upload, "loadend", l, l);
     }
@@ -466,11 +462,12 @@ function execUploadLoadend(xhr: XMLHttpRequestImpl, type: string, ctx?: { payloa
 }
 
 function execHeadersReceived(xhr: XMLHttpRequestImpl, res: IRequestSuccessCallbackBaseResult) {
-    if (state(xhr).pos !== XHRCycle.LOADSTART && state(xhr).pos !== XHRCycle.UPLOAD_LOADEND) return;
-    state(xhr).pos = XHRCycle.HEADERS_RECEIVED;
-    state(xhr).responseURL = state(xhr).requestURL;
-    state(xhr).status = "statusCode" in res ? res.statusCode : "status" in res ? (res as IRequestSuccessCallbackBaseResult).status! : 200;
-    state(xhr).responseHeaders = new HeadersP(("header" in res ? res.header : "headers" in res ? (res as IRequestSuccessCallbackBaseResult).headers! : {}) as Record<string, string>);
+    let s = state(xhr);
+    if (s.pos !== XHRCycle.LOADSTART && s.pos !== XHRCycle.UPLOAD_LOADEND) return;
+    s.pos = XHRCycle.HEADERS_RECEIVED;
+    s.responseURL = s.requestURL;
+    s.status = "statusCode" in res ? res.statusCode : "status" in res ? (res as IRequestSuccessCallbackBaseResult).status! : 200;
+    s.responseHeaders = new HeadersP(("header" in res ? res.header : "headers" in res ? (res as IRequestSuccessCallbackBaseResult).headers! : {}) as Record<string, string>);
     setReadyStateAndNotify(xhr, 2 /* HEADERS_RECEIVED */);
     execLoading(xhr, res);
 }
@@ -483,12 +480,13 @@ function execLoading(xhr: XMLHttpRequestImpl, res: IRequestSuccessCallbackBaseRe
 }
 
 function execDone(xhr: XMLHttpRequestImpl, res: IRequestSuccessCallbackBaseResult) {
-    if (state(xhr).pos !== XHRCycle.LOADING) return;
-    state(xhr).pos = XHRCycle.DONE;
+    let s = state(xhr);
+    if (s.pos !== XHRCycle.LOADING) return;
+    s.pos = XHRCycle.DONE;
 
     const setResponse = () => {
-        state(xhr).response = getResponse(xhr.responseType, res.data ?? "");
-        if (!xhr.responseType || xhr.responseType === "text") state(xhr).responseText = xhr.response;
+        s.response = getResponse(xhr.responseType, res.data ?? "");
+        if (!xhr.responseType || xhr.responseType === "text") s.responseText = xhr.response;
         setReadyStateAndNotify(xhr, 4 /* DONE */);
         execLoad(xhr);
     }
@@ -498,9 +496,10 @@ function execDone(xhr: XMLHttpRequestImpl, res: IRequestSuccessCallbackBaseResul
 }
 
 function execLoad(xhr: XMLHttpRequestImpl) {
-    if (state(xhr).pos !== XHRCycle.DONE) return;
-    state(xhr).pos = XHRCycle.LOAD;
-    let lstr = state(xhr).responseHeaders!.get("Content-Length");
+    let s = state(xhr);
+    if (s.pos !== XHRCycle.DONE) return;
+    s.pos = XHRCycle.LOAD;
+    let lstr = s.responseHeaders!.get("Content-Length");
     let contentLength = lstr ? (parseInt(lstr) || 0) : 0;
     emitProgressEvent(xhr, "load", contentLength, contentLength);
     execLoadend(xhr, contentLength);
@@ -514,7 +513,8 @@ function execAbort(xhr: XMLHttpRequestImpl) {
 }
 
 function execError(xhr: XMLHttpRequestImpl, err?: IRequestFailCallbackResult | IAliRequestFailCallbackResult) {
-    switch (state(xhr).pos) {
+    let s = state(xhr);
+    switch (s.pos) {
         case XHRCycle.LOADSTART:
         case XHRCycle.UPLOAD_LOADEND:
         case XHRCycle.DONE:
@@ -523,11 +523,11 @@ function execError(xhr: XMLHttpRequestImpl, err?: IRequestFailCallbackResult | I
         default:
             return;
     }
-    state(xhr).pos = XHRCycle.ERROR;
+    s.pos = XHRCycle.ERROR;
 
     if (err) {
-        state(xhr).status = 0;
-        state(xhr).statusText = "errMsg" in err ? err.errMsg : "errorMessage" in err ? err.errorMessage : "";
+        s.status = 0;
+        s.statusText = "errMsg" in err ? err.errMsg : "errorMessage" in err ? err.errorMessage : "";
     }
 
     setReadyStateAndNotify(xhr, 4 /* DONE */);
@@ -543,9 +543,10 @@ function execTimeout(xhr: XMLHttpRequestImpl) {
 }
 
 function execLoadend(xhr: XMLHttpRequestImpl, contentLength = 0) {
-    state(xhr).pos = XHRCycle.LOADEND;
-    state(xhr).requestTask = null;
-    clearRequestTimeout(state(xhr));
+    let s = state(xhr);
+    s.pos = XHRCycle.LOADEND;
+    s.requestTask = null;
+    clearRequestTimeout(s);
     emitProgressEvent(xhr, "loadend", contentLength, contentLength);
 }
 

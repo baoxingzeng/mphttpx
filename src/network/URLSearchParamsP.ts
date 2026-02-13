@@ -54,7 +54,7 @@ export class URLSearchParamsP implements URLSearchParams {
 
     /** @internal */ declare readonly __URLSearchParams__: URLSearchParamsState;
 
-    get size() { return state(this).array.length; }
+    get size(): number { return state(this).array.length; }
 
     append(name: string, value: string): void {
         checkArgsFn(arguments.length, 2, "append");
@@ -178,7 +178,7 @@ export class URLSearchParamsP implements URLSearchParams {
     declare [Symbol.iterator]: () => URLSearchParamsIterator<[string, string]>;
 
     // @ts-ignore
-    /** @internal */[SymbolP.iterator]() {
+    /** @internal */[SymbolP.iterator](): URLSearchParamsIterator<[string, string]> {
         return this.entries();
     }
 

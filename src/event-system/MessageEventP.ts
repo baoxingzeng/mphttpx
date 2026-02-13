@@ -16,11 +16,11 @@ export class MessageEventP<T> extends EventP implements MessageEvent {
 
     /** @internal */ declare readonly __MessageEvent__: MessageEventState;
 
-    get data() { return state(this).data as T; }
-    get lastEventId() { return state(this).lastEventId; }
-    get origin() { return state(this).origin; }
-    get ports() { return state(this).ports; }
-    get source() { return state(this).source; }
+    get data(): T { return state(this).data as T; }
+    get lastEventId(): string { return state(this).lastEventId; }
+    get origin(): string { return state(this).origin; }
+    get ports(): ReadonlyArray<MessagePort> { return state(this).ports; }
+    get source(): MessageEventSource | null { return state(this).source; }
 
     initMessageEvent(type: string, bubbles?: boolean, cancelable?: boolean, data?: any, origin?: string, lastEventId?: string, source?: MessageEventSource | null, ports?: Iterable<MessagePort>): void {
         checkArgsLength(arguments.length, 1, "MessageEvent", "initMessageEvent");

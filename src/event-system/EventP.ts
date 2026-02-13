@@ -9,14 +9,16 @@ export class EventP implements Event {
     constructor(type: string, eventInitDict?: EventInit) {
         checkArgsLength(arguments.length, 1, "Event");
         setState(this, "__Event__", new EventState());
-        state(this).type = "" + type;
-        state(this).bubbles = !!eventInitDict?.bubbles;
-        state(this).cancelable = !!eventInitDict?.cancelable;
-        state(this).composed = !!eventInitDict?.composed;
+        const s = state(this);
+
+        s.type = "" + type;
+        s.bubbles = !!eventInitDict?.bubbles;
+        s.cancelable = !!eventInitDict?.cancelable;
+        s.composed = !!eventInitDict?.composed;
 
         Object.defineProperty(this, "isTrusted", {
             enumerable: true,
-            get: (function isTrusted(this: EventP): boolean { return state(this).isTrusted === "YES"; }).bind(this),
+            get: function isTrusted(): boolean { return s.isTrusted === "YES"; },
         });
     }
 
@@ -27,21 +29,21 @@ export class EventP implements Event {
     get AT_TARGET(): 2 { return 2; }
     get BUBBLING_PHASE(): 3 { return 3; }
 
-    get bubbles() { return state(this).bubbles; }
-    get cancelBubble() { return state(this).cancelBubble; }
-    set cancelBubble(value) { if (value) { state(this).cancelBubble = true; } }
-    get cancelable() { return state(this).cancelable; }
-    get composed() { return state(this).composed; }
-    get currentTarget() { return state(this).currentTarget; }
-    get defaultPrevented() { return state(this).defaultPrevented; }
-    get eventPhase() { return state(this).eventPhase; }
+    get bubbles(): boolean { return state(this).bubbles; }
+    get cancelBubble(): boolean { return state(this).cancelBubble; }
+    set cancelBubble(value: boolean) { if (value) { state(this).cancelBubble = true; } }
+    get cancelable(): boolean { return state(this).cancelable; }
+    get composed(): boolean { return state(this).composed; }
+    get currentTarget(): EventTarget | null { return state(this).currentTarget; }
+    get defaultPrevented(): boolean { return state(this).defaultPrevented; }
+    get eventPhase(): number { return state(this).eventPhase; }
     declare readonly isTrusted: boolean;
-    get returnValue() { return state(this).returnValue; }
-    set returnValue(value) { if (!value) { this.preventDefault(); } }
-    get srcElement() { return state(this).target; }
-    get target() { return state(this).target; }
-    get timeStamp() { return state(this).timeStamp; }
-    get type() { return state(this).type; }
+    get returnValue(): boolean { return state(this).returnValue; }
+    set returnValue(value: boolean) { if (!value) { this.preventDefault(); } }
+    get srcElement(): EventTarget | null { return state(this).target; }
+    get target(): EventTarget | null { return state(this).target; }
+    get timeStamp(): DOMHighResTimeStamp { return state(this).timeStamp; }
+    get type(): string { return state(this).type; }
 
     composedPath(): EventTarget[] {
         let path = this.target ? [this.target] : [];
@@ -51,20 +53,20 @@ export class EventP implements Event {
 
     initEvent(type: string, bubbles?: boolean, cancelable?: boolean): void {
         checkArgsLength(arguments.length, 1, className(this), "initEvent");
-        if (state(this).eventDispatched) return;
-        state(this).type = "" + type;
-        state(this).bubbles = !!bubbles;
-        state(this).cancelable = !!cancelable;
+        let s = state(this);
+        if (s.eventDispatched) return;
+        s.type = "" + type;
+        s.bubbles = !!bubbles;
+        s.cancelable = !!cancelable;
     }
 
     preventDefault(): void {
-        if (state(this).passive) {
-            return console.warn(`Ignoring 'preventDefault()' call on event of type '${this.type}' from a listener registered as 'passive'.`);
-        }
+        let s = state(this);
+        if (s.passive) return console.warn(`Ignoring 'preventDefault()' call on event of type '${this.type}' from a listener registered as 'passive'.`);
 
         if (this.cancelable) {
-            state(this).defaultPrevented = true;
-            state(this).returnValue = false;
+            s.defaultPrevented = true;
+            s.returnValue = false;
         }
     }
 

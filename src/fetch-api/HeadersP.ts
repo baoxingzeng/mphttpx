@@ -74,10 +74,11 @@ export class HeadersP implements Headers {
         if (typeof callbackfn !== "function") {
             throw new TypeError("Failed to execute 'forEach' on 'Headers': parameter 1 is not of type 'Function'.");
         }
-        let names = Object.getOwnPropertyNames(state(this).dict);
+        let dict = state(this).dict;
+        let names = Object.getOwnPropertyNames(dict);
         for (let i = 0; i < names.length; ++i) {
             let name = names[i]!;
-            callbackfn.call(thisArg, state(this).dict[name]!, name, this);
+            callbackfn.call(thisArg, dict[name]!, name, this);
         }
     }
 
@@ -88,15 +89,15 @@ export class HeadersP implements Headers {
     }
 
     keys(): HeadersIterator<string> {
-        let array: string[] = [];
-        this.forEach((value, name) => { array.push(name); });
-        return array.values();
+        let array: [string, string][] = [];
+        this.forEach((value, name) => { array.push([name, value]); });
+        return array.map(x => x[0]).values();
     }
 
     values(): HeadersIterator<string> {
-        let array: string[] = [];
-        this.forEach((value, name) => { array.push(value); });
-        return array.values();
+        let array: [string, string][] = [];
+        this.forEach((value, name) => { array.push([name, value]); });
+        return array.map(x => x[1]).values();
     }
 
     declare [Symbol.iterator]: () => HeadersIterator<[string, string]>;

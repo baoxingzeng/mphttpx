@@ -5,19 +5,21 @@ export class ProgressEventP extends EventP implements ProgressEvent {
     constructor(type: string, eventInitDict?: ProgressEventInit) {
         super(type, eventInitDict);
         setState(this, "__ProgressEvent__", new ProgressEventState());
-        state(this).lengthComputable = !!eventInitDict?.lengthComputable;
-        state(this).loaded = Number(eventInitDict?.loaded ?? 0);
-        state(this).total = Number(eventInitDict?.total ?? 0);
+        const s = state(this);
 
-        checkNumber("loaded", this.loaded);
-        checkNumber("total", this.total);
+        s.lengthComputable = !!eventInitDict?.lengthComputable;
+        s.loaded = Number(eventInitDict?.loaded ?? 0);
+        s.total = Number(eventInitDict?.total ?? 0);
+
+        checkNumberField("loaded", this.loaded);
+        checkNumberField("total", this.total);
     }
 
     /** @internal */ declare readonly __ProgressEvent__: ProgressEventState;
 
-    get lengthComputable() { return state(this).lengthComputable; }
-    get loaded() { return state(this).loaded; }
-    get total() { return state(this).total; }
+    get lengthComputable(): boolean { return state(this).lengthComputable; }
+    get loaded(): number { return state(this).loaded; }
+    get total(): number { return state(this).total; }
 
     /** @internal */ toString() { return "[object ProgressEvent]"; }
     /** @internal */ get [SymbolP.toStringTag]() { return "ProgressEvent"; }
@@ -35,7 +37,7 @@ function state(target: ProgressEventP) {
     return target.__ProgressEvent__;
 }
 
-function checkNumber(field: string, value: number) {
+function checkNumberField(field: string, value: number) {
     if (isNaN(value)) {
         throw new TypeError(`Failed to construct 'ProgressEvent': Failed to read the '${field}' property from 'ProgressEventInit': The provided double value is non-finite.`);
     }

@@ -43,9 +43,7 @@ export class XMLHttpRequestEventTargetP extends EventTargetP implements XMLHttpR
 
 /** @internal */
 export class XMLHttpRequestEventTargetState {
-    /**
-     * @param target XMLHttpRequestEventTarget
-     */
+    /** @param target XMLHttpRequestEventTarget */
     constructor(target: unknown) {
         this.attach = attachFn<XMLHttpRequestEventTarget, keyof XMLHttpRequestEventTargetEventMap>(target as XMLHttpRequestEventTarget, getHandlers(target as XMLHttpRequestEventTarget));
     }

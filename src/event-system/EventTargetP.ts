@@ -11,28 +11,30 @@ export class EventTargetP implements EventTarget {
 
     addEventListener(type: string, callback: EventListenerOrEventListenerObject | null, options?: AddEventListenerOptions | boolean): void {
         checkArgsLength(arguments.length, 2, className(this), "addEventListener");
-        if (!(typeof callback === "function" || typeof callback === "object" || callback === undefined)) {
+        if (typeof callback !== "function" && typeof callback !== "object" && callback !== undefined) {
             throw new TypeError(`Failed to execute 'addEventListener' on '${className(this)}': parameter 2 is not of type 'Object'.`);
         }
 
+        let s = state(this);
         let executor = new Executor(type, callback);
-        executor.options.capture = typeof options === "boolean" ? options : !!options?.capture;
+        let capture = executor.options.capture = typeof options === "boolean" ? options : !!options?.capture;
 
-        if (!state(this).executors.some(x => x.equals(executor))) {
+        if (!s.executors.some(x => x.equals(executor))) {
+            s.executors.push(executor);
             if (options && typeof options === "object") {
                 executor.options.once = !!options.once;
                 executor.options.passive = !!options.passive;
+                const signal = options.signal;
 
-                const signal = options.signal; if (signal && isEventTarget(signal)) {
+                if (signal && isEventTarget(signal) && !signal.aborted) {
                     executor.options.signal = signal;
                     whenAbort(this, executor, signal);
                 }
             }
-
-            state(this).executors.push(executor);
-
-            const f = (v: Executor) => !!v.options.capture ? 0 : 1;
-            state(this).executors = state(this).executors.sort((a, b) => f(a) - f(b));
+            if (capture) {
+                let f = (v: Executor) => !!v.options.capture ? 0 : 1;
+                s.executors = s.executors.sort((a, b) => f(a) - f(b));
+            }
         }
     }
 
@@ -45,20 +47,22 @@ export class EventTargetP implements EventTarget {
         } else {
             console.warn(`WARNING: undefined behavior when executing 'dispatchEvent' on '${className(this)}': parameter 1 is not of type 'mphttpx.Event'`);
         }
+
         return EventTarget_fire(this, event);
     }
 
     removeEventListener(type: string, callback: EventListenerOrEventListenerObject | null, options?: EventListenerOptions | boolean): void {
         checkArgsLength(arguments.length, 2, className(this), "removeEventListener");
-        if (!(typeof callback === "function" || typeof callback === "object" || callback === undefined)) {
+        if (typeof callback !== "function" && typeof callback !== "object" && callback !== undefined) {
             throw new TypeError(`Failed to execute 'removeEventListener' on '${className(this)}': parameter 2 is not of type 'Object'.`);
         }
 
+        let s = state(this);
         let executor = new Executor(type, callback);
         executor.options.capture = typeof options === "boolean" ? options : !!options?.capture;
 
-        if (state(this).executors.some(x => x.equals(executor))) {
-            state(this).executors = state(this).executors.filter(x => !x.equals(executor));
+        if (s.executors.some(x => x.equals(executor))) {
+            s.executors = s.executors.filter(x => !x.equals(executor));
         }
     }
 

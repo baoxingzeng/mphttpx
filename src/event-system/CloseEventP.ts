@@ -7,17 +7,16 @@ export class CloseEventP extends EventP implements CloseEvent {
         setState(this, "__CloseEvent__", new CloseEventState());
         const s = state(this);
 
-        let _code = Number(eventInitDict?.code ?? 0);
-        s.code = isNaN(_code) ? 0 : _code;
+        let _code = Number(eventInitDict?.code); s.code = isNaN(_code) ? 0 : _code;
         if (eventInitDict?.reason !== undefined) s.reason = "" + eventInitDict.reason;
         s.wasClean = !!eventInitDict?.wasClean;
     }
 
     /** @internal */ declare readonly __CloseEvent__: CloseEventState;
 
-    get code() { return state(this).code; }
-    get reason() { return state(this).reason; }
-    get wasClean() { return state(this).wasClean; }
+    get code(): number { return state(this).code; }
+    get reason(): string { return state(this).reason; }
+    get wasClean(): boolean { return state(this).wasClean; }
 
     /** @internal */ toString() { return "[object CloseEvent]"; }
     /** @internal */ get [SymbolP.toStringTag]() { return "CloseEvent"; }

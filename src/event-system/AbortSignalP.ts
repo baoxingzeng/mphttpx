@@ -6,27 +6,20 @@ import { isEventTarget } from "../helpers/isEventTarget";
 import { SymbolP, DOMExceptionP, setState, checkArgsLength } from "../utils";
 
 export class AbortSignalP extends EventTargetP implements AbortSignal {
-    static abort(reason?: any) {
-        let signal = createAbortSignal();
-        AbortSignal_abort(signal, false, reason);
+    static abort(reason?: any): AbortSignal {
+        let signal = createAbortSignal(); AbortSignal_abort(signal, false, reason);
         return signal;
     }
 
-    static any(signals: AbortSignal[]) {
+    static any(signals: AbortSignal[]): AbortSignal {
         checkArgsLength(arguments.length, 1, "AbortSignal", "any");
-        if (!isSequence(signals)) {
-            throw new TypeError("Failed to execute 'any' on 'AbortSignal': The provided value cannot be converted to a sequence.");
-        }
+        if (!isSequence(signals)) { throw new TypeError("Failed to execute 'any' on 'AbortSignal': The provided value cannot be converted to a sequence."); }
 
         let _signals = Array.isArray(signals) ? signals : Array.from<AbortSignal>(signals);
-        _signals.forEach(sig => {
-            if (!isEventTarget(sig)) {
-                throw new TypeError("Failed to execute 'any' on 'AbortSignal': Failed to convert value to 'AbortSignal'.");
-            }
-        });
+        _signals.forEach(sig => { if (!isEventTarget(sig)) throw new TypeError("Failed to execute 'any' on 'AbortSignal': Failed to convert value to 'AbortSignal'."); });
 
         let signal = createAbortSignal();
-        let abortedSignal = _signals.find(x => x.aborted);
+        let abortedSignal = (() => { for (let i = 0; i < _signals.length; ++i) { let sig = _signals[i]!; if (sig.aborted) return sig; } })();
 
         if (abortedSignal) {
             AbortSignal_abort(signal, false, abortedSignal.reason);
@@ -48,16 +41,16 @@ export class AbortSignalP extends EventTargetP implements AbortSignal {
         return signal;
     }
 
-    static timeout(milliseconds: number) {
+    static timeout(milliseconds: number): AbortSignal {
         checkArgsLength(arguments.length, 1, "AbortSignal", "timeout");
         if (!(milliseconds >= 0)) {
             throw new TypeError("Failed to execute 'timeout' on 'AbortSignal': Value is outside the 'unsigned long long' value range.");
         }
 
         const signal = createAbortSignal();
-        const whenTimeout = () => AbortSignal_abort(signal, true, new DOMExceptionP("signal timed out", "TimeoutError"));
+        const execTimeout = () => AbortSignal_abort(signal, true, new DOMExceptionP("signal timed out", "TimeoutError"));
 
-        setTimeout(whenTimeout, milliseconds);
+        setTimeout(execTimeout, milliseconds);
         return signal;
     }
 
@@ -73,8 +66,8 @@ export class AbortSignalP extends EventTargetP implements AbortSignal {
 
     /** @internal */ declare readonly __AbortSignal__: AbortSignalState;
 
-    get aborted() { return state(this).aborted; }
-    get reason() { return state(this).reason; }
+    get aborted(): boolean { return state(this).aborted; }
+    get reason(): any { return state(this).reason; }
 
     throwIfAborted(): void {
         if (this.aborted) { throw this.reason; }
@@ -114,16 +107,14 @@ function state(target: AbortSignalP) {
 /** @internal */
 export function AbortSignal_abort(signal: AbortSignal, notify = true, reason?: any) {
     const s = state(signal as AbortSignalP);
-    const whenAbort = () => {
+    const execAbort = () => {
         s.aborted = true;
-        s.reason = reason ?? (new DOMExceptionP("signal is aborted without reason", "AbortError"));
+        s.reason = reason !== undefined ? reason : new DOMExceptionP("signal is aborted without reason", "AbortError");
 
-        if (notify) {
-            emitEvent(signal, "abort");
-        }
+        if (notify) emitEvent(signal, "abort");
     }
 
-    if (!signal.aborted) { whenAbort(); }
+    if (!signal.aborted) execAbort();
 }
 
 /** @internal */

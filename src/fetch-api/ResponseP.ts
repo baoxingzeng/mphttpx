@@ -40,9 +40,7 @@ export class ResponseP extends BodyImpl implements Response {
         }
 
         let status = _init.status === undefined ? 200 : _init.status;
-        if (status < 200 || status > 500) {
-            throw new RangeError(`Failed to construct 'Response': The status provided (${+status}) is outside the range [200, 599].`);
-        }
+        if (status < 200 || status > 500) throw new RangeError(`Failed to construct 'Response': The status provided (${+status}) is outside the range [200, 599].`);
 
         s.status = status;
         s.statusText = _init.statusText === undefined ? "" : "" + _init.statusText;
@@ -50,35 +48,38 @@ export class ResponseP extends BodyImpl implements Response {
         Body_init(this, body);
         let payload = this.__Body__.payload;
 
-        if (payload && payload.type && !this.headers.has("Content-Type")) {
+        if (!this.headers.has("Content-Type") && payload && payload.type) {
             this.headers.set("Content-Type", payload.type);
         }
     }
 
     /** @internal */ declare readonly __Response__: ResponseState;
 
-    get headers() {
+    get headers(): Headers {
         if (!state(this).headers) { state(this).headers = new HeadersP(); }
         return state(this).headers!;
     }
-    get ok() { return this.status >= 200 && this.status < 300; }
-    get redirected() { return false; }
-    get status() { return state(this).status; }
-    get statusText() { return state(this).statusText; }
-    get type() { return state(this).type; }
-    get url() { return state(this).url; }
+    get ok(): boolean { return this.status >= 200 && this.status < 300; }
+    get redirected(): boolean { return false; }
+    get status(): number { return state(this).status; }
+    get statusText(): string { return state(this).statusText; }
+    get type(): ResponseType { return state(this).type; }
+    get url(): string { return state(this).url; }
 
     clone(): Response {
         if (this.bodyUsed) {
             throw new TypeError("Failed to execute 'clone' on 'Response': Response body is already used");
         }
+
         let response = new ResponseP(null, {
             headers: new HeadersP(this.headers),
             status: this.status,
             statusText: this.statusText,
         });
+
         state(response).url = this.url;
         response.__Body__.payload = this.__Body__.payload;
+
         return response;
     }
 

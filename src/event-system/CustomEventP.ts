@@ -3,6 +3,7 @@ import { SymbolP, setState, checkArgsLength } from "../utils";
 
 export class CustomEventP<T> extends EventP implements CustomEvent {
     constructor(type: string, eventInitDict?: CustomEventInit<T>) {
+        checkArgsLength(arguments.length, 1, "CustomEvent");
         super(type, eventInitDict);
         setState(this, "__CustomEvent__", new CustomEventState());
         state(this).detail = eventInitDict?.detail ?? null;
@@ -10,11 +11,12 @@ export class CustomEventP<T> extends EventP implements CustomEvent {
 
     /** @internal */ declare readonly __CustomEvent__: CustomEventState;
 
-    get detail() { return state(this).detail as T; }
+    get detail(): T { return state(this).detail as T; }
 
     initCustomEvent(type: string, bubbles?: boolean, cancelable?: boolean, detail?: T): void {
         checkArgsLength(arguments.length, 1, "CustomEvent", "initCustomEvent");
         if (this.__Event__.eventDispatched) return;
+
         this.initEvent(type, bubbles, cancelable);
         state(this).detail = detail ?? null;
     }

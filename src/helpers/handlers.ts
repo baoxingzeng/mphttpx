@@ -1,3 +1,5 @@
+import { EventTargetP } from "../event-system/EventTargetP";
+
 /** @internal */
 export function attachFn<
     T extends EventTarget & Record<`on${K}`, ((ev: any) => any) | null>,
@@ -12,8 +14,8 @@ export function attachFn<
         const listener = handlers[fnName] as EventListener;
 
         typeof callback === "function"
-            ? target.addEventListener(type, listener)
-            : target.removeEventListener(type, listener);
+            ? EventTargetP.prototype.addEventListener.call(target, type, listener)
+            : EventTargetP.prototype.removeEventListener.call(target, type, listener);
     }
 }
 

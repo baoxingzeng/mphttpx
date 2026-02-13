@@ -9,9 +9,9 @@ import { Event_setTrusted } from "../event-system/EventP";
 import { EventTargetP, EventTarget_fire } from "../event-system/EventTargetP";
 import { isSequence } from "../helpers/isSequence";
 import { isArrayBuffer } from "../helpers/isArrayBuffer";
-import { SymbolP, DOMExceptionP, setState, checkArgsLength } from "../utils";
 import { getConnectSocket } from "./connectSocket";
-import type { TConnectSocketFunc, IConnectSocketOption, ISocketTask } from "./connectSocket";
+import type { TConnectSocketFunc, ISocketTask } from "./connectSocket";
+import { SymbolP, DOMExceptionP, setState, checkArgsLength } from "../utils";
 
 const mp = { connectSocket: getConnectSocket() };
 export function setConnectSocket(connectSocket: unknown) { mp.connectSocket = connectSocket as TConnectSocketFunc; }
@@ -25,8 +25,10 @@ export class WebSocketImpl extends EventTargetP implements WebSocket {
     constructor(url: string | URL, protocols?: string | string[]) {
         checkArgsLength(arguments.length, 1, "WebSocket");
         super();
-        setState(this, "__WebSocket__", new WebSocketState(this, {
-            url: "" + url,
+
+        const targetURL = "" + url;
+        const socketTask = mp.connectSocket({
+            url: targetURL,
             protocols: protocols !== undefined
                 ? isSequence(protocols)
                     ? Array.isArray(protocols) ? protocols : Array.from<string>(protocols)
@@ -34,9 +36,8 @@ export class WebSocketImpl extends EventTargetP implements WebSocket {
                 : [],
             multiple: true, // Alipay Mini Program
             fail(err: unknown) { console.error(err); },
-        }));
+        });
 
-        let socketTask = state(this).socketTask;
         if (socketTask && typeof socketTask === "object") {
             onOpen(this);
             onClose(this);
@@ -45,6 +46,9 @@ export class WebSocketImpl extends EventTargetP implements WebSocket {
         } else {
             throw new Error(`connectSocket can't establish a connection to the server at ${"" + url}.`);
         }
+
+        setState(this, "__WebSocket__", new WebSocketState(this, socketTask));
+        state(this).url = targetURL;
     }
 
     /** @internal */ declare readonly __WebSocket__: WebSocketState;
@@ -54,26 +58,25 @@ export class WebSocketImpl extends EventTargetP implements WebSocket {
     get CLOSING(): 2 { return 2; }
     get CLOSED(): 3 { return 3; }
 
-    get binaryType() { return state(this).binaryType; }
-    set binaryType(value) { if (value === "blob" || value === "arraybuffer") { state(this).binaryType = value; } }
+    get binaryType(): BinaryType { return state(this).binaryType; }
+    set binaryType(value: BinaryType) { if (value === "blob" || value === "arraybuffer") { state(this).binaryType = value; } }
 
-    get bufferedAmount() { return state(this).bufferedAmount; }
-    get extensions() { return state(this).extensions; }
-    get protocol() { return state(this).protocol; }
-    get readyState() { return state(this).readyState; }
-    get url() { return state(this).url; }
+    get bufferedAmount(): number { return state(this).bufferedAmount; }
+    get extensions(): string { return ""; }
+    get protocol(): string { return state(this).protocol; }
+    get readyState(): number { return state(this).readyState; }
+    get url(): string { return state(this).url; }
 
     close(code?: number, reason?: string): void {
+        let s = state(this);
         if (this.readyState === 2 /* CLOSING */ || this.readyState === 3 /* CLOSED */) return;
-        state(this).readyState = 2 /* CLOSING */;
+        s.readyState = 2 /* CLOSING */;
 
-        state(this).socketTask.close({
+        s.socketTask.close({
             code: code,
             reason: reason,
             fail(err: unknown) { console.error(err); },
-            complete: (function (this: WebSocketImpl) {
-                state(this).readyState = 3 /* CLOSED */;
-            }).bind(this),
+            complete: () => { s.readyState = 3 /* CLOSED */; },
         });
     }
 
@@ -115,10 +118,9 @@ export class WebSocketImpl extends EventTargetP implements WebSocket {
 
 /** @internal */
 class WebSocketState {
-    constructor(target: WebSocket, opts: IConnectSocketOption) {
+    constructor(target: WebSocket, socketTask: ISocketTask) {
         this.target = target;
-        this.url = opts.url;
-        this.socketTask = mp.connectSocket(opts);
+        this.socketTask = socketTask;
         this.attach = attachFn<WebSocket, keyof WebSocketEventMap>(target, getHandlers(target));
     }
 
@@ -126,10 +128,9 @@ class WebSocketState {
 
     binaryType: BinaryType = "blob";
     bufferedAmount = 0;
-    extensions = "";
     protocol = "";
     readyState = 0;
-    url: string;
+    url = "";
 
     socketTask: ISocketTask;
     error: unknown = null;
@@ -155,23 +156,25 @@ function state(target: WebSocketImpl) {
 }
 
 function onOpen(socket: WebSocketImpl) {
-    state(socket).socketTask.onOpen(res => {
+    let s = state(socket);
+    s.socketTask.onOpen(res => {
         if ("header" in res && res.header && typeof res.header === "object") {
             let headers = new HeadersP(res.header as Record<string, string>);
-            state(socket).protocol = headers.get("Sec-WebSocket-Protocol") || "";
+            s.protocol = headers.get("Sec-WebSocket-Protocol") || "";
         }
 
-        state(socket).readyState = 1 /* OPEN */;
+        s.readyState = 1 /* OPEN */;
         emitEvent(socket, "open");
     });
 }
 
 function onClose(socket: WebSocketImpl) {
-    state(socket).socketTask.onClose(res => {
-        state(socket).readyState = 3 /* CLOSED */;
+    let s = state(socket);
+    s.socketTask.onClose(res => {
+        s.readyState = 3 /* CLOSED */;
 
         let event = new CloseEventP("close", {
-            wasClean: !state(socket).error,
+            wasClean: !s.error,
             code: res.code,
             reason: res.reason,
         });
@@ -182,11 +185,12 @@ function onClose(socket: WebSocketImpl) {
 }
 
 function onError(socket: WebSocketImpl) {
-    state(socket).socketTask.onError(res => {
+    let s = state(socket);
+    s.socketTask.onError(res => {
         console.error(res);
 
-        state(socket).error = res;
-        state(socket).readyState = 3 /* CLOSED */;
+        s.error = res;
+        s.readyState = 3 /* CLOSED */;
         emitEvent(socket, "error");
     });
 }

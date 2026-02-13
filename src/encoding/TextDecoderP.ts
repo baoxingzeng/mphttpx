@@ -42,7 +42,7 @@ function state(target: TextDecoderP) {
     return target.__TextDecoder__;
 }
 
-function decodeText(input?: AllowSharedBufferSource, { stream = false } = {}, settings = { fatal: false, ignoreBOM: false, initial: 0, partial: [] as number[] }): string {
+function decodeText(input?: AllowSharedBufferSource, { stream = false } = {}, settings = { fatal: false, initial: 0, partial: [] as number[] }): string {
     if (input === undefined) {
         if (settings.partial.length > 0) {
             if (settings.fatal) {

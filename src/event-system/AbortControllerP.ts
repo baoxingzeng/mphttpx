@@ -8,11 +8,8 @@ export class AbortControllerP implements AbortController {
 
     /** @internal */ declare readonly __AbortController__: AbortControllerState;
 
-    get signal() { return state(this).signal; }
-
-    abort(reason?: any): void {
-        AbortSignal_abort(this.signal, true, reason);
-    }
+    get signal(): AbortSignal { return state(this).signal; }
+    abort(reason?: any): void { AbortSignal_abort(this.signal, true, reason); }
 
     /** @internal */ toString() { return "[object AbortController]"; }
     /** @internal */ get [SymbolP.toStringTag]() { return "AbortController"; }

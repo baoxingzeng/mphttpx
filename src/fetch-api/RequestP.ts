@@ -28,7 +28,7 @@ export class RequestP extends BodyImpl implements Request {
 
             s.cache = input.cache;
             s.credentials = input.credentials;
-            if (!_init.headers) { state(this).headers = new HeadersP(input.headers); }
+            if (_init.headers === undefined) { state(this).headers = new HeadersP(input.headers); }
             s.method = input.method;
             s.mode = input.mode;
             s.signal = input.signal;
@@ -52,14 +52,16 @@ export class RequestP extends BodyImpl implements Request {
             else throw new TypeError("Failed to construct 'Request': Failed to read the 'signal' property from 'RequestInit': Failed to convert value to 'AbortSignal'.");
         }
 
-        if ((this.method === "GET" || this.method === "HEAD") && body) {
-            throw new TypeError("Failed to construct 'Request': Request with GET/HEAD method cannot have body.");
+        if (this.method === "GET" || this.method === "HEAD") {
+            if (body !== null && body !== undefined) {
+                throw new TypeError("Failed to construct 'Request': Request with GET/HEAD method cannot have body.");
+            }
         }
 
         Body_init(this, bodyInited ? null : body);
         let payload = this.__Body__.payload;
 
-        if (payload && payload.type && !this.headers.has("Content-Type")) {
+        if (!this.headers.has("Content-Type") && payload && payload.type) {
             this.headers.set("Content-Type", payload.type);
         }
 
@@ -72,32 +74,29 @@ export class RequestP extends BodyImpl implements Request {
 
     /** @internal */ declare readonly __Request__: RequestState;
 
-    get cache() { return state(this).cache; }
-    get credentials() { return state(this).credentials; }
+    get cache(): RequestCache { return state(this).cache; }
+    get credentials(): RequestCredentials { return state(this).credentials; }
     get destination(): RequestDestination { return ""; }
-    get headers() {
+    get headers(): Headers {
         if (!state(this).headers) { state(this).headers = new HeadersP(); }
         return state(this).headers!;
     }
-    get integrity() { return ""; }
-    get keepalive() { return false; }
-    get method() { return state(this).method; }
-    get mode() { return state(this).mode; }
+    get integrity(): string { return ""; }
+    get keepalive(): boolean { return false; }
+    get method(): string { return state(this).method; }
+    get mode(): RequestMode { return state(this).mode; }
     get redirect(): RequestRedirect { return "follow"; }
-    get referrer() { return state(this).referrer; }
+    get referrer(): string { return state(this).referrer; }
     get referrerPolicy(): ReferrerPolicy { return ""; }
-    get signal() {
+    get signal(): AbortSignal {
         if (!state(this).signal) { state(this).signal = createAbortSignal(); }
         return state(this).signal!;
     }
-    get url() { return state(this).url; }
+    get url(): string { return state(this).url; }
 
     clone(): Request {
-        if (!this.bodyUsed) {
-            let request = new RequestP(this); this.__Body__.bodyUsed = false; return request;
-        } else {
-            throw new TypeError("Failed to execute 'clone' on 'Request': Request body is already used");
-        }
+        if (!this.bodyUsed) { let req = new RequestP(this); this.__Body__.bodyUsed = false; return req; }
+        else { throw new TypeError("Failed to execute 'clone' on 'Request': Request body is already used"); }
     }
 
     /** @internal */ toString() { return "[object Request]"; }

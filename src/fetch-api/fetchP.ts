@@ -23,7 +23,7 @@ export function fetchP(input: RequestInfo | URL, init?: RequestInit): Promise<Re
         let aborted = false;
         let payload = request.__Body__.payload;
 
-        xhr.onload = function () {
+        xhr.onload = () => {
             let options = {
                 headers: parseHeaders(xhr.getAllResponseHeaders() || ""),
                 status: xhr.status,
@@ -43,24 +43,9 @@ export function fetchP(input: RequestInfo | URL, init?: RequestInit): Promise<Re
             });
         }
 
-        xhr.onerror = function () {
-            setTimeout(function () {
-                reject(new TypeError("Failed to fetch"));
-            });
-        }
-
-        xhr.ontimeout = function () {
-            setTimeout(function () {
-                reject(new DOMExceptionP("request:fail timeout", "TimeoutError"));
-            });
-        }
-
-        xhr.onabort = function () {
-            setTimeout(function () {
-                reject(new DOMExceptionP("The user aborted a request.", "AbortError"));
-            });
-        }
-
+        xhr.onerror = () => { setTimeout(() => { reject(new TypeError("Failed to fetch")); }); }
+        xhr.ontimeout = () => { setTimeout(() => { reject(new DOMExceptionP("request:fail timeout", "TimeoutError")); }); }
+        xhr.onabort = () => { setTimeout(() => { reject(new DOMExceptionP("The user aborted a request.", "AbortError")); }); }
         xhr.open(request.method, request.url, true);
 
         if (request.credentials === "include") {

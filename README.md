@@ -8,6 +8,7 @@ This allows web code to be reused in other environments (such as mini-programs).
 
 - [MPHTTPX](#mphttpx)
   - [Table of Contents](#table-of-contents)
+  - [Translations](#translations)
   - [Features](#features)
   - [Installation](#installation)
   - [Mini-Program Support](#mini-program-support)
@@ -61,6 +62,10 @@ This allows web code to be reused in other environments (such as mini-programs).
   - [UniApp \& Taro](#uniapp--taro)
   - [Node.js](#nodejs)
   - [License](#license)
+
+## Translations
+
+* [中文文档](README.zh-CN.md)
 
 ## Features
 
