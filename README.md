@@ -65,7 +65,7 @@ This allows web code to be reused in other environments (such as mini-programs).
 
 ## Translations
 
-* [中文文档](README.zh-CN.md)
+* [中文文档][3]
 
 ## Features
 
@@ -991,3 +991,4 @@ MIT
 [0]: https://github.com/eligrey/Blob.js
 [1]: https://github.com/github/fetch
 [2]: https://www.npmjs.com/package/unplugin-auto-import
+[3]: https://github.com/baoxingzeng/mphttpx/blob/main/README.zh-CN.md
