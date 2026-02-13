@@ -160,5 +160,5 @@ function normalizeArgs(name: string, value: string | Blob, filename?: string): [
     return ["" + name, "" + value];
 }
 
-const FormDataE = (typeof FormData !== "undefined" && FormData) || FormDataP;
+const FormDataE = (typeof FormData !== "undefined" && FormData) as typeof FormData || FormDataP;
 export { FormDataE as FormData };

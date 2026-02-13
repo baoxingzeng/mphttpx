@@ -550,5 +550,5 @@ function execLoadend(xhr: XMLHttpRequestImpl, contentLength = 0) {
     emitProgressEvent(xhr, "loadend", contentLength, contentLength);
 }
 
-const XMLHttpRequestE = (typeof XMLHttpRequest !== "undefined" && XMLHttpRequest) || XMLHttpRequestImpl;
+const XMLHttpRequestE = (typeof XMLHttpRequest !== "undefined" && XMLHttpRequest) as typeof XMLHttpRequest || XMLHttpRequestImpl;
 export { XMLHttpRequestE as XMLHttpRequest };
