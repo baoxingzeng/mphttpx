@@ -71,7 +71,6 @@ export class WebSocketImpl extends EventTargetP implements WebSocket {
         let s = state(this);
         if (this.readyState === 2 /* CLOSING */ || this.readyState === 3 /* CLOSED */) return;
         s.readyState = 2 /* CLOSING */;
-
         s.socketTask.close({
             code: code,
             reason: reason,
@@ -119,12 +118,9 @@ export class WebSocketImpl extends EventTargetP implements WebSocket {
 /** @internal */
 class WebSocketState {
     constructor(target: WebSocket, socketTask: ISocketTask) {
-        this.target = target;
         this.socketTask = socketTask;
         this.attach = attachFn<WebSocket, keyof WebSocketEventMap>(target, getHandlers(target));
     }
-
-    target: WebSocket;
 
     binaryType: BinaryType = "blob";
     bufferedAmount = 0;
