@@ -38,6 +38,9 @@ export class WebSocketImpl extends EventTargetP implements WebSocket {
             fail(err: unknown) { console.error(err); },
         });
 
+        setState(this, "__WebSocket__", new WebSocketState(this, socketTask));
+        state(this).url = targetURL;
+
         if (socketTask && typeof socketTask === "object") {
             onOpen(this);
             onClose(this);
@@ -46,9 +49,6 @@ export class WebSocketImpl extends EventTargetP implements WebSocket {
         } else {
             throw new Error(`connectSocket can't establish a connection to the server at ${"" + url}.`);
         }
-
-        setState(this, "__WebSocket__", new WebSocketState(this, socketTask));
-        state(this).url = targetURL;
     }
 
     /** @internal */ declare readonly __WebSocket__: WebSocketState;
