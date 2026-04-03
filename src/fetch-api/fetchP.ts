@@ -37,8 +37,14 @@ export function fetchP(input: RequestInfo | URL, init?: RequestInit): Promise<Re
             }
 
             setTimeout(() => {
-                let response = new ResponseP("response" in xhr ? xhr.response : (xhr as XMLHttpRequest).responseText, options);
+                const response = new ResponseP("response" in xhr ? xhr.response : (xhr as XMLHttpRequest).responseText, options);
                 response.__Response__.url = "responseURL" in xhr ? xhr.responseURL : (options.headers.get("X-Request-URL") || "");
+
+                const _payload = response.__Body__.payload;
+                const _contentType = response.headers.get("Content-Type") || "";
+
+                if (_payload && _contentType) { _payload.type = _contentType; }
+
                 resolve(response);
             });
         }
@@ -85,11 +91,11 @@ export function fetchP(input: RequestInfo | URL, init?: RequestInit): Promise<Re
             xhr.onreadystatechange = () => { if (xhr.readyState === 4) removeFn(); }
         }
 
-        Promise.resolve(payload ? payload.promise : undefined)
-            .then(body => {
-                if (!aborted) xhr.send(body !== "" ? body : undefined);
-                else reject(new DOMExceptionP("The user aborted a request.", "AbortError"));
-            })
+        if (!payload) xhr.send();
+        else payload.promise.then(body => {
+            if (!aborted) xhr.send(body !== "" ? body : undefined);
+            else reject(new DOMExceptionP("The user aborted a request.", "AbortError"));
+        })
             .catch(e => {
                 console.error(e);
                 reject(new TypeError("Failed to fetch"));
