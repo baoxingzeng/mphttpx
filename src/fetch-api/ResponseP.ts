@@ -40,7 +40,7 @@ export class ResponseP extends BodyImpl implements Response {
         }
 
         let status = _init.status === undefined ? 200 : _init.status;
-        if (status < 200 || status > 500) throw new RangeError(`Failed to construct 'Response': The status provided (${+status}) is outside the range [200, 599].`);
+        if (status < 200 || status > 599) throw new RangeError(`Failed to construct 'Response': The status provided (${+status}) is outside the range [200, 599].`);
 
         s.status = status;
         s.statusText = _init.statusText === undefined ? "" : "" + _init.statusText;
