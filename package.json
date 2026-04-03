@@ -1,6 +1,6 @@
 {
   "name": "mphttpx",
-  "version": "2.2.1",
+  "version": "2.3.0",
   "type": "module",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
@@ -8,6 +8,7 @@
   "files": [
     "README.md",
     "dist",
+    "!dist/types/**/*",
     "!dist/cjs/types/**/*",
     "!dist/esm/types/**/*"
   ],

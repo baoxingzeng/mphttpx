@@ -1,5 +1,5 @@
 import { dts } from "rollup-plugin-dts";
-// import terser from "@rollup/plugin-terser";
+import terser from "@rollup/plugin-terser";
 import typescript from "@rollup/plugin-typescript";
 
 export default [
@@ -8,7 +8,6 @@ export default [
         output: {
             dir: "dist/cjs",
             format: "cjs",
-            // plugins: [terser()],
             preserveModules: true,
         },
         plugins: [
@@ -23,7 +22,6 @@ export default [
         output: {
             dir: "dist/esm",
             format: "es",
-            // plugins: [terser()],
             preserveModules: true,
         },
         plugins: [
@@ -40,5 +38,32 @@ export default [
             format: "es",
         },
         plugins: [dts()],
+    },
+
+    {
+        input: "src/index.ts",
+        output: {
+            file: "dist/mphttpx.cjs.min.js",
+            format: "cjs",
+        },
+        plugins: [
+            typescript({
+                declarationDir: "dist/types",
+            }),
+            terser(),
+        ],
+    },
+    {
+        input: "src/index.ts",
+        output: {
+            file: "dist/mphttpx.esm.min.js",
+            format: "es",
+        },
+        plugins: [
+            typescript({
+                declarationDir: "dist/types",
+            }),
+            terser(),
+        ],
     },
 ];
