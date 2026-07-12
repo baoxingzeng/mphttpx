@@ -24,7 +24,7 @@ test("Request basic construction (URL + configuration items)", () => {
     assert.equal(req1.url, "https://test.com/api");
     assert.equal(req1.method, "GET");
     assert.equal(req1.credentials, "same-origin");
-    assert.instance(req1.headers, Headers);
+    assert.equal(Object.prototype.toString.call(req1.headers), "[object Headers]");
     let customHeaders = new Headers({
         "Content-Type": "application/json",
         "X-Test": "polyfill"
@@ -67,7 +67,7 @@ test("Request body handling (various types of body)", async () => {
     });
     assert.equal(req3.headers.get("Content-Type"), "text/css");
     let blobResult = await req3.blob();
-    assert.instance(blobResult, Blob);
+    assert.equal(Object.prototype.toString.call(blobResult), "[object Blob]");
     assert.equal(await blobResult.text(), ".white { color: #fff; }");
     let file = new File(["<div></div>"], "file.txt", { type: "text/html" });
     let req3F = new Request("https://test.com/file", {
@@ -76,7 +76,7 @@ test("Request body handling (various types of body)", async () => {
     });
     assert.equal(req3F.headers.get("Content-Type"), "text/html");
     let fileResult = await req3F.blob();
-    assert.instance(fileResult, Blob);
+    assert.equal(Object.prototype.toString.call(fileResult), "[object Blob]");
     assert.equal(await fileResult.text(), "<div></div>");
     let searchParams = new URLSearchParams({ a: "1", b: "2" });
     let req4 = new Request("https://test.com/search", {

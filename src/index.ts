@@ -1,28 +1,35 @@
-export { TextEncoder, TextEncoderP } from "./encoding/TextEncoderP";
-export { TextDecoder, TextDecoderP } from "./encoding/TextDecoderP";
+export { TextEncoder, TextEncoderP } from "fetch-xhr-shim";
+export { TextDecoder, TextDecoderP } from "fetch-xhr-shim";
 
-export { Blob, BlobP } from "./file-system/BlobP";
-export { File, FileP } from "./file-system/FileP";
-export { FileReader, FileReaderP } from "./file-system/FileReaderP";
+export { Blob, BlobP } from "fetch-xhr-shim";
+export { File, FileP } from "fetch-xhr-shim";
+export { FileReader, FileReaderP } from "fetch-xhr-shim";
 
-export { URLSearchParams, URLSearchParamsP } from "./network/URLSearchParamsP";
-export { FormData, FormDataP } from "./network/FormDataP";
+export { URLSearchParams, URLSearchParamsP } from "fetch-xhr-shim";
+export { FormData, FormDataP } from "fetch-xhr-shim";
 
-export { fetch, fetchP } from "./fetch-api/fetchP";
-export { Headers, HeadersP } from "./fetch-api/HeadersP";
-export { Request, RequestP } from "./fetch-api/RequestP";
-export { Response, ResponseP } from "./fetch-api/ResponseP";
+export { fetch, fetchP } from "./fetchP";
+export { setXMLHttpRequestClass, setXMLHttpRequest } from "./fetchP";
 
-export { AbortController, AbortControllerP } from "./event-system/AbortControllerP";
-export { AbortSignal, AbortSignalP } from "./event-system/AbortSignalP";
+export { Headers, HeadersP } from "fetch-xhr-shim";
+export { Request, RequestP } from "fetch-xhr-shim";
+export { Response, ResponseP } from "fetch-xhr-shim";
 
-export { EventTarget, EventTargetP } from "./event-system/EventTargetP";
-export { Event, EventP } from "./event-system/EventP";
-export { CustomEvent, CustomEventP } from "./event-system/CustomEventP";
+export { AbortController, AbortControllerP } from "fetch-xhr-shim";
+export { AbortSignal, AbortSignalP } from "fetch-xhr-shim";
 
-export { WebSocket, WebSocketImpl as WebSocketP } from "./mini-program/WebSocketImpl";
-export { XMLHttpRequest, XMLHttpRequestImpl as XMLHttpRequestP } from "./mini-program/XMLHttpRequestImpl";
+export { EventTarget, EventTargetP } from "fetch-xhr-shim";
+export { Event, EventP } from "fetch-xhr-shim";
+export { CustomEvent, CustomEventP } from "fetch-xhr-shim";
 
-export { setXMLHttpRequest } from "./fetch-api/fetchP";
-export { setRequest } from "./mini-program/XMLHttpRequestImpl";
-export { setConnectSocket } from "./mini-program/WebSocketImpl";
+export { setReadableStreamClass } from "fetch-xhr-shim";
+export { fixFetch, fixXMLHttpRequest, fixWebSocket, setFullOverride } from "fetch-xhr-shim";
+
+export { getPlatform } from "miniprogram-platform";
+
+export { XMLHttpRequest, XMLHttpRequestP } from "miniprogram-xmlhttprequest-shim";
+export { setRequestFunc, setRequestFunc as setRequest } from "miniprogram-xmlhttprequest-shim";
+export { Cookie, enableCookie } from "miniprogram-xmlhttprequest-shim";
+
+export { WebSocket, WebSocketP } from "miniprogram-websocket";
+export { setConnectSocketFunc, setConnectSocketFunc as setConnectSocket } from "miniprogram-websocket";

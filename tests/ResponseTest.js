@@ -23,7 +23,7 @@ test("Response basic construction (status code + configuration items)", () => {
     assert.equal(res1.status, 200);
     assert.equal(res1.statusText, "");
     assert.equal(res1.ok, true);
-    assert.instance(res1.headers, Headers);
+    assert.equal(Object.prototype.toString.call(res1.headers), "[object Headers]");
     let customHeaders = new Headers({
         "Content-Type": "application/json",
         "X-Response": "polyfill"
@@ -58,7 +58,7 @@ test("Response body handling (different types of bodies)", async () => {
     let blob = new Blob(["blob content"], { type: "text/plain" });
     let res3 = new Response(blob);
     let blobResult = await res3.blob();
-    assert.instance(blobResult, Blob);
+    assert.equal(Object.prototype.toString.call(blobResult), "[object Blob]");
     assert.equal(await blobResult.text(), "blob content");
     let uint8 = new Uint8Array([72, 101, 108, 108, 111]);
     let res4 = new Response(uint8.buffer);

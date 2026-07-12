@@ -1,9 +1,13 @@
 {
   "name": "mphttpx",
-  "version": "2.3.0",
+  "version": "2.3.1",
+  "license": "MIT",
+  "author": "Xingzeng Bao",
+  "homepage": "https://github.com/baoxingzeng/mphttpx",
+  "description": "A polyfill for mini programs.",
   "type": "module",
-  "main": "dist/cjs/index.js",
-  "module": "dist/esm/index.js",
+  "main": "dist/mphttpx.cjs.js",
+  "module": "dist/mphttpx.esm.js",
   "types": "dist/index.d.ts",
   "files": [
     "README.md",
@@ -12,15 +16,18 @@
     "!dist/cjs/types/**/*",
     "!dist/esm/types/**/*"
   ],
+  "exports": {
+    ".": {
+      "require": "./dist/cjs/index.js",
+      "import": "./dist/esm/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "sideEffects": false,
   "scripts": {
     "build": "rollup --config",
     "test": "node tests/test.js"
   },
-  "sideEffects": false,
-  "author": "Xingzeng",
-  "license": "MIT",
-  "description": "A polyfill for mini-program.",
-  "homepage": "https://github.com/baoxingzeng/mphttpx",
   "keywords": [
     "小程序",
     "mini-program",
@@ -36,7 +43,18 @@
     "XMLHttpRequest",
     "WebSocket"
   ],
+  "dependencies": {
+    "fetch-xhr-shim": ">=1.0.0",
+    "miniprogram-platform": ">=1.0.0",
+    "miniprogram-websocket": ">=1.0.0",
+    "miniprogram-xmlhttprequest-shim": ">=1.0.0"
+  },
   "devDependencies": {
+    "@babel/core": "^7.29.7",
+    "@babel/preset-env": "^7.29.7",
+    "@rollup/plugin-babel": "^7.1.0",
+    "@rollup/plugin-commonjs": "^29.0.3",
+    "@rollup/plugin-node-resolve": "^16.0.3",
     "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-typescript": "^12.3.0",
     "cors": "^2.8.5",
