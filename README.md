@@ -1,6 +1,6 @@
 # MPHTTPX
 
-小程序中浏览器网络 API 的完整 polyfill 实现，一次安装即可使用 `fetch`、`XMLHttpRequest`、`WebSocket` 等标准接口，让小程序开发不再「小」。
+小程序中浏览器网络 API 的完整 polyfill 实现，一次安装即可使用 `fetch`、`XMLHttpRequest`、`WebSocket` 等符合 W3C 标准的应用程序编程接口。
 
 ---
 
@@ -33,11 +33,11 @@ fetch("https://api.example.com/data")
 | `XMLHttpRequest`                             | miniprogram-xmlhttprequest-shim |
 | `WebSocket`                                  | miniprogram-websocket           |
 
-每个 API 都有对应的 `P` 后缀版本（如 `fetchP`、`BlobP`、`TextEncoderP`），始终返回 polyfill 实现，不会回退至浏览器原生 API。
+每个 API 都有对应的 `P` 后缀版本（如 `fetchP`、`BlobP`、`TextEncoderP`），始终返回 polyfill 实现，请按需使用。
 
 ```javascript
-import { fetch, Blob } from "mphttpx";      // 优先返回全局对象，不存在时返回 polyfill
-import { fetchP, BlobP } from "mphttpx";    // 始终返回 polyfill 实现
+import { fetch, Blob } from "mphttpx";   // 优先返回全局对象，不存在时返回 polyfill
+import { fetchP, BlobP } from "mphttpx"; // 始终返回 polyfill 实现
 ```
 
 ## 依赖库
@@ -48,7 +48,7 @@ import { fetchP, BlobP } from "mphttpx";    // 始终返回 polyfill 实现
 | [miniprogram-xmlhttprequest-shim](https://www.npmjs.com/package/miniprogram-xmlhttprequest-shim) | XMLHttpRequest、<br>Cookie、enableCookie                                                                                                                                                          |
 | [miniprogram-websocket](https://www.npmjs.com/package/miniprogram-websocket)                     | WebSocket                                                                                                                                                                                         |
 
-各 API 的详细文档和兼容性说明及更多功能请参阅对应库的 README。
+各 API 的详细文档及兼容性说明请参阅对应库的自述文档。
 
 ## 兼容性
 
@@ -56,34 +56,11 @@ import { fetchP, BlobP } from "mphttpx";    // 始终返回 polyfill 实现
 | :---: | :----: | :---: | :---: | :---: | :---: | :---: | :----: |
 |   ✅   |   ✅    |   ✅   |   ✅   |   ✅   |   ✅   |   ✅   |   ✅    |
 
-在 Chrome、Firefox、Edge、Safari 等浏览器中，所有导出均直接使用浏览器原生实现，无额外开销。
-
-## 自动导入
-
-配合 [unplugin-auto-import](https://www.npmjs.com/package/unplugin-auto-import) 使用：
-
-```javascript
-AutoImport({
-    imports: [{
-        "mphttpx": [
-            "fetch", "Headers", "Request", "Response",
-            "Blob", "File", "FileReader",
-            "URLSearchParams", "FormData",
-            "AbortController", "AbortSignal",
-            "EventTarget", "Event", "CustomEvent",
-            "TextEncoder", "TextDecoder",
-
-            "XMLHttpRequest",   // mini-programs
-            "WebSocket",        // mini-programs
-        ],
-    }],
-});
-```
+在 Chrome、Firefox、Edge、Safari 等浏览器中，所有导出均直接使用浏览器原生实现，无性能损耗。
 
 ## 注意事项
 
-- **UniApp (HBuilderX Vue2)**：可能需要安装较低版本的 `unplugin-auto-import`（如 `0.16.7`）以兼容 CMD 模块格式。
-- **支付宝小程序**：`globalThis`、`window`、`XMLHttpRequest` 等为保留字，导入时建议重命名：`import { XMLHttpRequest as myXHR } from "mphttpx";`。
+- **支付宝小程序**：`fetch`、`XMLHttpRequest`、`WebSocket` 等为保留字，导入时建议重命名：`import { fetch as fetchPolyfill } from "mphttpx";`。
 
 ## 开源协议
 
