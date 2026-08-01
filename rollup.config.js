@@ -1,5 +1,4 @@
 import terser from "@rollup/plugin-terser";
-import commonjs from "@rollup/plugin-commonjs";
 import typescript from "@rollup/plugin-typescript";
 import { dts } from "rollup-plugin-dts";
 import { babel } from "@rollup/plugin-babel";
@@ -41,7 +40,6 @@ export default [
                 declarationDir: "dist/types",
                 moduleResolution: "bundler",
             }),
-            commonjs(),
             nodeResolve(),
             babel({
                 babelHelpers: "bundled",
@@ -62,7 +60,6 @@ export default [
                 declarationDir: "dist/types",
                 moduleResolution: "bundler",
             }),
-            commonjs(),
             nodeResolve(),
             babel({
                 babelHelpers: "bundled",
@@ -108,7 +105,6 @@ export default [
                 declarationDir: "dist/types",
                 moduleResolution: "bundler",
             }),
-            commonjs(),
             nodeResolve(),
             babel({
                 babelHelpers: "bundled",
@@ -129,7 +125,6 @@ export default [
                 declarationDir: "dist/types",
                 moduleResolution: "bundler",
             }),
-            commonjs(),
             nodeResolve(),
             babel({
                 babelHelpers: "bundled",
@@ -139,6 +134,48 @@ export default [
         ],
     },
 
+    // UMD (polyfill singlefile)
+    {
+        input: "src/polyfill.ts",
+        output: {
+            file: "dist/mphttpx.umd.js",
+            format: "umd",
+            name: "MPHTTPX",
+        },
+        plugins: [
+            typescript({
+                declarationDir: "dist/types",
+                moduleResolution: "bundler",
+            }),
+            nodeResolve(),
+            babel({
+                babelHelpers: "bundled",
+                extensions: [".js", ".jsx", ".es6", ".es", ".mjs", ".ts", ".tsx"],
+            }),
+        ],
+    },
+
+    // UMD (polyfill singlefile, minimized)
+    {
+        input: "src/polyfill.ts",
+        output: {
+            file: "dist/mphttpx.umd.min.js",
+            format: "umd",
+            name: "MPHTTPX",
+        },
+        plugins: [
+            typescript({
+                declarationDir: "dist/types",
+                moduleResolution: "bundler",
+            }),
+            nodeResolve(),
+            babel({
+                babelHelpers: "bundled",
+                extensions: [".js", ".jsx", ".es6", ".es", ".mjs", ".ts", ".tsx"],
+            }),
+            terser(),
+        ],
+    },
 
     // Types
     {

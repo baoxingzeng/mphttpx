@@ -11,4 +11,3 @@ const fetchPolyfill = /*#__PURE__*/function () { return fetches[1]; }();
 
 export { fetchE as fetch };
 export { fetchPolyfill as fetchP };
-export { setXMLHttpRequestClass, setXMLHttpRequestClass as setXMLHttpRequest };
