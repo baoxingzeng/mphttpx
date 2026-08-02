@@ -103,8 +103,7 @@ test("encodeInto mixed characters (ascii+emoji): cross byte scenes", () => {
     let encoder = new TextEncoder();
     let dest = new Uint8Array(10);
     let result = encoder.encodeInto("A🎉B", dest);
-    assert.equal(result.read, 4);
-    assert.equal(result.written, 6);
+    assert.equal(result.read, 4); assert.equal(result.written, 6);
     compare(dest, new Uint8Array([65, 240, 159, 142, 137, 66, 0, 0, 0, 0]));
 });
 

@@ -40,8 +40,7 @@ test("Blob construct content containing strings", () => {
     compare(blob1, "", 11);
     let blob2 = new Blob(["Hello", " ", "World!"], { type: "text/plain" });
     compare(blob2, "text/plain", 12);
-    let str = "你好🎉";
-    let blob3 = new Blob([str], { type: "text/plain;charset=utf-8" });
+    let str = "你好🎉", blob3 = new Blob([str], { type: "text/plain;charset=utf-8" });
     compare(blob3, "text/plain;charset=utf-8", (new TextEncoder()).encode(str).length);
 });
 

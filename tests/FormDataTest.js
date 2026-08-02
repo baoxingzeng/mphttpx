@@ -125,7 +125,6 @@ test("FormData strictly distinguish between File/Blob and regular strings", () =
     formData.append("file", file);
     formData.append("blob", blob);
     formData.append("str", str);
-
     assert.instance(formData.get("file"), File);
     assert.instance(formData.get("blob"), Blob);
     assert.type(formData.get("str"), "string");

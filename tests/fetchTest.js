@@ -84,7 +84,6 @@ test("fetch custom request header", async () => {
             "Content-Type": "application/json"
         }
     });
-
     let data = await response.json();
     assert.equal(data.token, "123456789");
     assert.equal(data.contentType, "application/json");

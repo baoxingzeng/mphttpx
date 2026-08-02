@@ -126,6 +126,7 @@ test("Headers edge scenes: invalid keys/ null values", () => {
     assert.throws(() => headers.set("", "empty-key"), (err) => err instanceof TypeError);
     assert.throws(() => headers.append("invalid key", "val"), (err) => err instanceof TypeError);
     assert.throws(() => headers.set("key\nwith\nnewline", "val"), (err) => err instanceof TypeError);
+
     headers.append("Empty-Value", "");
     assert.equal(headers.get("Empty-Value"), "");
     assert.equal(headers.has("Empty-Value"), true);

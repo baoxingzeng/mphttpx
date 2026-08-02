@@ -22,6 +22,7 @@ import { RequestP } from "fetch-xhr-shim";
 import { ResponseP } from "fetch-xhr-shim";
 
 import { getPlatform } from "miniprogram-platform";
+
 import { XMLHttpRequestP } from "miniprogram-xmlhttprequest-shim";
 import { WebSocketP } from "miniprogram-websocket";
 

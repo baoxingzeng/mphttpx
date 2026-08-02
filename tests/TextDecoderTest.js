@@ -81,6 +81,7 @@ test("decode utf-8 bytes with BOM", () => {
     let withoutBOM = new Uint8Array([72, 101, 108, 108, 111]);
     let decoder1 = new TextDecoder();
     let decoder2 = new TextDecoder("utf-8", { ignoreBOM: false });
+
     assert.equal(decoder1.decode(withBOM), "Hello");
     assert.equal(decoder2.decode(withBOM), "Hello");
     assert.equal(decoder1.decode(withoutBOM), "Hello");

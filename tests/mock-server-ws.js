@@ -31,11 +31,9 @@ wss.on("connection", ws => {
     ws.on("close", (code, reason) => {
         console.log(`close: code=${code}, reason=${reason}`);
     });
-
     ws.on("error", (error) => {
         console.error("WebSocket Error: ", error);
     });
-
     ws.send("Welcome to test server!");
 });
 
